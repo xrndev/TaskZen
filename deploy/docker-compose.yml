@@ -1,0 +1,65 @@
+name: taskzen
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: taskzen
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD}
+      POSTGRES_DB: taskzen
+    # Memoria contenida: la VPS tiene 1,8 GB en total.
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=40", "-c", "work_mem=4MB"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    mem_limit: 450m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskzen -d taskzen"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    image: taskzen-migrate:latest
+    restart: "no"
+    environment:
+      DATABASE_URL: postgres://taskzen:${POSTGRES_PASSWORD}@postgres:5432/taskzen
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    image: taskzen-app:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://taskzen:${POSTGRES_PASSWORD}@postgres:5432/taskzen
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    mem_limit: 600m
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?define SITE_ADDRESS}
+      LEGACY_ADDRESS: ${LEGACY_ADDRESS:?define LEGACY_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    mem_limit: 128m
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

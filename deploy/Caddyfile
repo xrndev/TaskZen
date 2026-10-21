@@ -1,0 +1,27 @@
+# Dirección anterior: redirige a la principal (temporal, para poder quitarla sin romper enlaces viejos).
+{$LEGACY_ADDRESS} {
+	redir https://{$SITE_ADDRESS}{uri} temporary
+}
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Subidas de hasta 10 MB + cabeceras.
+	request_body {
+		max_size 12MB
+	}
+
+	reverse_proxy app:3000 {
+		# Sin buffering para que el flujo SSE (/api/events) llegue al instante.
+		flush_interval -1
+	}
+}
