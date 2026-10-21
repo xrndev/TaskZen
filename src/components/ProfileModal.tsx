@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/utils/supabase/client'
+import { useState } from 'react'
+import { uploadAvatar } from '@/lib/api'
+import { toast } from '@/lib/toast'
 import { Profile } from '@/types'
+import { SecuritySettings } from './SecuritySettings'
 import { LogOut, Image as ImageIcon, Upload, X, Check } from 'lucide-react'
+import { fallbackAvatar } from '@/lib/avatar';
 
 export function ProfileModal({ 
    isOpen, 
@@ -20,21 +23,16 @@ export function ProfileModal({
 }) {
   const [activeTab, setActiveTab] = useState<'url' | 'upload'>('url');
   const [avatarUrlInput, setAvatarUrlInput] = useState('');
-  const [nameInput, setNameInput] = useState('');
+  // null = sin editar: se muestra el nombre del perfil.
+  const [editedName, setEditedName] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const supabase = createClient();
-
-  useEffect(() => {
-    if (profile) {
-      setNameInput(profile.full_name || '');
-    }
-  }, [profile, isOpen]);
-
   if (!isOpen || !profile) return null;
 
-  const currentAvatar = profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.id}`;
+  const nameInput = editedName ?? profile.full_name ?? '';
+
+  const currentAvatar = profile.avatar_url || fallbackAvatar(profile.id);
 
   const handleSubmitAvatar = async () => {
     setIsSubmitting(true);
@@ -44,21 +42,7 @@ export function ProfileModal({
        if (activeTab === 'url' && avatarUrlInput.trim()) {
            newUrl = avatarUrlInput.trim();
        } else if (activeTab === 'upload' && selectedFile) {
-           const fileExt = selectedFile.name.split('.').pop();
-           const filePath = `${profile.id}-${Math.random()}.${fileExt}`;
-           
-           // Requiere que exista el bucket 'avatars' configurado en la base de datos
-           const { error: uploadError } = await supabase.storage
-             .from('avatars')
-             .upload(filePath, selectedFile);
-             
-           if (uploadError) throw uploadError;
-           
-           const { data: { publicUrl } } = supabase.storage
-             .from('avatars')
-             .getPublicUrl(filePath);
-             
-           newUrl = publicUrl;
+           newUrl = await uploadAvatar(selectedFile);
        }
 
         const nameTrimmed = nameInput.trim();
@@ -71,14 +55,15 @@ export function ProfileModal({
             if (avatarChanged) changes.avatar_url = newUrl as string;
 
             await onUpdateProfile(changes);
-            alert("¡Perfil actualizado!");
+            toast.success("¡Perfil actualizado!");
             setAvatarUrlInput('');
             setSelectedFile(null);
+            setEditedName(null);
             onClose(); // Auto-close on success for better UX
         }
-    } catch(err: any) {
+    } catch(err: unknown) {
         console.error(err);
-        alert("Error al actualizar el perfil. Inténtalo de nuevo.");
+        toast.error((err instanceof Error && err.message) || "Error al actualizar el perfil. Inténtalo de nuevo.");
     }
     
     setIsSubmitting(false);
@@ -88,7 +73,7 @@ export function ProfileModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-background/80 backdrop-blur-md transition-opacity" onClick={onClose} />
       
-      <div className="relative w-full max-w-sm bg-surface-container-low border border-outline-variant/10 rounded-3xl shadow-[0_12px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col p-6 animate-in zoom-in-95 duration-200 ease-out">
+      <div className="relative w-full max-w-sm max-h-[92vh] overflow-y-auto bg-surface-container-low border border-outline-variant/10 rounded-3xl shadow-[0_12px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col p-6 animate-in zoom-in-95 duration-200 ease-out">
          {/* Botón cerrar sutil */}
          <button onClick={onClose} className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface transition-colors p-1.5 rounded-full hover:bg-surface-container-highest">
             <X className="w-4 h-4" />
@@ -103,7 +88,7 @@ export function ProfileModal({
                 <input 
                    type="text" 
                    value={nameInput}
-                   onChange={e => setNameInput(e.target.value)}
+                   onChange={e => setEditedName(e.target.value)}
                    placeholder="Tu nombre completo"
                    className="w-full bg-transparent border-b border-outline-variant/30 text-center text-xl font-black tracking-tight text-on-surface focus:outline-none focus:border-primary transition-all py-1 placeholder:text-on-surface-variant/30"
                 />
@@ -158,8 +143,10 @@ export function ProfileModal({
             </button>
          </div>
 
+         <SecuritySettings />
+
          {/* Sector Zona Roja */}
-         <div className="mt-8 pt-4 border-t border-outline-variant/10">
+         <div className="mt-6 pt-4 border-t border-outline-variant/10">
             <button 
                onClick={onLogout}
                className="w-full flex items-center justify-center gap-2 py-3 bg-error/10 text-error font-extrabold text-[11px] tracking-widest rounded-xl uppercase hover:bg-error hover:text-white transition-all shadow-sm border border-error/20"

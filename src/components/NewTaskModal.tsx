@@ -3,6 +3,17 @@
 import { useState } from 'react'
 import { TagSelector } from './TagSelector'
 import { TeamMember } from '@/types'
+import { fallbackAvatar } from '@/lib/avatar';
+
+export interface NewTaskFormData {
+  title: string;
+  description: string;
+  due_date: string | null;
+  image_url: string | null;
+  upload_file: File | null;
+  tag_ids: string[];
+  assigned_to: string | null;
+}
 
 export function NewTaskModal({ 
    isOpen, 
@@ -13,7 +24,7 @@ export function NewTaskModal({
 }: { 
    isOpen: boolean, 
    onClose: () => void, 
-   onSubmit: (data: any) => Promise<void>,
+   onSubmit: (data: NewTaskFormData) => Promise<void>,
    teamMembers?: TeamMember[],
    teamId?: string | null
 }) {
@@ -90,7 +101,7 @@ export function NewTaskModal({
               <div className="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant/30 px-3 py-1.5 shadow-inner transition-all focus-within:border-primary/50">
                  <div className="w-6 h-6 rounded-full overflow-hidden border border-outline-variant/20 bg-surface-container-high">
                    <img 
-                     src={teamMembers.find(m => m.user_id === assignedTo)?.profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${assignedTo || 'none'}`} 
+                     src={teamMembers.find(m => m.user_id === assignedTo)?.profile?.avatar_url || fallbackAvatar(assignedTo || 'none')} 
                      alt="Avatar" 
                      className="w-full h-full object-cover" 
                    />

@@ -5,9 +5,10 @@ import { Task, Tag, TeamMember, TeamRole, TaskComment } from '@/types'
 import { TagSelector } from './TagSelector'
 import { TagBadge } from './TagBadge'
 import { Plus, User, ShieldAlert, MessageSquare, Send, Reply, Trash2, Calendar, Paperclip, FileText, X, Download, AlertCircle, Check, Loader2 } from 'lucide-react'
-import { fetchTaskComments, createComment, deleteComment } from '@/utils/supabase/comments'
-import { uploadAttachment, getAttachmentsByTask, getAttachmentsByComment, deleteAttachment, getDownloadUrl } from '@/utils/supabase/attachments'
+import { fetchTaskComments, createComment, deleteComment, uploadAttachment, getAttachmentsByTask, deleteAttachment, attachmentUrl } from '@/lib/api'
+import { toast } from '@/lib/toast'
 import { Attachment } from '@/types'
+import { fallbackAvatar } from '@/lib/avatar';
 
 export function TaskDetailPanel({ 
    isOpen, 
@@ -26,7 +27,7 @@ export function TaskDetailPanel({
    task: Task | null, 
    autoEditTags?: boolean,
    onClose: () => void, 
-   onUpdate: (id: string, partial: Partial<Task>) => Promise<void>, 
+   onUpdate: (id: string, partial: Partial<Task> & { tag_ids?: string[] }) => Promise<void>, 
    onDelete: (id: string) => Promise<void>,
    onRefresh?: () => void,
    teamMembers?: TeamMember[],
@@ -94,11 +95,11 @@ export function TaskDetailPanel({
 
      setIsUploading(true);
      try {
-       await uploadAttachment(file, task.id);
+       await uploadAttachment(file, { taskId: task.id });
        loadAttachments();
        onRefresh?.();
-     } catch (err: any) {
-       alert(err.message || 'Error al subir el archivo');
+     } catch (err: unknown) {
+       toast.error(err instanceof Error ? err.message : 'Error al subir el archivo');
      } finally {
        setIsUploading(false);
        if (e.target) e.target.value = '';
@@ -114,18 +115,13 @@ export function TaskDetailPanel({
      }
    }
 
-   const handleDownload = async (path: string, fileName: string) => {
-     try {
-       const url = await getDownloadUrl(path);
-       const link = document.createElement('a');
-       link.href = url;
-       link.download = fileName;
-       document.body.appendChild(link);
-       link.click();
-       document.body.removeChild(link);
-     } catch (err) {
-       alert('Error al obtener el enlace de descarga');
-     }
+   const handleDownload = (att: Attachment) => {
+     const link = document.createElement('a');
+     link.href = attachmentUrl(att);
+     link.download = att.file_name;
+     document.body.appendChild(link);
+     link.click();
+     document.body.removeChild(link);
    }
 
    if (!task) return null;
@@ -135,7 +131,6 @@ export function TaskDetailPanel({
       await onUpdate(task.id, { 
         title: editedTitle.trim() || 'Sin Título', 
         description: editedDesc,
-        // @ts-ignore
         tag_ids: editedTagIds,
         assigned_to: editedAssignedTo || null
       });
@@ -157,17 +152,16 @@ export function TaskDetailPanel({
 
       setIsSubmitting(true);
       const comment = await createComment(
-         task.id, 
-         currentUserId, 
-         newComment, 
+         task.id,
+         newComment,
          replyingTo?.id || null
       );
 
       if (comment && commentFile) {
          try {
-           await uploadAttachment(commentFile, undefined, comment.id);
-         } catch (err: any) {
-           alert(err.message || 'Error al subir el archivo del comentario');
+           await uploadAttachment(commentFile, { commentId: comment.id });
+         } catch (err: unknown) {
+           toast.error(err instanceof Error ? err.message : 'Error al subir el archivo del comentario');
          }
       }
 
@@ -275,7 +269,7 @@ export function TaskDetailPanel({
                   <div className={`flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant/30 px-3 py-1.5 shadow-inner ${!canManage ? 'opacity-50 pointer-events-none' : ''}`}>
                     <div className="w-6 h-6 rounded-full overflow-hidden border border-outline-variant/20 bg-surface-container-high">
                       <img 
-                        src={teamMembers.find(m => m.user_id === editedAssignedTo)?.profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${editedAssignedTo || 'none'}`} 
+                        src={teamMembers.find(m => m.user_id === editedAssignedTo)?.profile?.avatar_url || fallbackAvatar(editedAssignedTo || 'none')} 
                         alt="Avatar" 
                         className="w-full h-full object-cover" 
                       />
@@ -298,7 +292,7 @@ export function TaskDetailPanel({
                   <div onClick={() => canManage && setIsEditing(true)} className={`flex items-center gap-3 bg-surface-container-low p-3 rounded-xl border border-outline-variant/10 shadow-sm ${canManage ? 'cursor-pointer hover:border-primary/30 transition-colors' : ''}`}>
                     <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/20 bg-surface-container-high">
                       <img 
-                        src={task.assignee?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${task.assigned_to || 'none'}`} 
+                        src={task.assignee?.avatar_url || fallbackAvatar(task.assigned_to || 'none')} 
                         alt="Avatar" 
                         className="w-full h-full object-cover" 
                       />
@@ -413,7 +407,7 @@ export function TaskDetailPanel({
                          </div>
                        </div>
                        <div className="flex items-center gap-1 opacity-0 group-hover/att:opacity-100 transition-opacity">
-                         <button onClick={() => handleDownload(att.file_path, att.file_name)} className="p-1.5 hover:bg-surface-container-highest rounded-lg text-primary transition-colors">
+                         <button onClick={() => handleDownload(att)} className="p-1.5 hover:bg-surface-container-highest rounded-lg text-primary transition-colors">
                            <Download className="w-3.5 h-3.5" />
                          </button>
                          {canManage && (
@@ -495,7 +489,7 @@ export function TaskDetailPanel({
                   <div className="flex gap-3">
                      <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-outline-variant/20">
                         <img 
-                           src={teamMembers.find(m => m.user_id === currentUserId)?.profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUserId}`} 
+                           src={teamMembers.find(m => m.user_id === currentUserId)?.profile?.avatar_url || fallbackAvatar(currentUserId)} 
                            alt="Tú" 
                            className="w-full h-full object-cover" 
                         />
@@ -524,12 +518,12 @@ export function TaskDetailPanel({
 
                   <div className="flex justify-between items-center pt-2 border-t border-outline-variant/10">
                      <div className="flex items-center gap-1">
-                        <label className="p-2 hover:bg-surface-container-highest rounded-xl text-on-surface-variant hover:text-primary transition-colors cursor-pointer" title="Adjuntar archivo (máx 5MB)">
+                        <label className="p-2 hover:bg-surface-container-highest rounded-xl text-on-surface-variant hover:text-primary transition-colors cursor-pointer" title="Adjuntar archivo (máx 10 MB)">
                           <input type="file" className="hidden" onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              if (file.size > 5 * 1024 * 1024) {
-                                alert('El archivo supera los 5MB');
+                              if (file.size > 10 * 1024 * 1024) {
+                                toast.error('El archivo supera los 10 MB');
                                 if (e.target) e.target.value = '';
                                 return;
                               }
@@ -594,7 +588,7 @@ function CommentItem({
       <div className="flex gap-3 group/comment">
          <div className={`w-8 h-8 rounded-full overflow-hidden shrink-0 border border-outline-variant/20 ${isReply ? 'scale-90' : ''}`}>
             <img 
-               src={comment.profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user_id}`} 
+               src={comment.profile?.avatar_url || fallbackAvatar(comment.user_id)} 
                alt="Avatar" 
                className="w-full h-full object-cover" 
             />

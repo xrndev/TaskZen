@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Tag } from '@/types';
-import { fetchUserTags, createTag } from '@/utils/supabase/tags';
+import { fetchUserTags, createTag } from '@/lib/api';
 import { TagBadge } from './TagBadge';
 import { Plus, Check, ChevronDown, ChevronRight, X, PaintBucket, Tag as TagIcon } from 'lucide-react';
 
@@ -24,14 +24,15 @@ export function TagSelector({ selectedTagIds, onChange, teamId }: TagSelectorPro
   const [newTagColor, setNewTagColor] = useState(PRESET_COLORS[0]);
   const [newTagParentId, setNewTagParentId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadTags();
-  }, [teamId]); // Re-load when team changes
-
   const loadTags = async () => {
-    const tags = await fetchUserTags(teamId || undefined);
+    const tags = teamId ? await fetchUserTags(teamId) : [];
     setAllTags(tags);
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga de datos al montar o cambiar de equipo
+    loadTags();
+  }, [teamId]); // Re-load when team changes
 
   const selectedTags = useMemo(() => 
     allTags.filter(t => selectedTagIds.includes(t.id)), 

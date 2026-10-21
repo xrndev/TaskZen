@@ -1,26 +1,32 @@
-import { LoginForm } from './LoginForm';
+import { redirect } from 'next/navigation'
+import { getSession } from '@/server/session'
+import { LoginForm, type Provider } from './LoginForm'
 
-export default async function LoginPage(props: { searchParams: Promise<{ message?: string, type?: string }> }) {
-  const searchParams = await props.searchParams;
-  const message = searchParams?.message;
-  const isError = searchParams?.type === 'error';
+// Solo rutas internas: evita redirecciones abiertas (//otro-sitio.com, https://...).
+function safeNext(next?: string) {
+  return next && /^\/(?!\/)[\w\-./?=&%]*$/.test(next) ? next : '/board'
+}
+
+const ERRORS: Record<string, string> = {
+  access_denied: 'Cancelaste el acceso con el proveedor.',
+}
+const REGISTRATION_CLOSED = 'No se pudo entrar. Si es tu primera vez, el registro es solo por invitación: abre el enlace que te enviaron y vuelve a intentarlo.'
+
+export default async function LoginPage(props: { searchParams: Promise<{ next?: string; error?: string }> }) {
+  const params = await props.searchParams
+  const next = safeNext(params.next)
+  if (await getSession()) redirect(next)
+
+  const providers: Provider[] = [
+    ...(process.env.GOOGLE_CLIENT_ID ? (['google'] as const) : []),
+    ...(process.env.MICROSOFT_CLIENT_ID ? (['microsoft'] as const) : []),
+    ...(process.env.GITHUB_CLIENT_ID ? (['github'] as const) : []),
+  ]
+  const initialError = params.error ? (ERRORS[params.error] ?? REGISTRATION_CLOSED) : null
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 relative">
-      
-      {/* Toast Pop-up Notification */}
-      {message && (
-        <div className={`absolute top-8 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-[0_10px_30px_rgba(0,0,0,0.3)] backdrop-blur-md border flex items-center gap-3 z-50
-          animate-in slide-in-from-top-10 fade-in duration-300
-          ${isError 
-            ? 'bg-error/10 border-error/30 text-error' 
-            : 'bg-tertiary/10 border-tertiary/30 text-tertiary'}`}>
-          <div className={`w-2 h-2 rounded-full ${isError ? 'bg-error' : 'bg-tertiary'} shadow-[0_0_8px_currentColor]`} />
-          <p className="font-medium text-sm">{message}</p>
-        </div>
-      )}
-
-      <LoginForm />
+      <LoginForm providers={providers} next={next} invited={next.startsWith('/invite/')} initialError={initialError} />
     </div>
   )
 }

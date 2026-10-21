@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Task, TaskStatus, Profile, Tag, Team, TeamMember } from '@/types';
-import { Trash, Search, Plus, Tag as TagIcon, LayoutGrid, X, Users, Calendar, Settings, ChevronDown, Paperclip } from 'lucide-react';
+import { Trash, Search, Plus, Tag as TagIcon, LayoutGrid, X, Users, Calendar, Settings, ChevronDown, Paperclip, List, CalendarDays } from 'lucide-react';
 import { TagBadge } from './TagBadge';
 import { TagSelector } from './TagSelector';
-import { fetchUserTags, assignTagsToTask } from '@/utils/supabase/tags';
-import { fetchUserTeams, fetchTeamMembers } from '@/utils/supabase/teams';
+import { fetchUserTags, fetchTasks, createTask, updateTask, moveTask, deleteTask, uploadCover, updateProfile, fetchTeamMembers } from '@/lib/api';
+import { authClient } from '@/lib/auth-client';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -28,21 +28,22 @@ import {
   useSortable 
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { createClient } from '@/utils/supabase/client';
-import { NewTaskModal } from './NewTaskModal';
+import { NewTaskModal, type NewTaskFormData } from './NewTaskModal';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import { ProfileModal } from './ProfileModal';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { TaskListView } from './TaskListView';
+import { CalendarView } from './CalendarView';
+import { DueSoonBell } from './DueSoonBell';
 import { CreateTeamModal } from './CreateTeamModal';
 import { TeamSettingsModal } from './TeamSettingsModal';
+import { fallbackAvatar, rememberName } from '@/lib/avatar';
 
 const COLUMNS: { id: TaskStatus; title: string; color: string }[] = [
   { id: 'pending', title: 'Pending', color: 'bg-secondary' },
   { id: 'in_progress', title: 'In Progress', color: 'bg-primary' },
   { id: 'completed', title: 'Completed', color: 'bg-tertiary' },
 ];
-
-const supabase = createClient();
 
 // Draggable + Sortable wrapper
 function SortableTaskCard({ task, globalAvatar, onTaskClick, onDeleteTask, onTagClick, setIsOpeningWithTagsFocused }: { task: Task, globalAvatar: string, onTaskClick: () => void, onDeleteTask: (id: string) => void, onTagClick: (tagId: string) => void, setIsOpeningWithTagsFocused: (val: boolean) => void }) {
@@ -129,23 +130,23 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
                )}
                
                {/* Activity Indicator (Comments) */}
-               {((task as any).task_comments?.[0]?.count > 0 || task.comment_count! > 0) && (
-                 <div className="flex items-center gap-1 text-on-surface-variant/60" title={`${(task as any).task_comments?.[0]?.count || task.comment_count} comentarios`}>
+               {(task.comment_count ?? 0) > 0 && (
+                 <div className="flex items-center gap-1 text-on-surface-variant/60" title={`${task.comment_count} comentarios`}>
                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                   <span className="text-[10px] font-bold">{(task as any).task_comments?.[0]?.count || task.comment_count}</span>
+                   <span className="text-[10px] font-bold">{task.comment_count}</span>
                  </div>
                )}
                
                {/* Attachment Indicator */}
-               {((task as any).attachments?.[0]?.count > 0) && (
-                 <div className="flex items-center gap-1 text-on-surface-variant/60" title={`${(task as any).attachments?.[0]?.count} archivos adjuntos`}>
+               {(task.attachment_count ?? 0) > 0 && (
+                 <div className="flex items-center gap-1 text-on-surface-variant/60" title={`${task.attachment_count} archivos adjuntos`}>
                    <Paperclip className="w-3 h-3" strokeWidth={2.5} />
-                   <span className="text-[10px] font-bold">{(task as any).attachments?.[0]?.count}</span>
+                   <span className="text-[10px] font-bold">{task.attachment_count}</span>
                  </div>
                )}
              </div>
              <div title={task.assignee?.full_name || 'Unassigned'} className="w-5 h-5 shrink-0 rounded-full bg-secondary-container bg-cover bg-center ring-1 ring-background ml-auto overflow-hidden">
-               <img src={task.assignee?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${task.assigned_to || task.user_id}`} alt="Assignee" className="w-full h-full object-cover" />
+               <img src={task.assignee?.avatar_url || fallbackAvatar(task.assigned_to || task.user_id)} alt="Assignee" className="w-full h-full object-cover" />
              </div>
            </div>
         </div>
@@ -155,7 +156,7 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
 }
 
 // Column container with Context
-function KanbanColumn({ column, tasks, globalAvatar, onTaskClick, onDeleteTask, onTagClick, setIsOpeningWithTagsFocused }: { column: { id: TaskStatus; title: string; color: string }, tasks: Task[], globalAvatar: string, onTaskClick: (t: Task) => void, onDeleteTask: (id: string) => void, onTagClick: (tagId: string) => void, setIsOpeningWithTagsFocused: (val: boolean) => void }) {
+function KanbanColumn({ column, tasks, globalAvatar, onTaskClick, onDeleteTask, onTagClick, setIsOpeningWithTagsFocused }: { column: { id: string; title: string; color: string }, tasks: Task[], globalAvatar: string, onTaskClick: (t: Task) => void, onDeleteTask: (id: string) => void, onTagClick: (tagId: string) => void, setIsOpeningWithTagsFocused: (val: boolean) => void }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id as string,
     data: { type: 'Column', column },
@@ -184,31 +185,47 @@ function KanbanColumn({ column, tasks, globalAvatar, onTaskClick, onDeleteTask, 
   );
 }
 
-export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+export interface BoardInitialData {
+  me: Profile;
+  teams: Team[];
+  teamId: string | null;
+  tasks: Task[];
+  members: TeamMember[];
+  tags: Tag[];
+}
+
+export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
+  // Caché de nombres para los avatares por iniciales (idempotente).
+  rememberName(initial.me.id, initial.me.full_name);
+  initial.members.forEach(m => rememberName(m.user_id, m.profile?.full_name));
+  initial.tasks.forEach(t => rememberName(t.assigned_to, t.assignee?.full_name));
+
+  const [tasks, setTasks] = useState<Task[]>(initial.tasks);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagManagerOpen, setIsTagManagerOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string>('default_dioni_seed');
-  
+  const currentUserId = initial.me.id;
+
   // UI State
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpeningWithTagsFocused, setIsOpeningWithTagsFocused] = useState(false);
   const [groupBy, setGroupBy] = useState<'status' | 'tag'>('status');
-  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [view, setView] = useState<'board' | 'list' | 'calendar'>('board');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [allTags, setAllTags] = useState<Tag[]>(initial.tags);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
-  
+
   // Team & Member filtering state
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teams, setTeams] = useState<Team[]>(initial.teams);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(initial.teamId);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initial.members);
   const [filterAssigneeId, setFilterAssigneeId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<{ start: string | null, end: string | null }>({ start: null, end: null });
   const [isDateRangeOpen, setIsDateRangeOpen] = useState(false);
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false);
-  
-  const [sessionProfile, setSessionProfile] = useState<Profile | null>(null);
+
+  const [sessionProfile, setSessionProfile] = useState<Profile>(initial.me);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [isTeamSettingsOpen, setIsTeamSettingsOpen] = useState(false);
@@ -218,66 +235,56 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
     return teamMembers.find(m => m.user_id === currentUserId)?.role || 'member';
   }, [teamMembers, currentUserId]);
 
+  const selectedTaskId = useRef<string | null>(null);
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) {
-         setCurrentUserId(user.id);
-         const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-         if (prof) setSessionProfile(prof);
-         
-         const userTeams = await fetchUserTeams();
-         setTeams(userTeams);
-         if (userTeams.length > 0) {
-            setSelectedTeamId(userTeams[0].id);
-         }
-      }
-    });
-  }, []);
+    selectedTaskId.current = selectedTask?.id ?? null;
+  }, [selectedTask]);
 
-  useEffect(() => {
-    if (selectedTeamId) {
-       fetchTeamMembers(selectedTeamId).then(setTeamMembers);
-       refreshTasksWithTags();
-       // Fetch tags scoped to team and clear filters
-       fetchUserTags(selectedTeamId).then(setAllTags);
-       setFilterTagIds([]);
+  const refreshTasksWithTags = useCallback(async () => {
+    if (!selectedTeamId) return;
+    const fresh = await fetchTasks(selectedTeamId);
+    if (!fresh) return;
+    setTasks(fresh);
+    // Sync selected task if open
+    const open = selectedTaskId.current;
+    if (open) {
+      const updated = fresh.find(t => t.id === open);
+      if (updated) setSelectedTask(updated);
     }
   }, [selectedTeamId]);
 
-  const refreshTasksWithTags = async () => {
-    if (!selectedTeamId) return;
-
-    const { data: tasksWithTags, error } = await supabase
-      .from('tasks')
-      .select('*, tags(*), assignee:profiles!tasks_assigned_to_fkey(*), task_comments(count), attachments(count)')
-      .eq('team_id', selectedTeamId);
-    
-    if (!error && tasksWithTags) {
-       setTasks(tasksWithTags as Task[]);
-       // Sync selected task if open
-       if (selectedTask) {
-          const updated = (tasksWithTags as Task[]).find(t => t.id === selectedTask.id);
-          if (updated) setSelectedTask(updated);
-       }
-    }
+  // Cambio de equipo (manejador de evento): recarga miembros, etiquetas y tareas.
+  const switchTeam = (teamId: string) => {
+    setSelectedTeamId(teamId);
+    setFilterTagIds([]);
+    setFilterAssigneeId(null);
+    setSelectedTask(null);
+    fetchTeamMembers(teamId).then(setTeamMembers);
+    fetchUserTags(teamId).then(setAllTags);
+    fetchTasks(teamId).then(fresh => fresh && setTasks(fresh));
   };
 
-  const handleUpdateProfile = async (changes: Partial<Profile>) => {
-    if (!sessionProfile) return;
-    const { data: updatedProfile, error } = await supabase
-      .from('profiles')
-      .update(changes)
-      .eq('id', sessionProfile.id)
-      .select()
-      .single();
+  // Tiempo real: el servidor avisa por SSE cuando alguien cambia el tablero.
+  useEffect(() => {
+    if (!selectedTeamId) return;
+    const es = new EventSource(`/api/events?teamId=${selectedTeamId}`);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    es.onmessage = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        refreshTasksWithTags();
+        fetchUserTags(selectedTeamId).then(setAllTags);
+      }, 200);
+    };
+    return () => {
+      clearTimeout(timer);
+      es.close();
+    };
+  }, [selectedTeamId, refreshTasksWithTags]);
 
-    if (error) {
-      console.error("Error updating profile:", error);
-      throw error;
-    }
-    if (updatedProfile) {
-      setSessionProfile(updatedProfile);
-    }
+  const handleUpdateProfile = async (changes: Partial<Profile>) => {
+    const updated = await updateProfile({ full_name: changes.full_name ?? undefined, avatar_url: changes.avatar_url });
+    setSessionProfile(updated);
     // Refresh tasks and team members to show the new name everywhere
     refreshTasksWithTags();
     if (selectedTeamId) {
@@ -286,11 +293,11 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await authClient.signOut();
     router.push('/login');
   };
 
-  const userAvatarUrl = sessionProfile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUserId}`;
+  const userAvatarUrl = sessionProfile?.avatar_url || fallbackAvatar(currentUserId);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -299,57 +306,35 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
 
   const activeTask = useMemo(() => tasks.find(t => t.id === activeId), [activeId, tasks]);
 
-  const handleNewTask = async (data: any) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const handleNewTask = async (data: NewTaskFormData) => {
+    if (!selectedTeamId) return;
 
     let finalImageUrl = data.image_url;
     if (data.upload_file) {
-        const file = data.upload_file;
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-        await supabase.storage.from('task-images').upload(fileName, file);
-        const { data: publicData } = supabase.storage.from('task-images').getPublicUrl(fileName);
-        finalImageUrl = publicData.publicUrl;
+      const uploaded = await uploadCover(data.upload_file);
+      if (!uploaded) return;
+      finalImageUrl = uploaded;
     }
-    
-    const { data: newTask, error } = await supabase.from('tasks').insert([
-      { 
-         title: data.title.trim(), 
-         description: data.description || null,
-         due_date: data.due_date || null,
-         image_url: finalImageUrl || null,
-         user_id: user.id, 
-         status: 'pending',
-         team_id: selectedTeamId,
-         assigned_to: data.assigned_to || null
-      }
-    ]).select('*, tags(*), assignee:profiles!tasks_assigned_to_fkey(*), task_comments(count)').single();
-    
-    if (newTask) {
-      if (data.tag_ids && data.tag_ids.length > 0) {
-        await assignTagsToTask(newTask.id, data.tag_ids);
-      }
-      refreshTasksWithTags();
-    }
+
+    const id = await createTask(selectedTeamId, {
+      title: data.title,
+      description: data.description || null,
+      due_date: data.due_date || null,
+      image_url: finalImageUrl || null,
+      assigned_to: data.assigned_to || null,
+      tag_ids: data.tag_ids ?? [],
+    });
+    if (id) refreshTasksWithTags();
   };
 
   const handleUpdateTask = async (id: string, partial: Partial<Task & { tag_ids?: string[] }>) => {
-    const { tag_ids, ...taskData } = partial;
-
-    if (Object.keys(taskData).length > 0) {
-      await supabase.from('tasks').update(taskData).eq('id', id);
-    }
-    
-    if (tag_ids) {
-      await assignTagsToTask(id, tag_ids);
-    }
-
+    const { title, description, due_date, image_url, assigned_to, tag_ids } = partial;
+    await updateTask(id, { title, description, due_date, image_url, assigned_to, tag_ids });
     await refreshTasksWithTags();
   };
 
   const handleDeleteTask = async (id: string) => {
-    await supabase.from('tasks').delete().eq('id', id);
+    if (!(await deleteTask(id))) return;
     setTasks(prev => prev.filter(t => t.id !== id));
     if (selectedTask?.id === id) setSelectedTask(null);
   };
@@ -401,11 +386,74 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveId(null);
     const { active } = event;
-    const droppedTask = tasks.find(t => t.id === active.id);
-    if (droppedTask) {
-      await supabase.from('tasks').update({ status: droppedTask.status }).eq('id', droppedTask.id);
-    }
+    const dropped = tasks.find(t => t.id === active.id);
+    if (!dropped) return;
+    // Vecinas en la columna de destino, en el orden visual actual.
+    const column = tasks.filter(t => t.status === dropped.status);
+    const idx = column.findIndex(t => t.id === dropped.id);
+    const ok = await moveTask(dropped.id, {
+      status: dropped.status,
+      prevId: column[idx - 1]?.id ?? null,
+      nextId: column[idx + 1]?.id ?? null,
+    });
+    // Si el servidor lo rechaza, volvemos al estado real.
+    if (!ok) refreshTasksWithTags();
   };
+
+    // Filtros compartidos por todas las vistas
+    const getFilteredTasks = (taskList: Task[]) => {
+      return taskList.filter(t => {
+        const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                             (t.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+        const matchesTags = filterTagIds.length === 0 || t.tags?.some(tag => filterTagIds.includes(tag.id));
+        const matchesAssignee = filterAssigneeId === null || t.assigned_to === filterAssigneeId;
+        
+        let matchesDate = true;
+        if (dateRange.start || dateRange.end) {
+          if (!t.due_date) {
+            matchesDate = false;
+          } else {
+            const d = new Date(t.due_date);
+            const taskDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            
+            if (dateRange.start) {
+              const startDate = new Date(dateRange.start);
+              const startCmp = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+              if (taskDate < startCmp) matchesDate = false;
+            }
+            
+            if (dateRange.end && matchesDate) {
+              const endDate = new Date(dateRange.end);
+              const endCmp = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+              if (taskDate > endCmp) matchesDate = false;
+            }
+          }
+        }
+
+        return matchesSearch && matchesTags && matchesAssignee && matchesDate;
+      });
+    };
+
+
+  const visibleTasks = getFilteredTasks(tasks);
+
+  // Atajos: N nueva tarea · / buscar · 1 tablero · 2 lista · 3 calendario
+  const anyModalOpen = isModalOpen || isTagManagerOpen || isProfileModalOpen || isCreateTeamOpen || isTeamSettingsOpen || selectedTask !== null;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))) return;
+      if (anyModalOpen) return;
+      if (e.key === '/') { e.preventDefault(); searchRef.current?.focus(); }
+      else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setIsModalOpen(true); }
+      else if (e.key === '1') setView('board');
+      else if (e.key === '2') setView('list');
+      else if (e.key === '3') setView('calendar');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [anyModalOpen]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
@@ -425,7 +473,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                     if (e.target.value === 'NEW_TEAM') {
                       setIsCreateTeamOpen(true);
                     } else {
-                      setSelectedTeamId(e.target.value);
+                      switchTeam(e.target.value);
                     }
                   }}
                   className="bg-transparent text-[10px] font-bold text-on-surface-variant focus:outline-none cursor-pointer max-w-[100px] truncate"
@@ -433,7 +481,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                   {teams.map(t => <option key={t.id} value={t.id} className="bg-surface-container text-on-surface">{t.name}</option>)}
                   <option value="NEW_TEAM" className="bg-surface-container text-primary font-bold">+ Nuevo Team</option>
                 </select>
-                {(currentUserRole === 'admin' || currentUserRole === 'product_owner') && (
+                {currentUserRole === 'admin' && (
                   <button onClick={() => setIsTeamSettingsOpen(true)} className="p-1 rounded-md text-on-surface-variant hover:text-primary transition-colors">
                     <Settings className="w-3 h-3" />
                   </button>
@@ -443,6 +491,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
           </div>
 
           <div className="flex lg:hidden items-center gap-3">
+             <DueSoonBell tasks={tasks} userId={currentUserId} onOpen={setSelectedTask} />
              <ThemeSwitcher />
              <div onClick={() => setIsProfileModalOpen(true)} className="w-8 h-8 rounded-full bg-surface-container-high border-2 border-outline-variant/30 cursor-pointer overflow-hidden shadow-sm">
                 <img src={userAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -456,7 +505,8 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant w-4 h-4 group-focus-within:text-primary transition-colors" />
             <input 
                type="text" 
-               placeholder="Search..." 
+               ref={searchRef}
+               placeholder="Buscar…  ( / )" 
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
                className="bg-surface-container-low border border-outline-variant/20 text-on-surface text-sm rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 w-full lg:max-w-xs transition-all placeholder:text-on-surface-variant/40 shadow-inner"
@@ -464,8 +514,14 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
           </div>
 
           <div className="flex bg-surface-container border border-outline-variant/20 rounded-xl p-0.5 shrink-0 shadow-inner">
-             <button title="Status View" onClick={() => setGroupBy('status')} className={`p-1.5 sm:p-2 rounded-lg transition-all ${groupBy === 'status' ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:text-on-surface'}`}><LayoutGrid className="w-4 h-4" /></button>
-             <button title="Tag View" onClick={() => setGroupBy('tag')} className={`p-1.5 sm:p-2 rounded-lg transition-all ${groupBy === 'tag' ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:text-on-surface'}`}><TagIcon className="w-4 h-4" /></button>
+             {([
+               { id: 'status', title: 'Tablero por estado (1)', icon: LayoutGrid, active: view === 'board' && groupBy === 'status', go: () => { setView('board'); setGroupBy('status'); } },
+               { id: 'tag', title: 'Tablero por etiqueta', icon: TagIcon, active: view === 'board' && groupBy === 'tag', go: () => { setView('board'); setGroupBy('tag'); } },
+               { id: 'list', title: 'Lista (2)', icon: List, active: view === 'list', go: () => setView('list') },
+               { id: 'calendar', title: 'Calendario (3)', icon: CalendarDays, active: view === 'calendar', go: () => setView('calendar') },
+             ] as const).map(v => (
+               <button key={v.id} title={v.title} aria-label={v.title} aria-pressed={v.active} onClick={v.go} className={`p-1.5 sm:p-2 rounded-lg transition-all ${v.active ? 'bg-primary text-black shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:text-on-surface'}`}><v.icon className="w-4 h-4" /></button>
+             ))}
           </div>
 
           <div className="flex items-center gap-2 pr-1 ml-auto lg:ml-0">
@@ -490,7 +546,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                       if (e.target.value === 'NEW_TEAM') {
                         setIsCreateTeamOpen(true);
                       } else {
-                        setSelectedTeamId(e.target.value);
+                        switchTeam(e.target.value);
                       }
                     }}
                     className="bg-transparent text-xs font-bold text-on-surface focus:outline-none cursor-pointer pr-4"
@@ -500,7 +556,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                   </select>
                </div>
                
-               {(currentUserRole === 'admin' || currentUserRole === 'product_owner') && (
+               {currentUserRole === 'admin' && (
                  <button 
                   onClick={() => setIsTeamSettingsOpen(true)}
                   className="p-1.5 rounded-lg hover:bg-primary/20 hover:text-primary transition-colors border border-transparent hover:border-primary/20"
@@ -510,6 +566,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                  </button>
                )}
              </div>
+             <DueSoonBell tasks={tasks} userId={currentUserId} onOpen={setSelectedTask} />
              <ThemeSwitcher />
              <div onClick={() => setIsProfileModalOpen(true)} className="w-9 h-9 rounded-full bg-surface-container-high border-2 border-outline-variant/30 cursor-pointer overflow-hidden shadow-md active:scale-90 transition-transform">
                <img src={userAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -538,7 +595,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                 title={m.profile?.full_name || m.profile?.email}
                 className={`w-7 h-7 rounded-full border-2 transition-all overflow-hidden ${filterAssigneeId === m.user_id ? 'border-primary ring-2 ring-primary/20 z-10 scale-110 shadow-md' : 'border-background hover:z-10 hover:scale-105'}`}
               >
-                <img src={m.profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.user_id}`} alt="Member" className="w-full h-full object-cover" />
+                <img src={m.profile?.avatar_url || fallbackAvatar(m.user_id)} alt="Member" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
@@ -681,43 +738,14 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
         )}
       </div>
 
+      {view === 'list' ? (
+        <TaskListView tasks={visibleTasks} onOpen={setSelectedTask} />
+      ) : view === 'calendar' ? (
+        <CalendarView tasks={visibleTasks} onOpen={setSelectedTask} />
+      ) : (
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
         <div className="flex-1 overflow-x-auto p-6 flex gap-6 items-start">
           {(() => {
-            // Unify filtering logic
-            const getFilteredTasks = (taskList: Task[]) => {
-              return taskList.filter(t => {
-                const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                     (t.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-                const matchesTags = filterTagIds.length === 0 || t.tags?.some(tag => filterTagIds.includes(tag.id));
-                const matchesAssignee = filterAssigneeId === null || t.assigned_to === filterAssigneeId;
-                
-                let matchesDate = true;
-                if (dateRange.start || dateRange.end) {
-                  if (!t.due_date) {
-                    matchesDate = false;
-                  } else {
-                    const d = new Date(t.due_date);
-                    const taskDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-                    
-                    if (dateRange.start) {
-                      const startDate = new Date(dateRange.start);
-                      const startCmp = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-                      if (taskDate < startCmp) matchesDate = false;
-                    }
-                    
-                    if (dateRange.end && matchesDate) {
-                      const endDate = new Date(dateRange.end);
-                      const endCmp = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-                      if (taskDate > endCmp) matchesDate = false;
-                    }
-                  }
-                }
-
-                return matchesSearch && matchesTags && matchesAssignee && matchesDate;
-              });
-            };
-
             if (groupBy === 'status') {
               return COLUMNS.map(col => {
                 const filteredTasks = getFilteredTasks(tasks.filter(t => t.status === col.id));
@@ -743,7 +771,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                     return (
                       <KanbanColumn 
                         key={tag.id} 
-                        column={{ id: tag.id as any, title: tag.name, color: '' }} 
+                        column={{ id: tag.id, title: tag.name, color: '' }} 
                         tasks={filteredTasks} 
                         globalAvatar={userAvatarUrl} 
                         onTaskClick={setSelectedTask} 
@@ -758,7 +786,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                     const filteredTasks = getFilteredTasks(uncategorizedTasks);
                     return (
                       <KanbanColumn 
-                        column={{ id: 'none' as any, title: 'No Tag', color: 'bg-outline-variant/30' }} 
+                        column={{ id: 'none', title: 'No Tag', color: 'bg-outline-variant/30' }} 
                         tasks={filteredTasks} 
                         globalAvatar={userAvatarUrl} 
                         onTaskClick={setSelectedTask} 
@@ -777,6 +805,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
            {activeTask ? (<div className="rotate-2 scale-105 opacity-90"><TaskCardRenderer task={activeTask} globalAvatar={userAvatarUrl} /></div>) : null}
         </DragOverlay>
       </DndContext>
+      )}
       
       <NewTaskModal 
         isOpen={isModalOpen} 
@@ -796,7 +825,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
                    selectedTagIds={[]} 
                    teamId={selectedTeamId}
                    onChange={async () => {
-                     const tags = await fetchUserTags(selectedTeamId || undefined);
+                     const tags = selectedTeamId ? await fetchUserTags(selectedTeamId) : [];
                      setAllTags(tags);
                      refreshTasksWithTags();
                    }} 
@@ -828,7 +857,7 @@ export function KanbanBoard({ initialTasks }: { initialTasks: Task[] }) {
         onClose={() => setIsCreateTeamOpen(false)}
         onTeamCreated={(team) => {
           setTeams(prev => [...prev, team]);
-          setSelectedTeamId(team.id);
+          switchTeam(team.id);
         }}
       />
 

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Team, TeamMember, TeamRole } from '@/types'
-import { fetchTeamMembers, inviteMemberByEmail, removeTeamMember, updateMemberRole } from '@/utils/supabase/teams'
-import { UserPlus, Trash2, Shield, ShieldCheck, User, X } from 'lucide-react'
+import { fetchTeamMembers, inviteMemberByEmail, removeTeamMember, updateMemberRole, fetchInvites, createInviteLink, revokeInvite, type InviteInfo } from '@/lib/api'
+import { toast } from '@/lib/toast'
+import { UserPlus, Trash2, Shield, ShieldCheck, User, X, Link2, Copy } from 'lucide-react'
+import { fallbackAvatar } from '@/lib/avatar';
 
 export function TeamSettingsModal({ 
   isOpen, 
@@ -27,11 +29,34 @@ export function TeamSettingsModal({
 
   const canManage = currentUserRole === 'admin'
 
-  useEffect(() => {
-    if (isOpen && team) {
-      loadMembers()
+  const [invites, setInvites] = useState<InviteInfo[]>([])
+  const [linkRole, setLinkRole] = useState<'member' | 'product_owner'>('member')
+  const [freshLink, setFreshLink] = useState<string | null>(null)
+
+  const loadInvites = async () => {
+    if (team && canManage) setInvites(await fetchInvites(team.id))
+  }
+
+  const handleCreateLink = async () => {
+    if (!team) return
+    const url = await createInviteLink(team.id, linkRole)
+    if (!url) return
+    setFreshLink(url)
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success('Enlace copiado. Caduca en 7 días.')
+    } catch {
+      toast.info('Copia el enlace manualmente.')
     }
-  }, [isOpen, team])
+    loadInvites()
+  }
+
+  const handleRevoke = async (id: string) => {
+    if (await revokeInvite(id)) {
+      setFreshLink(null)
+      loadInvites()
+    }
+  }
 
   const loadMembers = async () => {
     if (!team) return
@@ -41,6 +66,15 @@ export function TeamSettingsModal({
     onMembersUpdate?.(data)
     setIsLoading(false)
   }
+
+  useEffect(() => {
+    if (isOpen && team) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- carga de miembros al abrir el modal
+      loadMembers()
+      loadInvites()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, team])
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,6 +132,44 @@ export function TeamSettingsModal({
           
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8">
             
+            {/* Enlace de invitación */}
+            {canManage && !team.is_personal && (
+              <section className="bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-inner">
+                <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Link2 className="w-4 h-4 text-primary" /> Invitar con un enlace
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <select
+                    value={linkRole}
+                    onChange={(e) => setLinkRole(e.target.value as 'member' | 'product_owner')}
+                    className="rounded-xl bg-surface-container-lowest border border-outline-variant/30 px-4 py-3 text-sm focus:outline-none cursor-pointer"
+                  >
+                    <option value="member">Entrará como Miembro</option>
+                    <option value="product_owner">Entrará como Product Owner</option>
+                  </select>
+                  <button type="button" onClick={handleCreateLink} className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-xs font-bold uppercase tracking-wider text-black hover:brightness-110 transition-all">
+                    <Copy className="w-4 h-4" /> Generar y copiar enlace
+                  </button>
+                </div>
+                {freshLink && (
+                  <input readOnly value={freshLink} onFocus={(e) => e.currentTarget.select()} className="mt-3 w-full rounded-xl bg-surface-container-lowest border border-primary/30 px-4 py-2.5 text-xs font-mono text-on-surface" />
+                )}
+                {invites.length > 0 && (
+                  <ul className="mt-4 flex flex-col gap-2">
+                    {invites.map((i) => (
+                      <li key={i.id} className="flex items-center justify-between rounded-lg bg-surface-container-lowest px-3 py-2 text-xs text-on-surface-variant">
+                        <span>
+                          {i.role === 'product_owner' ? 'Product Owner' : 'Miembro'} · caduca el {new Date(i.expires_at).toLocaleDateString()}
+                        </span>
+                        <button type="button" onClick={() => handleRevoke(i.id)} className="font-bold text-error hover:underline">Revocar</button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="mt-3 text-[11px] text-on-surface-variant/70">Quien tenga el enlace podrá unirse hasta que caduque o lo revoques. Los enlaces nunca dan rol de administrador.</p>
+              </section>
+            )}
+
             {/* Invitación */}
             {canManage && (
               <section className="bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-inner">
@@ -147,7 +219,7 @@ export function TeamSettingsModal({
                   <div key={m.id} className="group flex items-center gap-4 p-3 rounded-2xl bg-surface-container-low border border-outline-variant/10 hover:border-primary/20 transition-all hover:shadow-md">
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/20 bg-surface-container-high shrink-0">
                       <img 
-                        src={m.profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${m.user_id}`} 
+                        src={m.profile?.avatar_url || fallbackAvatar(m.user_id)} 
                         alt="Avatar" 
                         className="w-full h-full object-cover" 
                       />

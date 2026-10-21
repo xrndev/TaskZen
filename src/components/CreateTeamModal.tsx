@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createNewTeam } from '@/utils/supabase/teams'
+import { createNewTeam } from '@/lib/api'
 import { Team } from '@/types'
 
 export function CreateTeamModal({ 

@@ -15,12 +15,6 @@ export function ThemeSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('cyber');
 
-  // Startup: Load saved theme from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('app-theme') || 'cyber';
-    applyTheme(saved);
-  }, []);
-
   const applyTheme = (themeId: string) => {
     setCurrentTheme(themeId);
     localStorage.setItem('app-theme', themeId);
@@ -28,6 +22,13 @@ export function ThemeSwitcher() {
     document.documentElement.setAttribute('data-theme', themeId);
     setIsOpen(false);
   };
+
+  // Startup: Load saved theme from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('app-theme') || 'cyber';
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage solo existe en el cliente
+    applyTheme(saved);
+  }, []);
 
   return (
     <div className="relative">

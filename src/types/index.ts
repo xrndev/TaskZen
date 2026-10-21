@@ -35,6 +35,7 @@ export interface Team {
   id: string;
   name: string;
   owner_id: string;
+  is_personal?: boolean;
   created_at: string;
 }
 
@@ -63,6 +64,7 @@ export interface Task {
   tags?: Tag[];
   assignee?: Profile | null;
   comment_count?: number;
+  attachment_count?: number;
   attachments?: Attachment[];
 }
 
