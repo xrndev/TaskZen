@@ -25,7 +25,7 @@ export default async function LoginPage(props: { searchParams: Promise<{ next?: 
   const initialError = params.error ? (ERRORS[params.error] ?? REGISTRATION_CLOSED) : null
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 relative">
+    <div className="flex min-h-dvh items-center justify-center bg-background p-4 relative">
       <LoginForm providers={providers} next={next} invited={next.startsWith('/invite/')} initialError={initialError} />
     </div>
   )

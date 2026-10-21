@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { logOut, seedUser, signIn, type TestUser } from './helpers'
+import { logOut, seedUser, signIn, type TestUser, visibleText } from './helpers'
 
 const run = Date.now().toString(36)
 const carol: TestUser = { name: 'Carol E2E', email: `carol-${run}@e2e.dev`, password: 'e2e-password-3' }
@@ -34,15 +34,15 @@ test('atajos, vistas de lista y calendario', async () => {
   await expect(page.getByPlaceholder(/Rediseñar/)).toHaveValue('nnn')
   await page.getByPlaceholder(/Rediseñar/).fill('Tarea de vistas')
   await page.getByRole('button', { name: 'Añadir al Tablero' }).click()
-  await expect(page.getByText('Tarea de vistas')).toBeVisible()
+  await expect(visibleText(page, 'Tarea de vistas')).toBeVisible()
 
   await page.keyboard.press('2')
   await expect(page.getByRole('button', { name: 'Fecha límite' })).toBeVisible()
-  await expect(page.getByText('Tarea de vistas')).toBeVisible()
+  await expect(visibleText(page, 'Tarea de vistas')).toBeVisible()
 
   await page.keyboard.press('3')
   await expect(page.getByRole('button', { name: 'Mes siguiente' })).toBeVisible()
-  await expect(page.getByText(/Sin fecha límite \(1\)/)).toBeVisible()
+  await expect(visibleText(page, /Sin fecha límite \(1\)/)).toBeVisible()
 
   await page.keyboard.press('1')
   await expect(page.getByRole('heading', { name: 'Pending' })).toBeVisible()
@@ -57,7 +57,7 @@ test('invitación por enlace: la única vía para crear una cuenta nueva', async
   await openNewTaskWithShortcut()
   await page.getByPlaceholder(/Rediseñar/).fill('Tarea del equipo')
   await page.getByRole('button', { name: 'Añadir al Tablero' }).click()
-  await expect(page.getByText('Tarea del equipo')).toBeVisible()
+  await expect(visibleText(page, 'Tarea del equipo')).toBeVisible()
 
   await page.getByTitle('Gestionar Miembros').click()
   await page.getByRole('button', { name: /Generar y copiar enlace/ }).click()
@@ -90,7 +90,7 @@ test('invitación por enlace: la única vía para crear una cuenta nueva', async
 
   await page.getByRole('button', { name: 'Unirme al equipo' }).click()
   await page.waitForURL(/\/board\?team=/)
-  await expect(page.getByText('Tarea del equipo')).toBeVisible()
+  await expect(visibleText(page, 'Tarea del equipo')).toBeVisible()
   await expect(page.getByTitle('Gestionar Miembros')).toHaveCount(0)
 })
 

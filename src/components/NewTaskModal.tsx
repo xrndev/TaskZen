@@ -80,7 +80,7 @@ export function NewTaskModal({
             <button type="button" onClick={onClose} className="relative z-10 text-on-surface-variant hover:text-error transition-colors">✕</button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4 max-h-[85dvh] overflow-y-auto">
            <div>
              <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant mb-1 font-bold">Título</label>
              <input required autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Rediseñar la landing page..." className="w-full px-4 py-2.5 bg-surface-container rounded-lg border border-outline-variant/30 text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 text-on-surface placeholder:text-on-surface-variant/40 outline-none transition-all shadow-inner" />

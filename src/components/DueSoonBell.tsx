@@ -12,7 +12,7 @@ const SOON_MS = 48 * 60 * 60 * 1000;
  * Aviso dentro de la app (sustituye a los recordatorios por correo mientras no haya SMTP):
  * tareas abiertas asignadas a mí que vencieron o vencen en las próximas 48 horas.
  */
-export function DueSoonBell({ tasks, userId, onOpen }: { tasks: Task[]; userId: string; onOpen: (t: Task) => void }) {
+export function DueSoonBell({ tasks, userId, onOpen, size = 'md' }: { tasks: Task[]; userId: string; onOpen: (t: Task) => void; size?: 'md' | 'lg' }) {
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
   const button = useRef<HTMLButtonElement>(null);
   const now = useNow();
@@ -41,7 +41,7 @@ export function DueSoonBell({ tasks, userId, onOpen }: { tasks: Task[]; userId: 
         title="Vencimientos próximos"
         aria-label={`Vencimientos próximos: ${due.length}`}
         aria-expanded={!!pos}
-        className="relative w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-high border md:border-2 border-outline-variant/30 hover:border-primary/60 text-on-surface-variant hover:text-primary transition-colors shadow-sm"
+        className={size === 'lg' ? 'relative grid h-11 w-11 shrink-0 place-items-center rounded-xl text-on-surface hover:bg-surface-container-high active:bg-surface-container-highest focus-visible:outline-2 focus-visible:outline-primary' : 'relative w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-high border md:border-2 border-outline-variant/30 hover:border-primary/60 text-on-surface-variant hover:text-primary transition-colors shadow-sm'}
       >
         <Bell className="w-4 h-4 md:w-5 md:h-5" />
         {due.length > 0 && (

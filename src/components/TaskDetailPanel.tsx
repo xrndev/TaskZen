@@ -192,28 +192,28 @@ export function TaskDetailPanel({
         onClick={onClose} 
       />
       
-      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-50 flex items-center justify-center p-0 lg:p-4 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
          
-         <div className={`w-full max-w-2xl max-h-[90vh] bg-surface-container-low rounded-3xl border border-surface-container-high shadow-[0_20px_60px_rgba(0,0,0,0.6)] transform transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] flex flex-col overflow-hidden ${isOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-10'}`}>
+         <div className={`w-full max-w-2xl h-dvh max-h-dvh lg:h-auto lg:max-h-[90vh] bg-surface-container-low rounded-none lg:rounded-3xl border border-surface-container-high shadow-[0_20px_60px_rgba(0,0,0,0.6)] transform transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] flex flex-col overflow-hidden ${isOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-10'}`}>
          
          {/* Botonera superior flotante */}
-         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+         <div className="absolute top-[max(1rem,env(safe-area-inset-top))] lg:top-4 right-4 z-20 flex items-center gap-2">
             {isEditing && (
               <button 
                 onClick={handleSave} 
                 disabled={isSubmitting} 
-                className="px-4 h-8 rounded-full bg-primary text-black flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 text-[10px] font-bold uppercase tracking-wider animate-in fade-in zoom-in duration-300"
+                className="px-4 h-11 lg:h-8 rounded-full bg-primary text-black flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 text-[10px] font-bold uppercase tracking-wider animate-in fade-in zoom-in duration-300"
               >
                 {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Check className="w-4 h-4" />}
                 <span className="hidden sm:inline">Guardar Cambios</span>
               </button>
             )}
             {canManage && (
-              <button onClick={handleDelete} title="Eliminar Tarea" className="w-8 h-8 rounded-full bg-error/10 text-error flex items-center justify-center hover:bg-error hover:text-white transition-colors shadow-sm">
+              <button onClick={handleDelete} title="Eliminar Tarea" className="w-11 h-11 lg:w-8 lg:h-8 rounded-full bg-error/10 text-error flex items-center justify-center hover:bg-error hover:text-white transition-colors shadow-sm">
                  <Trash2 className="w-4 h-4" />
               </button>
             )}
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-background/50 backdrop-blur-md text-on-surface-variant flex items-center justify-center border border-outline-variant/20 hover:text-on-surface hover:bg-surface-container-highest transition-colors shadow-sm">
+            <button onClick={onClose} aria-label="Cerrar" className="w-11 h-11 lg:w-8 lg:h-8 rounded-full bg-background/50 backdrop-blur-md text-on-surface-variant flex items-center justify-center border border-outline-variant/20 hover:text-on-surface hover:bg-surface-container-highest transition-colors shadow-sm">
                <X className="w-4 h-4" />
             </button>
          </div>
@@ -247,7 +247,7 @@ export function TaskDetailPanel({
                            setIsSubmitting(false);
                         }
                      }}
-                     className={`flex-1 py-2 rounded-lg text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${task.status === s ? 'bg-primary text-black shadow-lg scale-100 ring-2 ring-primary/50' : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'}`}
+                     className={`flex-1 py-2 max-lg:min-h-11 max-lg:text-xs rounded-lg text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${task.status === s ? 'bg-primary text-black shadow-lg scale-100 ring-2 ring-primary/50' : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'}`}
                   >
                      {s.replace('_', ' ')}
                   </button>
@@ -333,7 +333,7 @@ export function TaskDetailPanel({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                  </div>
                  <div>
-                   <p className="text-[10px] uppercase font-bold tracking-widest text-error/80">Plazo / Límite</p>
+                   <p className="text-[10px] max-lg:text-xs uppercase font-bold tracking-widest text-error/80 max-lg:text-error">Plazo / Límite</p>
                    <p className="font-semibold text-on-surface">{new Date(task.due_date).toLocaleString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                  </div>
                </div>
@@ -343,7 +343,7 @@ export function TaskDetailPanel({
                <div className="flex items-center justify-between border-b border-outline-variant/10 pb-2">
                   <h3 className="text-xs uppercase font-bold text-on-surface-variant tracking-wider">Etiquetas / Categorías</h3>
                   {!isEditing && canManage && (
-                     <button onClick={() => setIsEditing(true)} className="text-[10px] text-primary hover:underline font-bold uppercase tracking-wider">Gestionar</button>
+                     <button onClick={() => setIsEditing(true)} className="text-[10px] max-lg:text-xs max-lg:min-h-11 max-lg:px-2 text-primary hover:underline font-bold uppercase tracking-wider">Gestionar</button>
                   )}
                </div>
                
@@ -357,7 +357,7 @@ export function TaskDetailPanel({
                      {task.tags && task.tags.length > 0 ? (
                         task.tags.map(t => <TagBadge key={t.id} tag={t} />)
                      ) : (
-                        <div className="flex items-center gap-2 text-[10px] text-on-surface-variant/60 font-medium px-2">
+                        <div className="flex items-center gap-2 text-[10px] max-lg:text-sm text-on-surface-variant/60 max-lg:text-on-surface-variant font-medium px-2">
                            {canManage && <Plus className="w-3 h-3 text-primary" />}
                            <span>{canManage ? 'Añadir etiquetas o categorías...' : 'Sin etiquetas'}</span>
                         </div>
@@ -370,7 +370,7 @@ export function TaskDetailPanel({
                <div className="flex items-center justify-between border-b border-outline-variant/10 pb-2">
                   <h3 className="text-xs uppercase font-bold text-on-surface-variant tracking-wider">Descripción Larga</h3>
                   {!isEditing && canManage && (
-                     <button onClick={() => setIsEditing(true)} className="text-[10px] text-primary hover:underline font-bold uppercase tracking-wider">Editar Texto</button>
+                     <button onClick={() => setIsEditing(true)} className="text-[10px] max-lg:text-xs max-lg:min-h-11 max-lg:px-2 text-primary hover:underline font-bold uppercase tracking-wider">Editar Texto</button>
                   )}
                </div>
                
@@ -499,7 +499,7 @@ export function TaskDetailPanel({
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Escribe un comentario..."
                         rows={2}
-                        className="flex-1 bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none resize-none"
+                        className="flex-1 max-lg:min-h-12 max-lg:text-base bg-transparent text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none resize-none"
                      />
                   </div>
 
@@ -536,7 +536,7 @@ export function TaskDetailPanel({
                      <button 
                         type="submit" 
                         disabled={isSubmitting || (!newComment.trim() && !commentFile)}
-                        className="px-4 py-2 bg-primary text-black font-bold text-[10px] uppercase tracking-wider rounded-lg flex items-center gap-2 hover:shadow-lg hover:shadow-primary/20 transition-all disabled:opacity-50"
+                        className="px-4 py-2 max-lg:min-h-11 max-lg:text-xs bg-primary text-black font-bold text-[10px] uppercase tracking-wider rounded-lg flex items-center gap-2 hover:shadow-lg hover:shadow-primary/20 transition-all disabled:opacity-50"
                      >
                         <Send className="w-3 h-3" />
                         {isSubmitting ? 'Enviando...' : 'Publicar'}

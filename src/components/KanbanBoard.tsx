@@ -19,13 +19,15 @@ import {
   TouchSensor, 
   useSensor, 
   useSensors,
-  useDroppable
+  useDroppable,
+  KeyboardSensor
 } from '@dnd-kit/core';
 import { 
   SortableContext, 
   arrayMove, 
   verticalListSortingStrategy, 
-  useSortable 
+  useSortable,
+  sortableKeyboardCoordinates
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { NewTaskModal, type NewTaskFormData } from './NewTaskModal';
@@ -35,6 +37,10 @@ import { ThemeSwitcher } from './ThemeSwitcher';
 import { TaskListView } from './TaskListView';
 import { CalendarView } from './CalendarView';
 import { DueSoonBell } from './DueSoonBell';
+import { MobileBoard, STATUSES } from './mobile/MobileBoard';
+import { MobileHeader, MobileNav } from './mobile/MobileChrome';
+import { MobileFiltersSheet, MobileMoreSheet } from './mobile/MobileSheets';
+import { MobileTaskList } from './mobile/MobileTaskList';
 import { CreateTeamModal } from './CreateTeamModal';
 import { TeamSettingsModal } from './TeamSettingsModal';
 import { fallbackAvatar, rememberName } from '@/lib/avatar';
@@ -80,6 +86,7 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
               e.stopPropagation(); 
               if(window.confirm('¿Borrar esta tarea permanentemente?')) onDelete(task.id); 
            }}
+           aria-label={`Borrar la tarea ${task.title}`}
            className="absolute top-2 right-2 w-7 h-7 rounded bg-background/80 backdrop-blur border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-error hover:border-error transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100 z-10 shadow-sm"
            title="Borrar rápidamente"
         >
@@ -212,6 +219,11 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
   const [isOpeningWithTagsFocused, setIsOpeningWithTagsFocused] = useState(false);
   const [groupBy, setGroupBy] = useState<'status' | 'tag'>('status');
   const [view, setView] = useState<'board' | 'list' | 'calendar'>('board');
+  // Solo móvil
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [activeStatus, setActiveStatus] = useState<TaskStatus>('pending');
   const searchRef = useRef<HTMLInputElement>(null);
   const [allTags, setAllTags] = useState<Tag[]>(initial.tags);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
@@ -301,7 +313,8 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const activeTask = useMemo(() => tasks.find(t => t.id === activeId), [activeId, tasks]);
@@ -437,6 +450,19 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
 
   const visibleTasks = getFilteredTasks(tasks);
 
+  const filtersCount = filterTagIds.length + (filterAssigneeId ? 1 : 0) + (dateRange.start || dateRange.end ? 1 : 0);
+  const clearFilters = () => { setFilterTagIds([]); setFilterAssigneeId(null); setDateRange({ start: null, end: null }); };
+  const onMobileTeamChange = (value: string) => (value === 'NEW_TEAM' ? setIsCreateTeamOpen(true) : switchTeam(value));
+
+  // Mover desde el menú de la tarjeta (alternativa a arrastrar): va al final de la columna de destino.
+  const handleMoveTo = async (task: Task, status: TaskStatus) => {
+    const last = tasks.filter(t => t.status === status && t.id !== task.id).at(-1);
+    setTasks(prev => prev.map(t => (t.id === task.id ? { ...t, status } : t)));
+    setActiveStatus(status);
+    const ok = await moveTask(task.id, { status, prevId: last?.id ?? null, nextId: null });
+    if (!ok) refreshTasksWithTags();
+  };
+
   // Atajos: N nueva tarea · / buscar · 1 tablero · 2 lista · 3 calendario
   const anyModalOpen = isModalOpen || isTagManagerOpen || isProfileModalOpen || isCreateTeamOpen || isTeamSettingsOpen || selectedTask !== null;
   useEffect(() => {
@@ -456,8 +482,25 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
   }, [anyModalOpen]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
-      <header className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between px-4 py-3 lg:px-6 lg:py-4 border-b border-surface-container-high backdrop-blur-md bg-surface/80 z-20 gap-4">
+    <div className="flex flex-col h-dvh overflow-hidden bg-background">
+      <MobileHeader
+        teams={teams}
+        teamId={selectedTeamId}
+        onTeamChange={onMobileTeamChange}
+        searchOpen={mobileSearchOpen}
+        onSearchOpen={setMobileSearchOpen}
+        query={searchQuery}
+        onQuery={setSearchQuery}
+        filtersCount={filtersCount}
+        onFilters={() => setIsFiltersOpen(true)}
+        tasks={tasks}
+        userId={currentUserId}
+        onOpenTask={setSelectedTask}
+        avatarUrl={userAvatarUrl}
+        onProfile={() => setIsProfileModalOpen(true)}
+      />
+
+      <header className="hidden lg:flex lg:flex-row items-stretch lg:items-center justify-between px-4 py-3 lg:px-6 lg:py-4 border-b border-surface-container-high backdrop-blur-md bg-surface/80 z-20 gap-4">
         {/* Top Row: Logo & Search (Mobile) / Logo (Desktop) */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 shrink-0">
@@ -576,7 +619,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
       </header>
 
       {/* Advanced Filters Toolbar */}
-      <div className="px-4 lg:px-6 py-3 bg-surface-container-low border-b border-outline-variant/10 flex items-center gap-4 sm:gap-6 shrink-0 shadow-sm relative z-30">
+      <div className="hidden lg:flex px-4 lg:px-6 py-3 bg-surface-container-low border-b border-outline-variant/10 items-center gap-4 sm:gap-6 shrink-0 shadow-sm relative z-30">
         {/* Assignee Filter */}
         <div className="flex items-center gap-2 lg:gap-3">
           <span className="text-[10px] font-bold uppercase text-on-surface-variant shrink-0 hidden sm:block">Responsable:</span>
@@ -739,10 +782,15 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
       </div>
 
       {view === 'list' ? (
-        <TaskListView tasks={visibleTasks} onOpen={setSelectedTask} />
+        <>
+          <TaskListView tasks={visibleTasks} onOpen={setSelectedTask} />
+          <MobileTaskList tasks={visibleTasks} userId={currentUserId} role={currentUserRole} onOpen={setSelectedTask} onMove={handleMoveTo} onDelete={(t) => handleDeleteTask(t.id)} />
+        </>
       ) : view === 'calendar' ? (
         <CalendarView tasks={visibleTasks} onOpen={setSelectedTask} />
       ) : (
+        <>
+          <div className="hidden min-h-0 flex-1 flex-col lg:flex">
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
         <div className="flex-1 overflow-x-auto p-6 flex gap-6 items-start">
           {(() => {
@@ -805,8 +853,22 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
            {activeTask ? (<div className="rotate-2 scale-105 opacity-90"><TaskCardRenderer task={activeTask} globalAvatar={userAvatarUrl} /></div>) : null}
         </DragOverlay>
       </DndContext>
+          </div>
+          <MobileBoard
+            tasks={visibleTasks}
+            groupBy={groupBy}
+            allTags={allTags}
+            activeStatus={activeStatus}
+            onActiveStatus={setActiveStatus}
+            userId={currentUserId}
+            role={currentUserRole}
+            onOpen={setSelectedTask}
+            onMove={handleMoveTo}
+            onDelete={(t) => handleDeleteTask(t.id)}
+          />
+        </>
       )}
-      
+
       <NewTaskModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
@@ -867,6 +929,36 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
         onClose={() => setIsTeamSettingsOpen(false)}
         currentUserRole={currentUserRole}
         onMembersUpdate={setTeamMembers}
+      />
+
+      <MobileNav view={view} onView={setView} onMore={() => setIsMoreOpen(true)} onNewTask={() => setIsModalOpen(true)} />
+      <MobileFiltersSheet
+        open={isFiltersOpen}
+        onClose={() => setIsFiltersOpen(false)}
+        groupBy={groupBy}
+        onGroupBy={setGroupBy}
+        showGroupBy={view === 'board'}
+        members={teamMembers}
+        assigneeId={filterAssigneeId}
+        onAssignee={setFilterAssigneeId}
+        dateRange={dateRange}
+        onDateRange={setDateRange}
+        tags={allTags}
+        tagIds={filterTagIds}
+        onTagIds={setFilterTagIds}
+        activeCount={filtersCount}
+        onClear={clearFilters}
+      />
+      <MobileMoreSheet
+        open={isMoreOpen}
+        onClose={() => setIsMoreOpen(false)}
+        isAdmin={currentUserRole === 'admin'}
+        teamName={teams.find(t => t.id === selectedTeamId)?.name ?? null}
+        onTeamSettings={() => setIsTeamSettingsOpen(true)}
+        onNewTeam={() => setIsCreateTeamOpen(true)}
+        onTags={() => setIsTagManagerOpen(true)}
+        onProfile={() => setIsProfileModalOpen(true)}
+        onLogout={handleLogout}
       />
     </div>
   );

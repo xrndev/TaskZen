@@ -55,4 +55,7 @@ export async function attachmentId(fileName: string) {
   }
 }
 
+/** Texto visible: el tablero de escritorio y el de móvil conviven en el DOM y uno de ellos está oculto con CSS. */
+export const visibleText = (page: Page, text: string | RegExp) => page.getByText(text).and(page.locator(':visible'))
+
 export { expect }

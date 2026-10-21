@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { attachmentId, logOut, seedUser, signIn, type TestUser } from './helpers'
+import { attachmentId, logOut, seedUser, signIn, type TestUser, visibleText } from './helpers'
 
 // PNG de 1x1 píxel válido.
 const PNG = Buffer.from(
@@ -37,7 +37,7 @@ test('tarea, arrastrar, comentar y adjuntar', async () => {
   await page.getByRole('button', { name: /New Task/ }).click()
   await page.getByPlaceholder(/Rediseñar/).fill('Mi primera tarea')
   await page.getByRole('button', { name: 'Añadir al Tablero' }).click()
-  const card = page.getByText('Mi primera tarea')
+  const card = visibleText(page, 'Mi primera tarea')
   await expect(card).toBeVisible()
   await expect(column(page, 'Pending')).toContainText('Mi primera tarea')
 
@@ -54,7 +54,7 @@ test('tarea, arrastrar, comentar y adjuntar', async () => {
   await expect(column(page, 'In Progress')).toContainText('Mi primera tarea')
 
   // Comentario y adjunto desde el panel de detalle.
-  await page.getByText('Mi primera tarea').click()
+  await visibleText(page, 'Mi primera tarea').click()
   await page.getByPlaceholder('Escribe un comentario...').fill('Un comentario de prueba')
   await page.getByRole('button', { name: 'Publicar' }).click()
   await expect(page.getByText('Un comentario de prueba')).toBeVisible()
@@ -65,7 +65,7 @@ test('tarea, arrastrar, comentar y adjuntar', async () => {
 
 test('un archivo con contenido falso se rechaza', async () => {
   await page.goto('/board')
-  await page.getByText('Mi primera tarea').click()
+  await visibleText(page, 'Mi primera tarea').click()
   await page.locator('input[type="file"]').first().setInputFiles({ name: 'falso.png', mimeType: 'image/png', buffer: Buffer.from('esto no es un png') })
   await expect(page.getByText(/no coincide con el tipo/i)).toBeVisible()
 })
@@ -84,7 +84,7 @@ test('otro usuario no ve ni puede descargar lo de Alice', async ({ request }) =>
   expect((await request.get(`/api/files/${id}`)).status()).toBe(401)
 
   await signIn(page, bob)
-  await expect(page.getByText('Mi primera tarea')).toHaveCount(0)
+  await expect(visibleText(page, 'Mi primera tarea')).toHaveCount(0)
   await expect(page.locator('option', { hasText: 'Personal · Bob E2E' }).first()).toBeAttached()
   await expect(page.locator('option', { hasText: 'Personal · Alice E2E' })).toHaveCount(0)
 

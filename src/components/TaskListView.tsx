@@ -51,11 +51,11 @@ export function TaskListView({ tasks, onOpen }: { tasks: Task[]; onOpen: (t: Tas
   const toggle = (key: SortKey) => setSort(s => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
 
   if (tasks.length === 0) {
-    return <div className="flex-1 flex items-center justify-center text-sm text-on-surface-variant p-10">No hay tareas que coincidan con los filtros.</div>;
+    return <div className="hidden lg:flex flex-1 items-center justify-center text-sm text-on-surface-variant p-10">No hay tareas que coincidan con los filtros.</div>;
   }
 
   return (
-    <div className="flex-1 overflow-auto p-3 sm:p-6">
+    <div className="hidden lg:block flex-1 overflow-auto p-3 sm:p-6">
       <div className="min-w-[640px] bg-surface-container-low border border-surface-container-high rounded-xl overflow-hidden">
         <div className="grid grid-cols-[minmax(0,3fr)_120px_minmax(0,1.4fr)_150px] gap-4 px-4 py-3 border-b border-surface-container-high bg-surface-container">
           <Head k="title" sort={sort} onToggle={toggle}>Tarea</Head>

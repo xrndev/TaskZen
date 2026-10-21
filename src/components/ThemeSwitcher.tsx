@@ -35,7 +35,7 @@ export function ThemeSwitcher() {
        <button 
          onClick={() => setIsOpen(!isOpen)}
          title="Cambiar Paleta de Colores"
-         className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-high border md:border-2 border-outline-variant/30 hover:border-primary/60 text-on-surface-variant hover:text-primary transition-colors shadow-sm"
+         className="w-9 h-9 max-lg:w-11 max-lg:h-11 flex items-center justify-center rounded-full bg-surface-container-high border md:border-2 border-outline-variant/30 hover:border-primary/60 text-on-surface-variant hover:text-primary transition-colors shadow-sm"
        >
           <Palette className="w-4 h-4 md:w-5 md:h-5" />
        </button>

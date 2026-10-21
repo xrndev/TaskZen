@@ -29,7 +29,7 @@ export default async function BoardPage(props: { searchParams: Promise<{ team?: 
     : [[], [], []];
 
   return (
-    <main className="min-h-screen bg-background text-on-surface font-sans">
+    <main className="min-h-dvh bg-background text-on-surface font-sans">
       <KanbanBoard initial={{ me, teams, teamId, tasks, members, tags }} />
     </main>
   );
