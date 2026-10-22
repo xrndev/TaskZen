@@ -1,3 +1,4 @@
+import { expo } from '@better-auth/expo'
 import { passkey } from '@better-auth/passkey'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
@@ -35,7 +36,12 @@ export const auth = betterAuth({
   baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: 'pg', schema }),
-  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean),
+  // `taskzen://` es el enlace de retorno de la app nativa tras entrar con un proveedor (los comodines `exp://` solo en desarrollo).
+  trustedOrigins: [
+    'taskzen://',
+    ...(isProd ? [] : ['exp://', 'exp://**']),
+    ...(process.env.TRUSTED_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean) ?? []),
+  ],
   // Sin correo: no hay verificación ni recuperación por email. Se recupera el acceso con un
   // proveedor (Google, Microsoft, GitHub) o un passkey, y la clave se cambia desde el perfil.
   emailAndPassword: { enabled: true, minPasswordLength: 8 },
@@ -44,6 +50,7 @@ export const auth = betterAuth({
   onAPIError: { errorURL: '/login' },
   plugins: [
     passkey({ rpID, rpName: 'TaskZen', origin: new URL(baseURL).origin }),
+    expo(), // app nativa: devuelve la sesión por el enlace `taskzen://` al terminar el flujo del proveedor
     bearer(), // clientes nativos: `Authorization: Bearer <token>` equivale a la cookie de sesión
     nextCookies(), // debe ir el último
   ],

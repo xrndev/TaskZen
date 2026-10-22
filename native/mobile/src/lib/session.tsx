@@ -1,12 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api, loadToken, setUnauthorizedHandler, signInWithPassword, signOut as apiSignOut } from './api'
+import { api, setUnauthorizedHandler } from './api'
+import { authClient } from './auth-client'
 import type { Profile } from './types'
 
 type State = { status: 'loading' } | { status: 'out' } | { status: 'in'; user: Profile }
 
+export type Provider = 'google' | 'microsoft' | 'github'
+
 interface SessionValue {
   state: State
   signIn: (email: string, password: string) => Promise<void>
+  signInWith: (provider: Provider) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -22,7 +26,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setUnauthorizedHandler(() => setState({ status: 'out' }))
     void (async () => {
-      if (!(await loadToken())) return setState({ status: 'out' })
+      if (!(await authClient.getCookie())) return setState({ status: 'out' })
       try {
         await refresh()
       } catch {
@@ -37,11 +41,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     () => ({
       state,
       signIn: async (email, password) => {
-        await signInWithPassword(email, password)
+        const { error } = await authClient.signIn.email({ email, password })
+        if (error) throw new Error(error.status === 429 ? 'Demasiados intentos. Espera un minuto.' : 'Correo o contraseña incorrectos.')
         await refresh()
       },
+      signInWith: async (provider) => {
+        // Abre el navegador del sistema; al terminar, el servidor vuelve a la app por `taskzen://` con la sesión.
+        const { error } = await authClient.signIn.social({ provider, callbackURL: '/' })
+        if (error) throw new Error('No se pudo entrar con ese proveedor.')
+        try {
+          await refresh()
+        } catch {
+          // Cancelar en el navegador no es un error; un registro cerrado (sin invitación) sí.
+          if (!(await authClient.getCookie())) return
+          throw new Error('No se pudo entrar. Si es tu primera vez, el registro es solo por invitación: abre el enlace que te enviaron.')
+        }
+      },
       signOut: async () => {
-        await apiSignOut()
+        await authClient.signOut().catch(() => undefined)
         setState({ status: 'out' })
       },
     }),

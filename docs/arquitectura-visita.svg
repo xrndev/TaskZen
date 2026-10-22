@@ -1,5 +1,5 @@
 
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 610" width="1240" height="610" role="img" aria-label="Una visita a taskzen.duckdns.org: el navegador resuelve el nombre en DuckDNS, entra por HTTPS en Caddy dentro de tu VPS, que la pasa a la app Next.js, que consulta PostgreSQL. Los cambios vuelven al navegador por un canal de avisos en vivo."><style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 720" width="1240" height="720" role="img" aria-label="Una visita a taskzen.duckdns.org: el navegador resuelve el nombre en DuckDNS, entra por HTTPS en Caddy dentro de tu VPS, que la pasa a la app Next.js, que consulta PostgreSQL. Los cambios vuelven al navegador por un canal de avisos en vivo. La app Android nativa usa la misma API, y un Worker de Cloudflare despierta al servidor cada 5 minutos para enviar recordatorios por Web Push."><style>
   :root{--ink:#111820;--ink2:#4a5565;--line:#c8d0d9;--vps:#e9eff4;--stack:#f6f9fb;--node:#fff;--tile:#fff;--accent:#0b7a85;--bg:#f3f5f7}
   @media (prefers-color-scheme:dark){:root{--ink:#e7ecf1;--ink2:#9aa6b5;--line:#3a4654;--vps:#121a22;--stack:#0e151b;--node:#18222c;--accent:#46c3ce;--bg:#0b1015}}
   .bg{fill:var(--bg)}
@@ -12,7 +12,7 @@
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
   .flow{stroke:var(--accent);stroke-width:2.2;fill:none}.sse{stroke:var(--ink2);stroke-width:1.8;stroke-dasharray:6 5;fill:none}
   .cert{stroke:var(--ink2);stroke-width:1.6;stroke-dasharray:2 5;stroke-linecap:round;fill:none}
-  .mk{fill:var(--accent)}.mk-sse{fill:var(--ink2)}.disk{stroke:var(--ink2);stroke-width:1.6;fill:none}</style><rect class="bg" width="1240" height="610" rx="14"/>
+  .mk{fill:var(--accent)}.mk-sse{fill:var(--ink2)}.disk{stroke:var(--ink2);stroke-width:1.6;fill:none}</style><rect class="bg" width="1240" height="720" rx="14"/>
   <defs>
     <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="mk"/></marker>
     <marker id="ah-sse" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="mk-sse"/></marker>
@@ -26,7 +26,7 @@
   <rect x="350" y="190" width="860" height="360" rx="12" class="stack"/>
   <rect x="362" y="200" width="28" height="28" rx="6" class="tile"/><svg x="367" y="205" width="18" height="18" viewBox="0 0 24 24" fill="#2496ED"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/></svg>
   <text x="400" y="219" class="ttl-s" text-anchor="start">Docker Compose · /opt/taskzen</text>
-  <text x="370" y="572" class="lbl" text-anchor="start">Copia diaria a las 03:17 (cron): base de datos y archivos, 14 días en /opt/taskzen/backups</text>
+  <text x="480" y="572" class="lbl" text-anchor="start">Copia diaria a las 03:17 (cron): base de datos y archivos, 14 días en /opt/taskzen/backups</text>
 
   <!-- Navegador -->
   <rect x="20" y="270" width="180" height="140" rx="12" class="node"/>
@@ -41,17 +41,17 @@
   <text x="84" y="65" class="ttl" text-anchor="start">DuckDNS</text>
   <text x="84" y="83" class="lbl" text-anchor="start">taskzen.duckdns.org</text>
   <text x="84" y="100" class="lbl mono" text-anchor="start">→ 212.227.98.222</text>
-  <rect x="290" y="40" width="270" height="72" rx="12" class="node ghost"/>
+  <rect x="290" y="40" width="270" height="72" rx="12" class="node"/>
   <rect x="304" y="56" width="40" height="40" rx="9" class="tile"/><svg x="311" y="63" width="26" height="26" viewBox="0 0 24 24" fill="#F38020"><path d="M16.5088 16.8447c.1475-.5068.0908-.9707-.1553-1.3154-.2246-.3164-.6045-.499-1.0615-.5205l-8.6592-.1123a.1559.1559 0 0 1-.1333-.0713c-.0283-.042-.0351-.0986-.021-.1553.0278-.084.1123-.1484.2036-.1562l8.7359-.1123c1.0351-.0489 2.1601-.8868 2.5537-1.9136l.499-1.3013c.0215-.0561.0293-.1128.0147-.168-.5625-2.5463-2.835-4.4453-5.5499-4.4453-2.5039 0-4.6284 1.6177-5.3876 3.8614-.4927-.3658-1.1187-.5625-1.794-.499-1.2026.119-2.1665 1.083-2.2861 2.2856-.0283.31-.0069.6128.0635.894C1.5683 13.171 0 14.7754 0 16.752c0 .1748.0142.3515.0352.5273.0141.083.0844.1475.1689.1475h15.9814c.0909 0 .1758-.0645.2032-.1553l.12-.4268zm2.7568-5.5634c-.0771 0-.1611 0-.2383.0112-.0566 0-.1054.0415-.127.0976l-.3378 1.1744c-.1475.5068-.0918.9707.1543 1.3164.2256.3164.6055.498 1.0625.5195l1.8437.1133c.0557 0 .1055.0263.1329.0703.0283.043.0351.1074.0214.1562-.0283.084-.1132.1485-.204.1553l-1.921.1123c-1.041.0488-2.1582.8867-2.5527 1.914l-.1406.3585c-.0283.0713.0215.1416.0986.1416h6.5977c.0771 0 .1474-.0489.169-.126.1122-.4082.1757-.837.1757-1.2803 0-2.6025-2.125-4.727-4.7344-4.727"/></svg>
-  <text x="354" y="65" class="ttl" text-anchor="start">Cloudflare · futuro</text>
-  <text x="354" y="83" class="lbl" text-anchor="start">con un dominio propio:</text>
-  <text x="354" y="100" class="lbl" text-anchor="start">sustituye a DuckDNS</text>
+  <text x="354" y="65" class="ttl" text-anchor="start">Cloudflare Worker</text>
+  <text x="354" y="83" class="lbl" text-anchor="start">temporizador: cada 5 minutos</text>
+  <text x="354" y="100" class="lbl" text-anchor="start">solo despierta; no guarda datos</text>
 
   <!-- Let's Encrypt -->
-  <rect x="20" y="480" width="220" height="72" rx="12" class="node"/>
-  <rect x="34" y="496" width="40" height="40" rx="9" class="tile"/><svg x="41" y="503" width="26" height="26" viewBox="0 0 24 24" fill="#003A70"><path d="M11.9914 0a.8829.8829 0 00-.8718.817v3.0209A.8829.8829 0 0012 4.7207a.8829.8829 0 00.8803-.8803V.817a.8829.8829 0 00-.889-.817zm7.7048 3.1089a.8804.8804 0 00-.5214.1742l-2.374 1.9482a.8804.8804 0 00.5592 1.5622.8794.8794 0 00.5592-.2001l2.3714-1.9506a.8804.8804 0 00-.5944-1.534zm-15.3763.0133a.8829.8829 0 00-.611 1.5206l2.37 1.9506a.876.876 0 00.5606.2001v-.002a.8804.8804 0 00.5597-1.5602L4.8277 3.2831a.8829.8829 0 00-.5078-.161zm7.6598 3.2275a5.0456 5.0456 0 00-5.0262 5.0455v1.4876H5.787a.9672.9672 0 00-.9647.9643v9.1887a.9672.9672 0 00.9647.9643H18.213a.9672.9672 0 00.9643-.9643v-9.1907a.9672.9672 0 00-.9643-.9623h-1.1684v-1.4876a5.0456 5.0456 0 00-5.0649-5.0455zm.0127 2.8933a2.1522 2.1522 0 012.1593 2.1522v1.4876H9.8473v-1.4876a2.1522 2.1522 0 012.145-2.1522zm7.3812.5033a.8829.8829 0 10.0705 1.7632h3.0267a.8829.8829 0 000-1.7609H19.444a.8829.8829 0 00-.0705-.0023zm-17.8444.0023a.8829.8829 0 000 1.7609h2.9983a.8829.8829 0 000-1.7609zm10.4596 6.7746a1.2792 1.2792 0 01.641 2.3926v1.2453a.6298.6298 0 01-1.2595 0v-1.2453a1.2792 1.2792 0 01.6185-2.3926z"/></svg>
-  <text x="84" y="512" class="ttl" text-anchor="start">Let's Encrypt</text>
-  <text x="84" y="532" class="lbl" text-anchor="start">emite el certificado</text>
+  <rect x="20" y="610" width="220" height="72" rx="12" class="node"/>
+  <rect x="34" y="626" width="40" height="40" rx="9" class="tile"/><svg x="41" y="633" width="26" height="26" viewBox="0 0 24 24" fill="#003A70"><path d="M11.9914 0a.8829.8829 0 00-.8718.817v3.0209A.8829.8829 0 0012 4.7207a.8829.8829 0 00.8803-.8803V.817a.8829.8829 0 00-.889-.817zm7.7048 3.1089a.8804.8804 0 00-.5214.1742l-2.374 1.9482a.8804.8804 0 00.5592 1.5622.8794.8794 0 00.5592-.2001l2.3714-1.9506a.8804.8804 0 00-.5944-1.534zm-15.3763.0133a.8829.8829 0 00-.611 1.5206l2.37 1.9506a.876.876 0 00.5606.2001v-.002a.8804.8804 0 00.5597-1.5602L4.8277 3.2831a.8829.8829 0 00-.5078-.161zm7.6598 3.2275a5.0456 5.0456 0 00-5.0262 5.0455v1.4876H5.787a.9672.9672 0 00-.9647.9643v9.1887a.9672.9672 0 00.9647.9643H18.213a.9672.9672 0 00.9643-.9643v-9.1907a.9672.9672 0 00-.9643-.9623h-1.1684v-1.4876a5.0456 5.0456 0 00-5.0649-5.0455zm.0127 2.8933a2.1522 2.1522 0 012.1593 2.1522v1.4876H9.8473v-1.4876a2.1522 2.1522 0 012.145-2.1522zm7.3812.5033a.8829.8829 0 10.0705 1.7632h3.0267a.8829.8829 0 000-1.7609H19.444a.8829.8829 0 00-.0705-.0023zm-17.8444.0023a.8829.8829 0 000 1.7609h2.9983a.8829.8829 0 000-1.7609zm10.4596 6.7746a1.2792 1.2792 0 01.641 2.3926v1.2453a.6298.6298 0 01-1.2595 0v-1.2453a1.2792 1.2792 0 01.6185-2.3926z"/></svg>
+  <text x="84" y="642" class="ttl" text-anchor="start">Let's Encrypt</text>
+  <text x="84" y="662" class="lbl" text-anchor="start">emite el certificado</text>
 
   <!-- Caddy -->
   <rect x="370" y="270" width="170" height="140" rx="12" class="node"/>
@@ -62,7 +62,7 @@
   <text x="386" y="387" class="lbl" text-anchor="start">cabeceras seguras</text>
 
   <!-- App -->
-  <rect x="640" y="250" width="300" height="250" rx="12" class="node"/>
+  <rect x="640" y="250" width="300" height="290" rx="12" class="node"/>
   <rect x="654" y="264" width="40" height="40" rx="9" class="tile"/><svg x="661" y="271" width="26" height="26" viewBox="0 0 24 24" fill="#000000"><path d="M18.665 21.978C16.758 23.255 14.465 24 12 24 5.377 24 0 18.623 0 12S5.377 0 12 0s12 5.377 12 12c0 3.583-1.574 6.801-4.067 9.001L9.219 7.2H7.2v9.596h1.615V9.251l9.85 12.727Zm-3.332-8.533 1.6 2.061V7.2h-1.6v6.245Z"/></svg>
   <text x="704" y="289" class="ttl" text-anchor="start">Next.js 16</text>
   <text x="704" y="308" class="lbl" text-anchor="start">la aplicación (puerto interno)</text>
@@ -70,6 +70,7 @@
   <rect x="656" y="366" width="28" height="28" rx="6" class="tile"/><text x="670" y="384" text-anchor="middle" class="tt" style="font-size:11px">BA</text><text x="694" y="385" class="lbl" text-anchor="start">Better Auth: sesiones y login</text>
   <rect x="656" y="402" width="28" height="28" rx="6" class="tile"/><svg x="661" y="407" width="18" height="18" viewBox="0 0 24 24" fill="#C5F74F"><path d="M5.353 11.823a1.036 1.036 0 0 0-.395-1.422 1.063 1.063 0 0 0-1.437.399L.138 16.702a1.035 1.035 0 0 0 .395 1.422 1.063 1.063 0 0 0 1.437-.398l3.383-5.903Zm11.216 0a1.036 1.036 0 0 0-.394-1.422 1.064 1.064 0 0 0-1.438.399l-3.382 5.902a1.036 1.036 0 0 0 .394 1.422c.506.283 1.15.104 1.438-.398l3.382-5.903Zm7.293-4.525a1.036 1.036 0 0 0-.395-1.422 1.062 1.062 0 0 0-1.437.399l-3.383 5.902a1.036 1.036 0 0 0 .395 1.422 1.063 1.063 0 0 0 1.437-.399l3.383-5.902Zm-11.219 0a1.035 1.035 0 0 0-.394-1.422 1.064 1.064 0 0 0-1.438.398l-3.382 5.903a1.036 1.036 0 0 0 .394 1.422c.506.282 1.15.104 1.438-.399l3.382-5.902Z"/></svg><text x="694" y="421" class="lbl" text-anchor="start">Drizzle: consultas y migraciones</text>
   <rect x="656" y="438" width="28" height="28" rx="6" class="tile"/><text x="670" y="456" text-anchor="middle" class="tt" style="font-size:9px">can()</text><text x="694" y="457" class="lbl" text-anchor="start">Permisos por rol, en servidor</text>
+  <rect x="656" y="474" width="28" height="28" rx="6" class="tile"/><text x="670" y="492" text-anchor="middle" class="tt" style="font-size:10px">API</text><text x="694" y="487" class="lbl" text-anchor="start">/api/v1: la app nativa</text><text x="694" y="505" class="lbl" text-anchor="start">y los avisos Web Push</text>
 
   <!-- PostgreSQL y archivos -->
   <rect x="1030" y="270" width="170" height="140" rx="12" class="node"/>
@@ -101,6 +102,37 @@
   <line x1="940" y1="487" x2="1030" y2="487" class="flow" marker-end="url(#ah)"/><text x="985" y="478" class="lbl" text-anchor="middle">archivos</text>
 
   <!-- certificado -->
-  <polyline points="240,516 455,516 455,412" class="cert" marker-end="url(#ah)"/>
-  <text x="250" y="506" class="lbl" text-anchor="start">certificado, se renueva solo</text>
+  <polyline points="240,646 455,646 455,412" class="cert" marker-end="url(#ah)"/>
+  <text x="250" y="636" class="lbl" text-anchor="start">certificado, se renueva solo</text>
+
+  <!-- App Android nativa -->
+  <rect x="20" y="440" width="210" height="140" rx="12" class="node"/>
+  <rect x="34" y="454" width="38" height="38" rx="8" class="tile"/><text x="53" y="478" text-anchor="middle" class="tt" style="font-size:11px">RN</text>
+  <text x="82" y="472" class="ttl" text-anchor="start">App Android</text>
+  <text x="82" y="489" class="lbl" text-anchor="start">Expo · React Native</text>
+  <text x="34" y="520" class="lbl" text-anchor="start">interfaz nativa, no web</text>
+  <text x="34" y="540" class="lbl" text-anchor="start">mismo servidor y cuenta</text>
+  <text x="34" y="560" class="lbl" text-anchor="start">avisos aunque esté cerrada</text>
+
+  <!-- Servicio de push del navegador -->
+  <rect x="900" y="40" width="320" height="72" rx="12" class="node"/>
+  <rect x="914" y="56" width="40" height="40" rx="9" class="tile"/><text x="934" y="80" text-anchor="middle" class="tt" style="font-size:11px">PUSH</text>
+  <text x="964" y="65" class="ttl" text-anchor="start">Servicio push</text>
+  <text x="964" y="83" class="lbl" text-anchor="start">Google · Apple · Mozilla (Web Push)</text>
+  <text x="964" y="100" class="lbl" text-anchor="start">lo entrega al móvil</text>
+
+  <!-- Android → Caddy -->
+  <polyline points="230,510 420,510 420,412" class="flow" marker-end="url(#ah)"/>
+  <text x="240" y="500" class="lbl-a" text-anchor="start">/api/v1</text>
+  <text x="240" y="528" class="lbl" text-anchor="start">sesión</text>
+
+  <!-- Worker → Caddy -->
+  <polyline points="310,112 310,290 370,290" class="flow" marker-end="url(#ah)"/>
+  <text x="302" y="246" class="lbl-a" text-anchor="end">cada 5 min</text>
+  <text x="302" y="264" class="lbl" text-anchor="end">POST /tick</text>
+
+  <!-- App → servicio push -->
+  <line x1="920" y1="250" x2="920" y2="114" class="flow" marker-end="url(#ah)"/>
+  <text x="932" y="176" class="lbl-a" text-anchor="start">Web Push</text>
+  <text x="932" y="194" class="lbl" text-anchor="start">avisos de vencimiento</text>
 </svg>
