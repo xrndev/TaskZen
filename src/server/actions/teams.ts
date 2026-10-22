@@ -1,37 +1,27 @@
 'use server'
 
-import { z } from 'zod'
 import { db } from '@/server/db'
-import * as svc from '@/server/services/teams'
+import * as uc from '@/server/usecases/teams'
 import { run } from './run'
 
-const id = z.uuid()
-const role = z.enum(['admin', 'product_owner', 'member'])
-
 export async function listTeamsAction() {
-  return run((u) => svc.listTeams(db, u))
+  return run((u) => uc.listTeams(db, u))
 }
-
 export async function listMembersAction(teamId: string) {
-  return run((u) => svc.listMembers(db, u, id.parse(teamId)))
+  return run((u) => uc.listMembers(db, u, teamId))
 }
-
 export async function createTeamAction(name: string) {
-  return run((u) => svc.createTeam(db, u, z.string().trim().min(1, 'El nombre es obligatorio.').max(80).parse(name)))
+  return run((u) => uc.createTeam(db, u, { name }))
 }
-
-export async function inviteMemberAction(teamId: string, email: string, r: string = 'member') {
-  return run((u) => svc.inviteMember(db, u, id.parse(teamId), z.email('Correo no válido.').parse(email), role.parse(r)))
+export async function inviteMemberAction(teamId: string, email: string, role: string = 'member') {
+  return run((u) => uc.addMember(db, u, teamId, { email, role }))
 }
-
 export async function removeMemberAction(teamId: string, userId: string) {
-  return run((u) => svc.removeMember(db, u, id.parse(teamId), z.string().min(1).parse(userId)))
+  return run((u) => uc.removeMember(db, u, teamId, userId))
 }
-
-export async function updateMemberRoleAction(teamId: string, userId: string, r: string) {
-  return run((u) => svc.updateMemberRole(db, u, id.parse(teamId), z.string().min(1).parse(userId), role.parse(r)))
+export async function updateMemberRoleAction(teamId: string, userId: string, role: string) {
+  return run((u) => uc.changeMemberRole(db, u, teamId, userId, { role }))
 }
-
 export async function deleteTeamAction(teamId: string) {
-  return run((u) => svc.deleteTeam(db, u, id.parse(teamId)))
+  return run((u) => uc.deleteTeam(db, u, teamId))
 }

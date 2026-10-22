@@ -1,26 +1,8 @@
-import { z } from 'zod'
 import { db } from '@/server/db'
-import { api, idParam, readJson } from '@/server/api/http'
-import { commentContentSchema, uuid } from '@/server/schemas/tasks'
-import * as svc from '@/server/services/comments'
+import { endpoint } from '@/server/api/endpoint'
+import * as uc from '@/server/usecases/comments'
 
 export const dynamic = 'force-dynamic'
 
-const body = z.object({ content: commentContentSchema, parent_id: uuid.nullish() })
-
-export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { id } = await ctx.params
-  return api(req, (u) => svc.listComments(db, u, idParam(id)))
-}
-
-export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { id } = await ctx.params
-  return api(
-    req,
-    async (u) => {
-      const { content, parent_id } = body.parse(await readJson(req))
-      return svc.createComment(db, u, idParam(id), content, parent_id ?? null)
-    },
-    201,
-  )
-}
+export const GET = endpoint(({ userId, params }) => uc.listComments(db, userId, params.id))
+export const POST = endpoint(async ({ userId, params, json }) => uc.createComment(db, userId, params.id, await json()), 201)

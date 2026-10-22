@@ -1,13 +1,7 @@
 import { db } from '@/server/db'
-import { api, idParam } from '@/server/api/http'
-import { removeUploads } from '@/server/storage'
-import * as svc from '@/server/services/comments'
+import { endpoint } from '@/server/api/endpoint'
+import * as uc from '@/server/usecases/comments'
 
 export const dynamic = 'force-dynamic'
 
-export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { id } = await ctx.params
-  return api(req, async (u) => {
-    await removeUploads(await svc.deleteComment(db, u, idParam(id)))
-  })
-}
+export const DELETE = endpoint(({ userId, params }) => uc.deleteComment(db, userId, params.id))

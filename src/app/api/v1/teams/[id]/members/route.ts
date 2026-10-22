@@ -1,10 +1,8 @@
 import { db } from '@/server/db'
-import { api, idParam } from '@/server/api/http'
-import * as svc from '@/server/services/teams'
+import { endpoint } from '@/server/api/endpoint'
+import * as uc from '@/server/usecases/teams'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { id } = await ctx.params
-  return api(req, (u) => svc.listMembers(db, u, idParam(id)))
-}
+export const GET = endpoint(({ userId, params }) => uc.listMembers(db, userId, params.id))
+export const POST = endpoint(async ({ userId, params, json }) => uc.addMember(db, userId, params.id, await json()), 201)

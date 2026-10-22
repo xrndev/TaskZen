@@ -37,10 +37,13 @@ El Worker se despliega con `wrangler deploy` desde `workers/reminders` y la app 
 src/db/schema.ts        Esquema (Drizzle). Las migraciones están en drizzle/
 src/lib/permissions.ts  can(): única fuente de verdad de autorización
 src/server/services/    Lógica de negocio + permisos (recibe `db`, testeable)
-src/server/actions/     Server actions: sesión + validación Zod → servicios
+src/server/usecases/    Casos de uso: validación Zod + servicios + efectos (avisos, archivos). Sin transporte
+src/server/actions/     Adaptador de la web: server actions (sesión → caso de uso)
+src/server/api/         Adaptador HTTP: `endpoint()` para /api/v1 (sesión → caso de uso)
 src/app/api/            auth, archivos protegidos, eventos en tiempo real (SSE)
 src/app/api/v1/         API HTTP para la app nativa (mismos servicios y permisos)
 src/server/push/        Envío de notificaciones (Web Push)
+src/types, src/lib/permissions.ts, src/lib/initials.ts   Dominio compartido con la app nativa (`@domain/...`)
 workers/reminders/      Worker de Cloudflare: despierta al servidor cada 5 minutos
 native/mobile/          App Android (Expo / React Native); native/android es el APK TWA
 src/components/         Interfaz
@@ -48,7 +51,23 @@ tests/                  Vitest (permisos y servicios contra Postgres en memoria)
 e2e/                    Playwright (flujo completo en navegador)
 deploy/                 Docker Compose, Caddy y copias de seguridad
 ```
-No hay RLS: toda la autorización se aplica en servidor y está cubierta por tests (`tests/services.test.ts`).
+### Capas del código
+La web y la app nativa son dos clientes de las mismas reglas. Cada capa solo conoce a la de debajo:
+
+```
+Web (server actions)   App Android (HTTP /api/v1)      ← adaptadores finos: sesión + traducir errores
+            \                    /
+             usecases/            ← validación (Zod) + orquestación + efectos; reciben `unknown`
+                  |
+              services/           ← reglas de negocio y permisos (`can()`), reciben `db`
+                  |
+          PostgreSQL (Drizzle)
+```
+- Añadir una operación = escribir **un** caso de uso y **dos líneas** en cada adaptador (`actions/*.ts` y la ruta en `app/api/v1`). Las reglas no se repiten.
+- La app comparte con la web los tipos y los permisos (`src/types`, `src/lib/permissions.ts`), por lo que no puede desviarse de ellos.
+- El cliente de la app (`native/mobile/src/lib/client.ts`) es el único sitio que conoce las rutas HTTP, con los mismos nombres que los casos de uso.
+
+No hay RLS: toda la autorización se aplica en servidor y está cubierta por tests (`tests/services.test.ts`, `tests/api.v1.test.ts`).
 
 ## Desarrollo
 Requiere Node 22 y Docker.

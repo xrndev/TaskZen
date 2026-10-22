@@ -1,9 +1,11 @@
 # Compila el APK de la app en Linux. En Windows la compilación nativa falla por el límite de 260
 # caracteres de las rutas (CMake genera rutas más largas); aquí no existe ese límite.
 #
-#   docker build -f Dockerfile.android --output type=local,dest=out .
+#   (desde la raíz del repositorio)
+#   docker build -f native/mobile/Dockerfile.android --output type=local,dest=native/mobile/out .
 #
-# Deja `out/TaskZen.apk`. Sin clave propia, Gradle lo firma con la clave de depuración: sirve para probar,
+# El contexto es la raíz porque la app comparte con la web su código de dominio (tipos y permisos, en `src/`).
+# Deja `native/mobile/out/TaskZen.apk`. Sin clave propia, Gradle lo firma con la clave de depuración: sirve para probar,
 # no para publicar. Solo arm64-v8a (casi todos los móviles actuales); quita ARCH para compilar las cuatro.
 FROM eclipse-temurin:21-jdk-jammy AS build
 
@@ -23,15 +25,18 @@ RUN mkdir -p $ANDROID_HOME/cmdline-tools \
  && yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null \
  && $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools"
 
-WORKDIR /app
-COPY package.json package-lock.json .npmrc ./
+# Misma disposición que el repositorio: la app importa `../../src` (Metro `watchFolders`) como `@domain/...`.
+WORKDIR /repo/native/mobile
+COPY native/mobile/package.json native/mobile/package-lock.json native/mobile/.npmrc ./
 RUN npm ci
 
-COPY . .
+COPY src/types /repo/src/types
+COPY src/lib/permissions.ts src/lib/initials.ts /repo/src/lib/
+COPY native/mobile/ ./
 RUN npx expo prebuild --platform android --no-install
 RUN cd android && ./gradlew assembleRelease --no-daemon --console=plain \
     -PreactNativeArchitectures=${ARCH} -Pkotlin.compiler.execution.strategy=in-process \
     --max-workers=4 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m"
 
 FROM scratch
-COPY --from=build /app/android/app/build/outputs/apk/release/app-release.apk /TaskZen.apk
+COPY --from=build /repo/native/mobile/android/app/build/outputs/apk/release/app-release.apk /TaskZen.apk

@@ -1,4 +1,4 @@
-import type { TeamRole } from '@/types'
+import type { TeamRole } from '../types'
 
 export type Action =
   | 'task:create'

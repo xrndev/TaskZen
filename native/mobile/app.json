@@ -12,10 +12,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#060e20",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#010014"
       },
       "predictiveBackGestureEnabled": true,
       "package": "io.github.xrndev.taskzen"
@@ -26,7 +24,15 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      "expo-sharing",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "TaskZen necesita acceso a tus fotos para elegir portadas y avatares."
+        }
+      ]
     ],
     "scheme": "taskzen",
     "experiments": {

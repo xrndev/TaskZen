@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api, setUnauthorizedHandler } from './api'
+import type { Profile } from '@domain/types'
+import { currentCookie, setUnauthorizedHandler } from './api'
 import { authClient } from './auth-client'
-import type { Profile } from './types'
+import { apiClient } from './client'
 
 type State = { status: 'loading' } | { status: 'out' } | { status: 'in'; user: Profile }
 
@@ -12,6 +13,7 @@ interface SessionValue {
   signIn: (email: string, password: string) => Promise<void>
   signInWith: (provider: Provider) => Promise<void>
   signOut: () => Promise<void>
+  updateUser: (user: Profile) => void
 }
 
 const Ctx = createContext<SessionValue | null>(null)
@@ -20,13 +22,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({ status: 'loading' })
 
   const refresh = useCallback(async () => {
-    setState({ status: 'in', user: await api<Profile>('GET', '/me') })
+    setState({ status: 'in', user: await apiClient.me() })
   }, [])
 
   useEffect(() => {
     setUnauthorizedHandler(() => setState({ status: 'out' }))
     void (async () => {
-      if (!(await authClient.getCookie())) return setState({ status: 'out' })
+      if (!(await currentCookie())) return setState({ status: 'out' })
       try {
         await refresh()
       } catch {
@@ -53,14 +55,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           await refresh()
         } catch {
           // Cancelar en el navegador no es un error; un registro cerrado (sin invitación) sí.
-          if (!(await authClient.getCookie())) return
+          if (!(await currentCookie())) return
           throw new Error('No se pudo entrar. Si es tu primera vez, el registro es solo por invitación: abre el enlace que te enviaron.')
         }
       },
       signOut: async () => {
         await authClient.signOut().catch(() => undefined)
+        await currentCookie()
         setState({ status: 'out' })
       },
+      updateUser: (user) => setState({ status: 'in', user }),
     }),
     [state, refresh],
   )

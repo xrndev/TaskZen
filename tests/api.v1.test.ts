@@ -1,4 +1,7 @@
 // @vitest-environment node
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Db } from '@/server/db'
 import { createTestDb, createUser } from './helpers/testdb'
@@ -9,9 +12,20 @@ vi.mock('@/lib/auth', () => ({
   auth: { api: { getSession: async () => (state.userId ? { user: { id: state.userId } } : null) } },
 }))
 vi.mock('@/server/db', () => ({ get db() { return state.db } }))
-vi.mock('@/server/actions/notify', () => ({ notifyAssignedInBackground: vi.fn() }))
+vi.mock('@/server/push/assigned', () => ({ notifyAssignedInBackground: vi.fn() }))
 
+import * as attachment from '@/app/api/v1/attachments/[id]/route'
+import * as attachments from '@/app/api/v1/attachments/route'
 import * as comment from '@/app/api/v1/comments/[id]/route'
+import * as invite from '@/app/api/v1/invites/[id]/route'
+import { notifyAssignedInBackground } from '@/server/push/assigned'
+import * as tag from '@/app/api/v1/tags/[id]/route'
+import * as taskAttachments from '@/app/api/v1/tasks/[id]/attachments/route'
+import * as teamInvites from '@/app/api/v1/teams/[id]/invites/route'
+import * as teamMember from '@/app/api/v1/teams/[id]/members/[userId]/route'
+import * as teamMembers from '@/app/api/v1/teams/[id]/members/route'
+import * as teamTags from '@/app/api/v1/teams/[id]/tags/route'
+import * as team from '@/app/api/v1/teams/[id]/route'
 import * as me from '@/app/api/v1/me/route'
 import * as taskComments from '@/app/api/v1/tasks/[id]/comments/route'
 import * as move from '@/app/api/v1/tasks/[id]/move/route'
@@ -21,12 +35,14 @@ import * as teams from '@/app/api/v1/teams/route'
 
 const req = (method: string, body?: unknown) =>
   new Request('http://test.local/api/v1/x', { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : typeof body === 'string' ? body : JSON.stringify(body) })
-const ctx = (id: string) => ({ params: Promise.resolve({ id }) })
+const ctx = (id: string, extra: Record<string, string> = {}) => ({ params: Promise.resolve({ id, ...extra }) })
 const call = async (res: Response | Promise<Response>) => {
   const r = await res
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { status: r.status, body: (await r.json()) as { data?: any; error?: string; code?: string } }
 }
+
+process.env.UPLOADS_DIR = mkdtempSync(path.join(tmpdir(), 'taskzen-uploads-'))
 
 let alice: Awaited<ReturnType<typeof createUser>>
 let bob: Awaited<ReturnType<typeof createUser>>
@@ -100,5 +116,77 @@ describe('API v1', () => {
     expect((await call(taskComments.GET(req('GET'), ctx(id)))).status).toBe(404)
     state.userId = alice.id
     expect((await call(comment.DELETE(req('DELETE'), ctx(created.body.data.id)))).status).toBe(200)
+  })
+
+  it('dispara el aviso en segundo plano solo si la tarea tiene responsable', async () => {
+    vi.mocked(notifyAssignedInBackground).mockClear()
+    const created = await call(teamTasks.POST(req('POST', { title: 'Asignada', assigned_to: alice.id }), ctx(alice.team.id)))
+    expect(created.status).toBe(201)
+    expect(notifyAssignedInBackground).toHaveBeenCalledWith(alice.id, created.body.data.id)
+    vi.mocked(notifyAssignedInBackground).mockClear()
+    await call(teamTasks.POST(req('POST', { title: 'Sin responsable' }), ctx(alice.team.id)))
+    expect(notifyAssignedInBackground).not.toHaveBeenCalled()
+  })
+
+  it('gestiona etiquetas: crear, renombrar y borrar', async () => {
+    const created = await call(teamTags.POST(req('POST', { name: 'Urgente', color: '#ef4444' }), ctx(alice.team.id)))
+    expect(created.status).toBe(201)
+    const id = created.body.data.id as string
+    expect((await call(teamTags.POST(req('POST', { name: 'x', color: 'rojo' }), ctx(alice.team.id)))).status).toBe(400)
+    expect((await call(tag.PATCH(req('PATCH', { name: 'Muy urgente' }), ctx(id)))).status).toBe(200)
+    const list = await call(teamTags.GET(req('GET'), ctx(alice.team.id)))
+    expect(list.body.data.find((t: { id: string }) => t.id === id).name).toBe('Muy urgente')
+    expect((await call(tag.DELETE(req('DELETE'), ctx(id)))).status).toBe(200)
+  })
+
+  it('crea un equipo, invita por enlace, cambia roles y lo borra', async () => {
+    const created = await call(teams.POST(req('POST', { name: 'Equipo API' })))
+    const teamId = created.body.data.id as string
+
+    const link = await call(teamInvites.POST(req('POST', { role: 'member' }), ctx(teamId)))
+    expect(link.status).toBe(201)
+    expect(link.body.data.token).toBeTruthy()
+    expect((await call(teamInvites.GET(req('GET'), ctx(teamId)))).body.data).toHaveLength(1)
+    expect((await call(invite.DELETE(req('DELETE'), ctx(link.body.data.invite.id)))).status).toBe(200)
+    expect((await call(teamInvites.GET(req('GET'), ctx(teamId)))).body.data).toHaveLength(0)
+
+    expect((await call(teamMembers.POST(req('POST', { email: 'bob@test.dev', role: 'member' }), ctx(teamId)))).status).toBe(201)
+    expect((await call(teamMembers.POST(req('POST', { email: 'bob@test.dev' }), ctx(teamId)))).status).toBe(409)
+    expect((await call(teamMember.PATCH(req('PATCH', { role: 'product_owner' }), ctx(teamId, { userId: bob.id })))).status).toBe(200)
+    const members = await call(teamMembers.GET(req('GET'), ctx(teamId)))
+    expect(members.body.data.find((m: { user_id: string }) => m.user_id === bob.id).role).toBe('product_owner')
+
+    state.userId = bob.id
+    expect((await call(team.DELETE(req('DELETE'), ctx(teamId)))).status).toBe(403)
+    state.userId = alice.id
+    expect((await call(teamMember.DELETE(req('DELETE'), ctx(teamId, { userId: bob.id })))).status).toBe(200)
+    expect((await call(team.DELETE(req('DELETE'), ctx(teamId)))).status).toBe(200)
+  })
+
+  it('edita el perfil con validación', async () => {
+    expect((await call(me.PATCH(req('PATCH', { full_name: 'Alicia' })))).body.data.full_name).toBe('Alicia')
+    expect((await call(me.PATCH(req('PATCH', { full_name: '  ' })))).status).toBe(400)
+    expect((await call(me.PATCH(req('PATCH', { avatar_url: 'http://inseguro.test/a.png' })))).status).toBe(400)
+  })
+
+  it('sube, lista, descarga el registro y borra un adjunto', async () => {
+    const taskId = (await call(teamTasks.POST(req('POST', { title: 'Con archivo' }), ctx(alice.team.id)))).body.data.id as string
+    const form = new FormData()
+    form.set('file', new File(['hola mundo'], 'notas.txt', { type: 'text/plain' }))
+    form.set('taskId', taskId)
+    const up = await call(attachments.POST(new Request('http://test.local/api/v1/attachments', { method: 'POST', body: form })))
+    expect(up.status).toBe(201)
+    expect(up.body.data).toMatchObject({ file_name: 'notas.txt', task_id: taskId })
+
+    expect((await call(taskAttachments.GET(req('GET'), ctx(taskId)))).body.data).toHaveLength(1)
+
+    state.userId = bob.id
+    expect((await call(attachment.DELETE(req('DELETE'), ctx(up.body.data.id)))).status).toBeGreaterThanOrEqual(403)
+    state.userId = alice.id
+    expect((await call(attachment.DELETE(req('DELETE'), ctx(up.body.data.id)))).status).toBe(200)
+    expect((await call(taskAttachments.GET(req('GET'), ctx(taskId)))).body.data).toHaveLength(0)
+
+    const empty = new FormData()
+    expect((await call(attachments.POST(new Request('http://test.local/x', { method: 'POST', body: empty })))).status).toBe(400)
   })
 })

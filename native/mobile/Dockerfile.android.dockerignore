@@ -1,8 +1,13 @@
-node_modules
-android
-ios
-dist
-out
-.expo
-.claude
-Dockerfile.android*
+# Contexto = raíz del repositorio: solo entra la app y el código de dominio que comparte con la web.
+*
+!native/mobile
+!src/types
+!src/lib/permissions.ts
+!src/lib/initials.ts
+native/mobile/node_modules
+native/mobile/android
+native/mobile/ios
+native/mobile/dist
+native/mobile/out
+native/mobile/.expo
+native/mobile/.claude

@@ -1,155 +1,156 @@
-import { useFocusEffect, useRouter } from 'expo-router'
-import * as SecureStore from 'expo-secure-store'
-import { useCallback, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, FlatList, Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
+import { useMemo, useState } from 'react'
+import { ActivityIndicator, RefreshControl, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { TaskCard } from '@/components/TaskCard'
-import { api } from '@/lib/api'
-import { useSession } from '@/lib/session'
-import { TOUCH, useTheme } from '@/lib/theme'
-import { STATUSES, type Task, type TaskStatus, type Team } from '@/lib/types'
+import type { Task, TaskStatus } from '@domain/types'
+import { CalendarView } from '@/components/Calendar'
+import { BottomNav, Header, type MobileView } from '@/components/Chrome'
+import { NewTask, type NewTaskData } from '@/components/NewTask'
+import { ProfileSheet } from '@/components/ProfileSheet'
+import { countFilters, FiltersSheet, MoreSheet, NO_FILTERS, type Filters } from '@/components/Sheets'
+import { TaskDetail } from '@/components/TaskDetail'
+import { Board, TaskList } from '@/components/TaskViews'
+import { CreateTeamSheet, TeamSettingsSheet } from '@/components/TeamSheets'
+import { TagPicker } from '@/components/FormParts'
+import { Txt, useToast } from '@/components/ui'
+import { useBoard } from '@/lib/board'
+import { fromDateInput } from '@/components/DateField'
+import { parseDate } from '@/lib/dates'
+import { useSession, useUser } from '@/lib/session'
+import { usePalette } from '@/lib/theme'
 
-const TEAM_KEY = 'taskzen.team'
-
-export default function Board() {
-  const t = useTheme()
-  const router = useRouter()
+/** Pantalla principal: cabecera, vista activa (tablero, lista o calendario), navegación inferior y las hojas. */
+export default function Home() {
+  const p = usePalette()
   const insets = useSafeAreaInsets()
-  const { signOut } = useSession()
+  const toast = useToast()
+  const { signOut, updateUser } = useSession()
+  const me = useUser()
+  const b = useBoard(me.id)
 
-  const [teams, setTeams] = useState<Team[]>([])
-  const [teamId, setTeamId] = useState<string | null>(null)
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [status, setStatus] = useState<TaskStatus>('pending')
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [menu, setMenu] = useState(false)
-  // Refs para que `load` tenga identidad estable y useFocusEffect no se dispare en bucle.
-  const teamsRef = useRef<Team[]>([])
-  const teamIdRef = useRef<string | null>(null)
+  const [view, setView] = useState<MobileView>('board')
+  const [groupBy, setGroupBy] = useState<'status' | 'tag'>('status')
+  const [activeStatus, setActiveStatus] = useState<TaskStatus>('pending')
+  const [query, setQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [filters, setFilters] = useState<Filters>(NO_FILTERS)
 
-  const load = useCallback(async (preferred?: string | null) => {
-    try {
-      setError(null)
-      const list = teamsRef.current.length ? teamsRef.current : await api<Team[]>('GET', '/teams')
-      teamsRef.current = list
-      setTeams(list)
-      const saved = preferred ?? teamIdRef.current ?? (await SecureStore.getItemAsync(TEAM_KEY))
-      const current = list.find((x) => x.id === saved) ?? list[0]
-      if (!current) return setTasks([])
-      teamIdRef.current = current.id
-      setTeamId(current.id)
-      setTasks(await api<Task[]>('GET', `/teams/${current.id}/tasks`))
-    } catch (e) {
-      setError((e as Error).message)
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }, [])
+  const [selected, setSelected] = useState<Task | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [newOpen, setNewOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [teamOpen, setTeamOpen] = useState(false)
+  const [createTeamOpen, setCreateTeamOpen] = useState(false)
+  const [tagsOpen, setTagsOpen] = useState(false)
 
-  // Al volver de una tarea (creada, movida, borrada) se recarga.
-  useFocusEffect(useCallback(() => { void load() }, [load]))
+  // El detalle abierto refleja siempre la última versión de la tarea (tras editar o refrescar).
+  const current = selected ? b.tasks.find((t) => t.id === selected.id) ?? null : null
 
-  const counts = useMemo(() => {
-    const c: Record<TaskStatus, number> = { pending: 0, in_progress: 0, completed: 0 }
-    for (const x of tasks) c[x.status]++
-    return c
-  }, [tasks])
-  const visible = useMemo(() => tasks.filter((x) => x.status === status), [tasks, status])
-  const team = teams.find((x) => x.id === teamId)
-  const now = Date.now()
+  // Filtros compartidos por todas las vistas (los mismos que en la web).
+  const visible = useMemo(() => {
+    const q = query.toLowerCase()
+    const start = filters.range.start ? fromDateInput(filters.range.start) : null
+    const end = filters.range.end ? fromDateInput(filters.range.end) : null
+    return b.tasks.filter((t) => {
+      if (q && !t.title.toLowerCase().includes(q) && !(t.description?.toLowerCase() ?? '').includes(q)) return false
+      if (filters.tagIds.length && !t.tags?.some((x) => filters.tagIds.includes(x.id))) return false
+      if (filters.assigneeId && t.assigned_to !== filters.assigneeId) return false
+      if (start || end) {
+        const d = parseDate(t.due_date)
+        if (!d) return false
+        const day = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+        if (start && day < start) return false
+        if (end && day > end) return false
+      }
+      return true
+    })
+  }, [b.tasks, query, filters])
 
-  async function pickTeam(id: string) {
-    setMenu(false)
-    setLoading(true)
-    await SecureStore.setItemAsync(TEAM_KEY, id)
-    void load(id)
+  const guard = (fn: () => Promise<unknown>) => async () => { try { await fn() } catch (e) { toast((e as Error).message, 'error') } }
+  const onMove = (t: Task, s: TaskStatus) => { setActiveStatus(s); return b.moveTask(t, s).catch((e) => toast((e as Error).message, 'error')) }
+  const onDelete = async (id: string) => { await b.deleteTask(id); setSelected((s) => (s?.id === id ? null : s)) }
+  const onCreate = async (d: NewTaskData) => b.createTask(d)
+
+  const bottomInset = 160
+  const refreshControl = <RefreshControl refreshing={b.refreshing} onRefresh={b.pullToRefresh} tintColor={p.primary} colors={[p.primary]} progressBackgroundColor={p.container} />
+
+  const shared = {
+    tasks: visible,
+    userId: me.id,
+    role: b.role,
+    onOpen: setSelected,
+    onMove,
+    onDelete: (t: Task) => guard(() => onDelete(t.id))(),
+    bottomInset,
+    refreshControl,
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.background, paddingTop: insets.top }}>
-      <View style={styles.header}>
-        <Pressable onPress={() => setMenu(true)} accessibilityRole="button" accessibilityLabel="Cambiar de equipo o cerrar sesión" style={styles.teamBtn}>
-          <Text style={[styles.teamName, { color: t.text }]} numberOfLines={1}>{team?.name ?? 'TaskZen'}</Text>
-          <Text style={{ color: t.textMuted, fontSize: 14 }}>  ▾</Text>
-        </Pressable>
-      </View>
+    <View style={{ flex: 1, backgroundColor: p.background }}>
+      <Header
+        teams={b.teams}
+        teamId={b.teamId}
+        onTeamChange={b.switchTeam}
+        onNewTeam={() => setCreateTeamOpen(true)}
+        searchOpen={searchOpen}
+        onSearchOpen={setSearchOpen}
+        query={query}
+        onQuery={setQuery}
+        filtersCount={countFilters(filters)}
+        onFilters={() => setFiltersOpen(true)}
+        tasks={b.tasks}
+        me={me}
+        onOpenTask={setSelected}
+        onProfile={() => setProfileOpen(true)}
+      />
 
-      <View style={[styles.tabs, { borderColor: t.border }]} accessibilityRole="tablist">
-        {STATUSES.map((s) => {
-          const active = s.key === status
-          return (
-            <Pressable
-              key={s.key}
-              onPress={() => setStatus(s.key)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              style={[styles.tab, active && { borderBottomColor: t.primary }]}
-            >
-              <Text style={{ color: active ? t.primary : t.textMuted, fontWeight: '700', fontSize: 15 }}>{s.label} · {counts[s.key]}</Text>
-            </Pressable>
-          )
-        })}
-      </View>
-
-      {loading ? (
-        <ActivityIndicator color={t.primary} size="large" style={{ marginTop: 48 }} />
+      {b.loading ? (
+        <ActivityIndicator color={p.primary} size="large" style={{ marginTop: 48 }} />
+      ) : b.error && b.tasks.length === 0 ? (
+        <Txt color={p.error} style={{ textAlign: 'center', marginTop: 48, paddingHorizontal: 24 }}>{b.error}</Txt>
+      ) : view === 'board' ? (
+        <Board {...shared} groupBy={groupBy} allTags={b.tags} activeStatus={activeStatus} onActiveStatus={setActiveStatus} />
+      ) : view === 'list' ? (
+        <TaskList {...shared} />
       ) : (
-        <FlatList
-          data={visible}
-          keyExtractor={(x) => x.id}
-          renderItem={({ item }) => <TaskCard task={item} now={now} onPress={(x) => router.push({ pathname: '/task/[id]', params: { id: x.id, teamId: teamId! } })} />}
-          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: insets.bottom + 96 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); void load() }} tintColor={t.primary} />}
-          ListEmptyComponent={
-            <Text style={{ color: error ? t.error : t.textMuted, textAlign: 'center', marginTop: 48, fontSize: 15 }}>
-              {error ?? 'No hay tareas aquí.'}
-            </Text>
-          }
-        />
+        <CalendarView tasks={visible} onOpen={setSelected} bottomInset={bottomInset} refreshControl={refreshControl} />
       )}
 
-      {!!teamId && (
-        <Pressable
-          onPress={() => router.push({ pathname: '/new-task', params: { teamId, status } })}
-          accessibilityRole="button"
-          accessibilityLabel="Nueva tarea"
-          style={[styles.fab, { backgroundColor: t.primary, bottom: insets.bottom + 20 }]}
-        >
-          <Text style={{ color: t.onPrimary, fontSize: 30, lineHeight: 34, fontWeight: '500' }}>+</Text>
-        </Pressable>
-      )}
+      <BottomNav view={view} onView={setView} onMore={() => setMoreOpen(true)} onNewTask={() => setNewOpen(true)} />
 
-      <Modal visible={menu} transparent animationType="fade" onRequestClose={() => setMenu(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setMenu(false)} accessibilityLabel="Cerrar menú" />
-        <View style={[styles.sheet, { backgroundColor: t.card, paddingBottom: insets.bottom + 12 }]}>
-          <Text style={[styles.sheetTitle, { color: t.textMuted }]}>Equipos</Text>
-          {teams.map((x) => (
-            <Pressable key={x.id} onPress={() => pickTeam(x.id)} accessibilityRole="button" style={styles.row}>
-              <Text style={{ color: x.id === teamId ? t.primary : t.text, fontSize: 16, fontWeight: x.id === teamId ? '700' : '400' }}>{x.name}</Text>
-            </Pressable>
-          ))}
-          <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.border, marginVertical: 8 }} />
-          <Pressable onPress={() => { setMenu(false); void signOut() }} accessibilityRole="button" style={styles.row}>
-            <Text style={{ color: t.error, fontSize: 16 }}>Cerrar sesión</Text>
-          </Pressable>
-        </View>
-      </Modal>
+      <FiltersSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} groupBy={groupBy} onGroupBy={setGroupBy} showGroupBy={view === 'board'} members={b.members} tags={b.tags} filters={filters} onFilters={setFilters} />
+      <MoreSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        isAdmin={b.role === 'admin'}
+        teamName={b.team?.name ?? null}
+        onTeamSettings={() => setTeamOpen(true)}
+        onNewTeam={() => setCreateTeamOpen(true)}
+        onTags={() => setTagsOpen(true)}
+        onProfile={() => setProfileOpen(true)}
+        onLogout={() => void signOut()}
+      />
+
+      <TaskDetail
+        task={current}
+        teamId={b.teamId}
+        members={b.members}
+        tags={b.tags}
+        role={b.role}
+        userId={me.id}
+        onClose={() => setSelected(null)}
+        onUpdate={(id, patch) => b.updateTask(id, patch)}
+        onMove={(t, s) => onMove(t, s)}
+        onDelete={onDelete}
+        onRefresh={b.refresh}
+        onTagCreated={(tag) => b.setTags((prev) => [...prev, tag])}
+      />
+      <NewTask open={newOpen} onClose={() => setNewOpen(false)} onSubmit={onCreate} members={b.members} tags={b.tags} teamId={b.teamId} onTagCreated={(tag) => b.setTags((prev) => [...prev, tag])} />
+      <TagPicker title="Categorías" open={tagsOpen} onClose={() => { setTagsOpen(false); void b.refresh() }} tags={b.tags} teamId={b.teamId} selected={[]} onChange={() => undefined} onCreated={(tag) => b.setTags((prev) => [...prev, tag])} />
+      <CreateTeamSheet open={createTeamOpen} onClose={() => setCreateTeamOpen(false)} onCreated={(team) => { b.setTeams((prev) => [...prev, team]); void b.switchTeam(team.id) }} />
+      <TeamSettingsSheet open={teamOpen} onClose={() => setTeamOpen(false)} team={b.team} role={b.role} onMembers={b.setMembers} onDeleted={() => void b.switchTeam(b.teams.find((t) => t.id !== b.teamId)?.id ?? '')} />
+      <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} profile={me} onUpdated={updateUser} onLogout={() => void signOut()} />
+      <View pointerEvents="none" style={{ height: insets.bottom * 0 }} />
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  header: { paddingHorizontal: 16, paddingVertical: 8 },
-  teamBtn: { minHeight: TOUCH, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
-  teamName: { fontSize: 24, fontWeight: '800', maxWidth: 300 },
-  tabs: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth },
-  tab: { flex: 1, minHeight: TOUCH, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 3, borderBottomColor: 'transparent' },
-  fab: { position: 'absolute', right: 20, width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center', elevation: 6 },
-  backdrop: { flex: 1, backgroundColor: '#00000088' },
-  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16, paddingHorizontal: 20 },
-  sheetTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 },
-  row: { minHeight: TOUCH, justifyContent: 'center' },
-})

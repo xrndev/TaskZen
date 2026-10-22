@@ -1,16 +1,8 @@
-import { z } from 'zod'
 import { db } from '@/server/db'
-import { api, readJson } from '@/server/api/http'
-import * as svc from '@/server/services/teams'
+import { endpoint } from '@/server/api/endpoint'
+import * as uc from '@/server/usecases/teams'
 
 export const dynamic = 'force-dynamic'
 
-const body = z.object({ name: z.string().trim().min(1, 'El nombre es obligatorio.').max(80) })
-
-export function GET(req: Request) {
-  return api(req, (u) => svc.listTeams(db, u))
-}
-
-export function POST(req: Request) {
-  return api(req, async (u) => svc.createTeam(db, u, body.parse(await readJson(req)).name), 201)
-}
+export const GET = endpoint(({ userId }) => uc.listTeams(db, userId))
+export const POST = endpoint(async ({ userId, json }) => uc.createTeam(db, userId, await json()), 201)

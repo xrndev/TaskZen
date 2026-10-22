@@ -1,24 +1,18 @@
 'use server'
 
-import { z } from 'zod'
 import { db } from '@/server/db'
-import * as svc from '@/server/services/invites'
+import * as uc from '@/server/usecases/teams'
 import { run } from './run'
 
-const id = z.uuid()
-
 export async function createInviteAction(teamId: string, role: string) {
-  return run((u) => svc.createInvite(db, u, id.parse(teamId), z.enum(['product_owner', 'member']).parse(role)))
+  return run((u) => uc.createInvite(db, u, teamId, { role }))
 }
-
 export async function listInvitesAction(teamId: string) {
-  return run((u) => svc.listInvites(db, u, id.parse(teamId)))
+  return run((u) => uc.listInvites(db, u, teamId))
 }
-
 export async function revokeInviteAction(inviteId: string) {
-  return run((u) => svc.revokeInvite(db, u, id.parse(inviteId)))
+  return run((u) => uc.revokeInvite(db, u, inviteId))
 }
-
 export async function acceptInviteAction(token: string) {
-  return run((u) => svc.acceptInvite(db, u, z.string().min(10).max(100).parse(token)))
+  return run((u) => uc.acceptInvite(db, u, token))
 }
