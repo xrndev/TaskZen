@@ -1,0 +1,18 @@
+build/
+.gradle/
+*.apk
+*.aab
+*.idsig
+app/build/
+local.properties
+# El proyecto Android se regenera con "bubblewrap update" desde twa-manifest.json
+app/
+gradle/
+gradlew
+gradlew.bat
+build.gradle
+settings.gradle
+gradle.properties
+store_icon.png
+manifest-checksum.txt
+dist/

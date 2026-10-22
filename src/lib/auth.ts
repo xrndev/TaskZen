@@ -2,6 +2,7 @@ import { passkey } from '@better-auth/passkey'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
+import { bearer } from 'better-auth/plugins'
 import { nextCookies } from 'better-auth/next-js'
 import * as schema from '@/db/schema'
 import { db } from '@/server/db'
@@ -43,6 +44,7 @@ export const auth = betterAuth({
   onAPIError: { errorURL: '/login' },
   plugins: [
     passkey({ rpID, rpName: 'TaskZen', origin: new URL(baseURL).origin }),
+    bearer(), // clientes nativos: `Authorization: Bearer <token>` equivale a la cookie de sesión
     nextCookies(), // debe ir el último
   ],
   rateLimit: { enabled: isProd, window: 60, max: 30, customRules: { '/sign-in/email': { window: 60, max: 5 }, '/sign-up/email': { window: 60, max: 5 } } },

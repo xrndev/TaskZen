@@ -148,6 +148,8 @@ export async function updateTask(db: Db, userId: string, taskId: string, patch: 
   if (Object.keys(set).length) await db.update(tasks).set({ ...set, updated_at: new Date().toISOString() }).where(eq(tasks.id, taskId))
   if (patch.tag_ids) await replaceTags(db, taskId, patch.tag_ids)
   await notifyTeam(db, task.team_id)
+  const assignedTo = patch.assigned_to === undefined ? task.assigned_to : patch.assigned_to || null
+  return { assigneeChanged: assignedTo !== task.assigned_to, assignedTo }
 }
 
 /**

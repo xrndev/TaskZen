@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { uploadAvatar } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { Profile } from '@/types'
+import { NotificationSettings } from './NotificationSettings'
 import { SecuritySettings } from './SecuritySettings'
 import { LogOut, Image as ImageIcon, Upload, X, Check } from 'lucide-react'
 import { fallbackAvatar } from '@/lib/avatar';
@@ -144,6 +145,7 @@ export function ProfileModal({
          </div>
 
          <SecuritySettings />
+         <NotificationSettings />
 
          {/* Sector Zona Roja */}
          <div className="mt-6 pt-4 border-t border-outline-variant/10">

@@ -1,0 +1,17 @@
+name = "taskzen-reminders"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+# Sin dirección pública: el Worker solo se ejecuta por su temporizador.
+workers_dev = false
+
+[triggers]
+# Cada 5 minutos (el margen de tolerancia de un aviso es de 15, así que ninguno se pierde).
+crons = ["*/5 * * * *"]
+
+[vars]
+# Al cambiar de dominio, editar esta línea y volver a desplegar.
+TICK_URL = "https://taskzen.duckdns.org/api/internal/reminders/tick"
+
+[observability]
+enabled = true

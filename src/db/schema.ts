@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   boolean, doublePrecision, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid,
   type AnyPgColumn,
@@ -156,3 +157,39 @@ export const teamInvites = pgTable('team_invites', {
   revoked_at: ts('revoked_at'),
   created_at: ts('created_at').notNull().defaultNow(),
 }, (t) => [index('team_invites_team_idx').on(t.team_id)])
+
+/* ---------- Notificaciones push y recordatorios ---------- */
+export const notificationEndpoints = pgTable('notification_endpoints', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  kind: text('kind').notNull().default('webpush'), // webpush hoy; fcm/apns si algún día hay app nativa
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  user_agent: text('user_agent'),
+  created_at: ts('created_at').notNull().defaultNow(),
+  last_ok_at: ts('last_ok_at'),
+  disabled_at: ts('disabled_at'),
+}, (t) => [index('notification_endpoints_user_idx').on(t.user_id)])
+
+export const notificationPrefs = pgTable('notification_prefs', {
+  user_id: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+  enabled: boolean('enabled').notNull().default(false), // opt-in explícito
+  due_soon: boolean('due_soon').notNull().default(true),
+  assigned: boolean('assigned').notNull().default(true),
+  offsets_minutes: integer('offsets_minutes').array().notNull().default(sql`'{1440,60}'::integer[]`),
+  quiet_start: text('quiet_start'), // 'HH:MM' en la zona horaria del usuario
+  quiet_end: text('quiet_end'),
+  timezone: text('timezone').notNull().default('Europe/Madrid'),
+  updated_at: ts('updated_at').notNull().defaultNow(),
+})
+
+// Un aviso por (tarea, persona, antelación, fecha límite). Reclamar la fila ANTES de enviar garantiza
+// "como mucho una vez" aunque dos llamadas coincidan; si la fecha cambia, vuelve a avisar.
+export const reminderLog = pgTable('reminder_log', {
+  task_id: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  user_id: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  offset_minutes: integer('offset_minutes').notNull(),
+  due_at: ts('due_at').notNull(),
+  sent_at: ts('sent_at').notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.task_id, t.user_id, t.offset_minutes, t.due_at] })])

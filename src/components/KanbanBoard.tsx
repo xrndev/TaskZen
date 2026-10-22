@@ -199,6 +199,8 @@ export interface BoardInitialData {
   tasks: Task[];
   members: TeamMember[];
   tags: Tag[];
+  /** Tarea que se abre al entrar (enlace de un aviso). */
+  openTaskId?: string | null;
 }
 
 export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
@@ -214,7 +216,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
   const currentUserId = initial.me.id;
 
   // UI State
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(() => initial.tasks.find(t => t.id === initial.openTaskId) ?? null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpeningWithTagsFocused, setIsOpeningWithTagsFocused] = useState(false);
   const [groupBy, setGroupBy] = useState<'status' | 'tag'>('status');

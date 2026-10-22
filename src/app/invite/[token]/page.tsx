@@ -22,7 +22,7 @@ export default async function InvitePage(props: { params: Promise<{ token: strin
   const session = info ? await getSession() : null
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm p-8 bg-surface-container-low rounded-2xl border border-surface-container-high text-center shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
         {!info ? (
           <>

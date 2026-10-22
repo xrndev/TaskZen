@@ -46,3 +46,11 @@ next-env.d.ts
 /uploads-e2e
 /test-results
 /playwright-report
+
+# Binarios y claves de firma de las apps: nunca al repositorio
+*.apk
+*.aab
+*.ipa
+*.keystore
+*.jks
+signing.env

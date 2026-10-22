@@ -1,7 +1,15 @@
 name: taskzen
 
+# Los registros de Docker no rotan por defecto: se limitan para que nunca llenen el disco.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
+    logging: *logging
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -20,6 +28,7 @@ services:
       retries: 20
 
   migrate:
+    logging: *logging
     image: taskzen-migrate:latest
     restart: "no"
     environment:
@@ -29,6 +38,7 @@ services:
         condition: service_healthy
 
   app:
+    logging: *logging
     image: taskzen-app:latest
     restart: unless-stopped
     env_file: .env
@@ -42,6 +52,7 @@ services:
     mem_limit: 600m
 
   caddy:
+    logging: *logging
     image: caddy:2-alpine
     restart: unless-stopped
     ports:
@@ -52,6 +63,7 @@ services:
       LEGACY_ADDRESS: ${LEGACY_ADDRESS:?define LEGACY_ADDRESS}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./downloads:/srv/downloads:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

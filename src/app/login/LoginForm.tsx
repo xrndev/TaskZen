@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Fingerprint } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
@@ -149,6 +150,9 @@ export function LoginForm({
           ? 'El registro es solo por invitación: abre el enlace que te enviaron antes de crear la cuenta.'
           : '¿Sin acceso? Entra con tu proveedor o con un passkey, o pide ayuda a quien administra tu equipo. Puedes cambiar la contraseña desde tu perfil.'}
       </p>
+      <Link href="/instalar" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary">
+        Instalar la app en el móvil
+      </Link>
     </div>
   );
 }

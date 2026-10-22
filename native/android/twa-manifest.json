@@ -1,0 +1,32 @@
+{
+  "packageId": "io.github.xrndev.taskzen",
+  "host": "taskzen.duckdns.org",
+  "name": "TaskZen",
+  "launcherName": "TaskZen",
+  "display": "standalone",
+  "themeColor": "#0b0620",
+  "themeColorDark": "#0b0620",
+  "navigationColor": "#0b0620",
+  "navigationColorDark": "#0b0620",
+  "navigationDividerColor": "#0b0620",
+  "navigationDividerColorDark": "#0b0620",
+  "backgroundColor": "#0b0620",
+  "enableNotifications": true,
+  "startUrl": "/board",
+  "iconUrl": "https://taskzen.duckdns.org/icon-512.png",
+  "maskableIconUrl": "https://taskzen.duckdns.org/icon-maskable-512.png",
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\dioni\\.taskzen-android\\taskzen.keystore",
+    "alias": "taskzen"
+  },
+  "fallbackType": "customtabs",
+  "enableSiteSettingsShortcut": false,
+  "orientation": "default",
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://taskzen.duckdns.org/manifest.webmanifest",
+  "fullScopeUrl": "https://taskzen.duckdns.org/",
+  "minSdkVersion": 24
+}

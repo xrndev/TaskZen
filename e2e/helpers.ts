@@ -44,6 +44,17 @@ export async function logOut(page: Page) {
   await page.waitForURL('**/login')
 }
 
+/** Consulta de solo lectura a la base de datos de pruebas. */
+export async function dbRows<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const client = new pg.Client({ connectionString: DATABASE_URL })
+  await client.connect()
+  try {
+    return (await client.query(sql, params)).rows as T[]
+  } finally {
+    await client.end()
+  }
+}
+
 export async function attachmentId(fileName: string) {
   const client = new pg.Client({ connectionString: DATABASE_URL })
   await client.connect()
