@@ -1,0 +1,37 @@
+# Compila el APK de la app en Linux. En Windows la compilación nativa falla por el límite de 260
+# caracteres de las rutas (CMake genera rutas más largas); aquí no existe ese límite.
+#
+#   docker build -f Dockerfile.android --output type=local,dest=out .
+#
+# Deja `out/TaskZen.apk`. Sin clave propia, Gradle lo firma con la clave de depuración: sirve para probar,
+# no para publicar. Solo arm64-v8a (casi todos los móviles actuales); quita ARCH para compilar las cuatro.
+FROM eclipse-temurin:21-jdk-jammy AS build
+
+ARG ARCH=arm64-v8a
+ENV ANDROID_HOME=/opt/android ANDROID_SDK_ROOT=/opt/android CI=1 EXPO_NO_TELEMETRY=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl unzip git ca-certificates \
+ && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
+
+# Herramientas de línea de comandos de Android; Gradle descarga el resto (plataforma, NDK, CMake) al compilar.
+RUN mkdir -p $ANDROID_HOME/cmdline-tools \
+ && curl -fsSL -o /tmp/cmd.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
+ && unzip -q /tmp/cmd.zip -d $ANDROID_HOME/cmdline-tools && mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest \
+ && rm /tmp/cmd.zip \
+ && yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null \
+ && $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools"
+
+WORKDIR /app
+COPY package.json package-lock.json .npmrc ./
+RUN npm ci
+
+COPY . .
+RUN npx expo prebuild --platform android --no-install
+RUN cd android && ./gradlew assembleRelease --no-daemon --console=plain \
+    -PreactNativeArchitectures=${ARCH} -Pkotlin.compiler.execution.strategy=in-process \
+    --max-workers=4 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m"
+
+FROM scratch
+COPY --from=build /app/android/app/build/outputs/apk/release/app-release.apk /TaskZen.apk

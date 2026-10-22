@@ -1,0 +1,8 @@
+node_modules
+android
+ios
+dist
+out
+.expo
+.claude
+Dockerfile.android*
