@@ -19,7 +19,7 @@ const FAMILY: Record<Weight, string> = {
 export function Txt({ w = '400', size = 14, color, upper, track, style, ...rest }: TextProps & { w?: Weight; size?: number; color?: string; upper?: boolean; track?: number }) {
   const p = usePalette()
   const base: TextStyle = { fontFamily: FAMILY[w], fontSize: size, color: color ?? p.onSurface, ...(upper ? { textTransform: 'uppercase' as const } : null), ...(track !== undefined ? { letterSpacing: track } : null) }
-  return <Text {...rest} style={[base, style]} />
+  return <Text maxFontSizeMultiplier={1.2} {...rest} style={[base, style]} />
 }
 
 /** Etiqueta de sección: pequeña, en mayúsculas y con espaciado (como `text-xs uppercase font-bold tracking-wider`). */
@@ -89,6 +89,7 @@ export function Field({ label, style, multiline, ...rest }: TextInputProps & { l
     <View style={{ gap: 6 }}>
       {label ? <Label>{label}</Label> : null}
       <TextInput
+        maxFontSizeMultiplier={1.2}
         {...rest}
         multiline={multiline}
         onFocus={(e) => { setFocus(true); rest.onFocus?.(e) }}

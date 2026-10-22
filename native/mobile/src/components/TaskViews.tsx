@@ -218,8 +218,9 @@ export function Board(props: ListProps & { groupBy: 'status' | 'tag'; allTags: T
           {STATUSES.map((s) => {
             const on = s === activeStatus
             return (
-              <Pressable key={s} onPress={() => onActiveStatus(s)} accessibilityRole="tab" accessibilityState={{ selected: on }} style={{ flex: 1, minHeight: 44, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: on ? p.primary : 'transparent' }}>
-                <Txt w="700" size={13} color={on ? '#000' : alpha(p.onSurface, 0.8)} numberOfLines={1}>{STATUS_LABEL[s]}</Txt>
+              <Pressable key={s} onPress={() => onActiveStatus(s)} accessibilityRole="tab" accessibilityState={{ selected: on }} style={{ flex: 1, minWidth: 0, minHeight: 44, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 4, backgroundColor: on ? p.primary : 'transparent' }}>
+                {/* flexShrink + adjustsFontSizeToFit: con la letra del sistema muy grande el texto se encoge en vez de pisar a la pestaña vecina. */}
+                <Txt w="700" size={13} color={on ? '#000' : alpha(p.onSurface, 0.8)} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ flexShrink: 1 }}>{STATUS_LABEL[s]}</Txt>
                 <View style={{ borderRadius: 999, paddingHorizontal: 6, backgroundColor: on ? 'rgba(0,0,0,0.15)' : p.high }}><Txt w="600" size={12} color={on ? '#000' : alpha(p.onSurface, 0.8)}>{counts[s]}</Txt></View>
               </Pressable>
             )

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native'
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Btn, Field, Txt } from '@/components/ui'
 import { apiClient } from '@/lib/client'
@@ -36,8 +36,11 @@ export default function Login() {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: p.background }}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
         <View style={{ gap: 12 }}>
-          <Txt w="800" size={36} color={p.primary}>TaskZen</Txt>
-          <Txt size={16} color={p.onSurfaceVariant} style={{ marginBottom: 12 }}>Organiza tus proyectos con paz y fluidez.</Txt>
+          <View style={{ width: 80, height: 80, borderRadius: 24, backgroundColor: '#ffffff', alignSelf: 'center', alignItems: 'center', justifyContent: 'center', padding: 8, marginBottom: 20, elevation: 8, shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
+            <Image source={require('../../assets/icon.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" accessibilityLabel="Logo de TaskZen" />
+          </View>
+          <Txt w="700" size={24} style={{ textAlign: 'center' }}>Acceso Espacio de Trabajo</Txt>
+          <Txt size={14} color={p.onSurfaceVariant} style={{ textAlign: 'center', marginBottom: 16 }}>Inicia sesión para ver tus tableros</Txt>
 
           {providers.map((id) => (
             <Pressable key={id} onPress={() => run(() => signInWith(id))} disabled={busy} accessibilityRole="button" style={({ pressed }) => ({ minHeight: 52, borderRadius: 14, borderWidth: 1, borderColor: alpha(p.outline, 0.3), backgroundColor: pressed ? p.high : p.container, alignItems: 'center', justifyContent: 'center', opacity: busy ? 0.5 : 1 })}>
