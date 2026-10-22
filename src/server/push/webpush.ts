@@ -18,6 +18,7 @@ export class WebPushSender implements PushSender {
   constructor(private readonly vapid: VapidConfig, private readonly ttlSeconds = 60 * 60) {}
 
   async send(target: PushTarget, payload: PushPayload): Promise<PushResult> {
+    if (!target.p256dh || !target.auth) return { ok: false, gone: true, message: 'Suscripción sin claves' }
     try {
       await webpush.sendNotification(
         { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },
@@ -36,13 +37,4 @@ export class WebPushSender implements PushSender {
       return { ok: false, gone: status === 404 || status === 410, status, message: (e as Error).message?.slice(0, 200) }
     }
   }
-}
-
-let cached: PushSender | null | undefined
-/** Emisor configurado por entorno, o null si faltan las claves VAPID. */
-export function getPushSender(): PushSender | null {
-  if (cached !== undefined) return cached
-  const vapid = vapidFromEnv()
-  cached = vapid ? new WebPushSender(vapid) : null
-  return cached
 }

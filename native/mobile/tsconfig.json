@@ -7,5 +7,5 @@
       "@domain/*": ["../../src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "../../src/types/index.ts", "../../src/lib/permissions.ts", "../../src/lib/initials.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "../../src/types/index.ts", "../../src/lib/permissions.ts", "../../src/lib/initials.ts", "../../src/lib/reminders.ts"]
 }

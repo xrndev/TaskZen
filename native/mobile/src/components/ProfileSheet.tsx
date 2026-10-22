@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/client'
 import { pickImage } from '@/lib/files'
 import { alpha, usePalette } from '@/lib/theme'
 import { BottomSheet } from './BottomSheet'
+import { NotificationSettings } from './NotificationSettings'
 import { Avatar, Btn, Field, Label, Txt, useToast } from './ui'
 
 /** Perfil: nombre, avatar (enlace o foto de la galería), contraseña y cierre de sesión. */
@@ -91,6 +92,8 @@ export function ProfileSheet({ open, onClose, profile, onUpdated, onLogout }: { 
           <Field value={next} onChangeText={setNext} placeholder="Nueva contraseña (mín. 8)" secureTextEntry autoCapitalize="none" />
           <Btn label="Guardar contraseña" variant="outline" onPress={savePassword} loading={pwBusy} disabled={!next} />
         </View>
+
+        <NotificationSettings />
 
         <View style={{ paddingTop: 16, borderTopWidth: 1, borderColor: alpha(p.outline, 0.1) }}>
           <Btn label="Cerrar tu sesión" variant="danger" icon={LogOut} onPress={() => { onClose(); onLogout() }} />

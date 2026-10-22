@@ -3,6 +3,7 @@ import type { Profile } from '@domain/types'
 import { currentCookie, setUnauthorizedHandler } from './api'
 import { authClient } from './auth-client'
 import { apiClient } from './client'
+import { unregisterDevice } from './push'
 
 type State = { status: 'loading' } | { status: 'out' } | { status: 'in'; user: Profile }
 
@@ -60,6 +61,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         }
       },
       signOut: async () => {
+        await unregisterDevice() // este móvil deja de recibir los avisos de esta cuenta
         await authClient.signOut().catch(() => undefined)
         await currentCookie()
         setState({ status: 'out' })

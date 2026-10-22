@@ -28,7 +28,7 @@ const b64url = (b: Buffer) => b.toString('base64url')
 function subscriptionTarget(pathname: string) {
   const ecdh = createECDH('prime256v1')
   ecdh.generateKeys()
-  return { endpoint: `${base}${pathname}`, p256dh: b64url(ecdh.getPublicKey()), auth: b64url(randomBytes(16)) }
+  return { kind: 'webpush' as const, endpoint: `${base}${pathname}`, p256dh: b64url(ecdh.getPublicKey()), auth: b64url(randomBytes(16)) }
 }
 
 let previousTls: string | undefined
@@ -86,7 +86,7 @@ describe('WebPushSender', () => {
     await new Promise<void>((r) => spy.listen(0, '127.0.0.1', r))
     const port = (spy.address() as AddressInfo).port
     const ecdh = createECDH('prime256v1'); ecdh.generateKeys()
-    await sender().send({ endpoint: `https://localhost:${port}/x`, p256dh: b64url(ecdh.getPublicKey()), auth: b64url(randomBytes(16)) }, payload)
+    await sender().send({ kind: 'webpush', endpoint: `https://localhost:${port}/x`, p256dh: b64url(ecdh.getPublicKey()), auth: b64url(randomBytes(16)) }, payload)
     await new Promise((r) => spy.close(r))
     expect(raw.length).toBeGreaterThan(0)
     expect(raw.toString('latin1')).not.toContain('Revisar permisos')

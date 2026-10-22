@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { db } from '@/server/db'
-import { getPushSender } from '@/server/push/webpush'
+import { getPushSender } from '@/server/push/sender'
 import { runTick } from '@/server/services/notifications'
 
 export const dynamic = 'force-dynamic'

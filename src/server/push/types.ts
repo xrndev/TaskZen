@@ -7,18 +7,23 @@ export interface PushPayload {
   tag?: string
 }
 
+/** `webpush`: navegador (`endpoint` es la URL del servicio de push). `fcm`: app nativa (`endpoint` es el token de FCM). */
+export type PushKind = 'webpush' | 'fcm'
+
 export interface PushTarget {
+  kind: PushKind
   endpoint: string
-  p256dh: string
-  auth: string
+  /** Claves de cifrado; solo existen en Web Push. */
+  p256dh: string | null
+  auth: string | null
 }
 
 export type PushResult =
   | { ok: true }
-  /** `gone`: el servicio de push dice que la suscripción ya no existe (404/410): hay que darla de baja. */
+  /** `gone`: el servicio de push dice que el destino ya no existe: hay que darlo de baja. */
   | { ok: false; gone: boolean; status?: number; message?: string }
 
-/** Un canal de entrega. Hoy Web Push; mañana podría haber FCM/APNs sin cambiar el resto. */
+/** Un canal de entrega. Hay uno por tipo de destino (Web Push, FCM); APNs sería uno más sin tocar el resto. */
 export interface PushSender {
   send(target: PushTarget, payload: PushPayload): Promise<PushResult>
 }

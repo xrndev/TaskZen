@@ -162,10 +162,10 @@ export const teamInvites = pgTable('team_invites', {
 export const notificationEndpoints = pgTable('notification_endpoints', {
   id: uuid('id').primaryKey().defaultRandom(),
   user_id: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-  kind: text('kind').notNull().default('webpush'), // webpush hoy; fcm/apns si algún día hay app nativa
+  kind: text('kind').notNull().default('webpush'), // 'webpush' (navegador) o 'fcm' (app nativa Android); `endpoint` guarda la URL o el token
   endpoint: text('endpoint').notNull().unique(),
-  p256dh: text('p256dh').notNull(),
-  auth: text('auth').notNull(),
+  p256dh: text('p256dh'), // solo Web Push
+  auth: text('auth'), // solo Web Push
   user_agent: text('user_agent'),
   created_at: ts('created_at').notNull().defaultNow(),
   last_ok_at: ts('last_ok_at'),

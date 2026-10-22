@@ -1,5 +1,5 @@
 import { db } from '@/server/db'
-import { getPushSender } from '@/server/push/webpush'
+import { getPushSender } from '@/server/push/sender'
 import { notifyTaskAssigned } from '@/server/services/notifications'
 
 /**

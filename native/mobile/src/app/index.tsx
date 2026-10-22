@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, RefreshControl, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { Task, TaskStatus } from '@domain/types'
@@ -15,6 +15,7 @@ import { Txt, useToast } from '@/components/ui'
 import { useBoard } from '@/lib/board'
 import { fromDateInput } from '@/components/DateField'
 import { parseDate } from '@/lib/dates'
+import { usePushLifecycle } from '@/lib/push'
 import { useSession, useUser } from '@/lib/session'
 import { usePalette } from '@/lib/theme'
 
@@ -42,6 +43,15 @@ export default function Home() {
   const [teamOpen, setTeamOpen] = useState(false)
   const [createTeamOpen, setCreateTeamOpen] = useState(false)
   const [tagsOpen, setTagsOpen] = useState(false)
+
+  // Tocar un aviso abre su tarea (cuando el tablero ya la ha cargado).
+  const [pendingTask, setPendingTask] = useState<string | null>(null)
+  usePushLifecycle(setPendingTask)
+  useEffect(() => {
+    if (!pendingTask) return
+    const t = b.tasks.find((x) => x.id === pendingTask)
+    if (t) { setSelected(t); setPendingTask(null) }
+  }, [pendingTask, b.tasks])
 
   // El detalle abierto refleja siempre la última versión de la tarea (tras editar o refrescar).
   const current = selected ? b.tasks.find((t) => t.id === selected.id) ?? null : null

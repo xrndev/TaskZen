@@ -14,6 +14,17 @@ export interface TaskInput {
   tag_ids?: string[]
 }
 
+export interface NotificationPrefs {
+  enabled: boolean
+  due_soon: boolean
+  assigned: boolean
+  offsets_minutes: number[]
+  quiet_start: string | null
+  quiet_end: string | null
+  timezone: string
+}
+export interface NotificationState { publicKey: string | null; fcm: boolean; prefs: NotificationPrefs; devices: number; allowedOffsets: number[] }
+
 export interface InviteInfo { id: string; role: TeamRole; expires_at: string; created_at: string }
 
 export const apiClient = {
@@ -49,6 +60,12 @@ export const apiClient = {
   comments: (taskId: string) => api<TaskComment[]>('GET', `/tasks/${taskId}/comments`),
   createComment: (taskId: string, content: string, parentId: string | null) => api<TaskComment>('POST', `/tasks/${taskId}/comments`, { content, parent_id: parentId }),
   deleteComment: (commentId: string) => api<null>('DELETE', `/comments/${commentId}`),
+
+  notifications: () => api<NotificationState>('GET', '/notifications'),
+  updatePrefs: (prefs: NotificationPrefs) => api<NotificationPrefs>('PUT', '/notifications/prefs', prefs),
+  registerDevice: (input: { token: string; userAgent: string; timezone: string }) => api<{ devices: number }>('POST', '/notifications/devices', input),
+  unregisterDevice: (token: string) => api<{ devices: number }>('DELETE', '/notifications/devices', { endpoint: token }),
+  testPush: () => api<{ sent: number; failed: number }>('POST', '/notifications/test'),
 
   attachments: (taskId: string) => api<Attachment[]>('GET', `/tasks/${taskId}/attachments`),
   uploadAttachment: (file: PickedFile, target: { taskId?: string; commentId?: string }) => upload<Attachment>('/attachments', file, target as Record<string, string>),

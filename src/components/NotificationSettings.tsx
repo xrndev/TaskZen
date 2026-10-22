@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff } from 'lucide-react';
+import { OFFSET_LABEL } from '@/lib/reminders';
 import { toast } from '@/lib/toast';
 import { urlBase64ToUint8Array, usePushEnvironment } from '@/lib/pushSupport';
 import {
@@ -23,7 +24,6 @@ interface Prefs {
   timezone: string;
 }
 
-const LABEL: Record<number, string> = { 5: '5 min', 15: '15 min', 30: '30 min', 60: '1 hora', 120: '2 horas', 180: '3 horas', 360: '6 horas', 720: '12 horas', 1440: '1 día', 2880: '2 días' };
 const BTN = 'w-full min-h-11 rounded-lg px-3 text-[11px] font-extrabold uppercase tracking-widest transition-all disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-primary';
 const CHIP = 'min-h-11 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-primary';
 const TIME = 'h-11 w-full rounded-lg border border-outline-variant/30 bg-surface-container px-3 text-sm text-on-surface focus:border-primary focus:outline-none';
@@ -163,7 +163,7 @@ export function NotificationSettings() {
                 {state.allowedOffsets.map((m) => {
                   const on = prefs.offsets_minutes.includes(m);
                   return (
-                    <button key={m} type="button" aria-pressed={on} onClick={() => toggleOffset(m)} className={`${CHIP} ${on ? 'border-primary bg-primary/20 text-primary' : 'border-outline-variant/30 text-on-surface hover:bg-surface-container-high'}`}>{LABEL[m] ?? `${m} min`}</button>
+                    <button key={m} type="button" aria-pressed={on} onClick={() => toggleOffset(m)} className={`${CHIP} ${on ? 'border-primary bg-primary/20 text-primary' : 'border-outline-variant/30 text-on-surface hover:bg-surface-container-high'}`}>{OFFSET_LABEL[m] ?? `${m} min`}</button>
                   );
                 })}
               </div>

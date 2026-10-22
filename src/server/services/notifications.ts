@@ -80,6 +80,7 @@ export async function savePrefs(db: Db, userId: string, input: Prefs): Promise<P
 }
 
 export interface EndpointInput { endpoint: string; p256dh: string; auth: string; userAgent?: string | null }
+export interface DeviceInput { token: string; userAgent?: string | null }
 
 export async function saveEndpoint(db: Db, userId: string, input: EndpointInput) {
   if (!isAllowedPushEndpoint(input.endpoint)) throw new ServiceError('INVALID', 'Este navegador no ofrece un servicio de notificaciones compatible.')
@@ -92,10 +93,27 @@ export async function saveEndpoint(db: Db, userId: string, input: EndpointInput)
   // Una suscripción pertenece al navegador: si otra cuenta la tenía, pasa a quien inició sesión ahora.
   await db
     .insert(notificationEndpoints)
-    .values({ user_id: userId, endpoint: input.endpoint, p256dh: input.p256dh, auth: input.auth, user_agent: input.userAgent?.slice(0, 300) ?? null })
+    .values({ user_id: userId, kind: 'webpush', endpoint: input.endpoint, p256dh: input.p256dh, auth: input.auth, user_agent: input.userAgent?.slice(0, 300) ?? null })
     .onConflictDoUpdate({
       target: notificationEndpoints.endpoint,
-      set: { user_id: userId, p256dh: input.p256dh, auth: input.auth, user_agent: input.userAgent?.slice(0, 300) ?? null, disabled_at: null },
+      set: { user_id: userId, kind: 'webpush', p256dh: input.p256dh, auth: input.auth, user_agent: input.userAgent?.slice(0, 300) ?? null, disabled_at: null },
+    })
+}
+
+/** Registra un móvil de la app nativa por su token de FCM. Mismo tratamiento que una suscripción Web Push. */
+export async function saveDevice(db: Db, userId: string, input: DeviceInput) {
+  if (input.token.length < 20 || input.token.length > 4096) throw new ServiceError('INVALID', 'Token de dispositivo no válido.')
+  const mine = await db.select({ endpoint: notificationEndpoints.endpoint }).from(notificationEndpoints).where(eq(notificationEndpoints.user_id, userId))
+  if (!mine.some((m) => m.endpoint === input.token) && mine.length >= MAX_ENDPOINTS_PER_USER) {
+    throw new ServiceError('CONFLICT', 'Has alcanzado el máximo de dispositivos. Quita alguno antes de añadir otro.')
+  }
+  // El token pertenece al móvil: si otra cuenta lo tenía, pasa a quien inició sesión ahora.
+  await db
+    .insert(notificationEndpoints)
+    .values({ user_id: userId, kind: 'fcm', endpoint: input.token, user_agent: input.userAgent?.slice(0, 300) ?? null })
+    .onConflictDoUpdate({
+      target: notificationEndpoints.endpoint,
+      set: { user_id: userId, kind: 'fcm', p256dh: null, auth: null, user_agent: input.userAgent?.slice(0, 300) ?? null, disabled_at: null },
     })
 }
 
@@ -111,13 +129,13 @@ export async function countActiveEndpoints(db: Db, userId: string): Promise<numb
   return rows.length
 }
 
-type ActiveEndpoint = { id: string; endpoint: string; p256dh: string; auth: string }
+type ActiveEndpoint = Pick<typeof notificationEndpoints.$inferSelect, 'id' | 'kind' | 'endpoint' | 'p256dh' | 'auth'>
 
 async function activeEndpointsFor(db: Db, userIds: string[]): Promise<Map<string, ActiveEndpoint[]>> {
   const map = new Map<string, ActiveEndpoint[]>()
   if (userIds.length === 0) return map
   const rows = await db
-    .select({ id: notificationEndpoints.id, user_id: notificationEndpoints.user_id, endpoint: notificationEndpoints.endpoint, p256dh: notificationEndpoints.p256dh, auth: notificationEndpoints.auth })
+    .select({ id: notificationEndpoints.id, user_id: notificationEndpoints.user_id, kind: notificationEndpoints.kind, endpoint: notificationEndpoints.endpoint, p256dh: notificationEndpoints.p256dh, auth: notificationEndpoints.auth })
     .from(notificationEndpoints)
     .where(and(inArray(notificationEndpoints.user_id, userIds), isNull(notificationEndpoints.disabled_at)))
   for (const r of rows) map.set(r.user_id, [...(map.get(r.user_id) ?? []), r])
@@ -126,7 +144,7 @@ async function activeEndpointsFor(db: Db, userIds: string[]): Promise<Map<string
 
 /** Envía a todos los dispositivos de una persona y deja la base de datos al día (último envío correcto, bajas). */
 async function deliver(db: Db, sender: PushSender, endpoints: ActiveEndpoint[], payload: PushPayload) {
-  const results = await Promise.all(endpoints.map(async (e) => ({ e, r: await sender.send(e, payload) })))
+  const results = await Promise.all(endpoints.map(async (e) => ({ e, r: await sender.send({ kind: e.kind === 'fcm' ? 'fcm' : 'webpush', endpoint: e.endpoint, p256dh: e.p256dh, auth: e.auth }, payload) })))
   const okIds = results.filter((x) => x.r.ok).map((x) => x.e.id)
   const goneIds = results.filter((x) => !x.r.ok && (x.r as { gone: boolean }).gone).map((x) => x.e.id)
   if (okIds.length) await db.update(notificationEndpoints).set({ last_ok_at: new Date().toISOString() }).where(inArray(notificationEndpoints.id, okIds))

@@ -14,6 +14,9 @@ vi.mock('@/lib/auth', () => ({
 vi.mock('@/server/db', () => ({ get db() { return state.db } }))
 vi.mock('@/server/push/assigned', () => ({ notifyAssignedInBackground: vi.fn() }))
 
+import * as notifDevices from '@/app/api/v1/notifications/devices/route'
+import * as notifPrefs from '@/app/api/v1/notifications/prefs/route'
+import * as notifState from '@/app/api/v1/notifications/route'
 import * as attachment from '@/app/api/v1/attachments/[id]/route'
 import * as attachments from '@/app/api/v1/attachments/route'
 import * as comment from '@/app/api/v1/comments/[id]/route'
@@ -188,5 +191,35 @@ describe('API v1', () => {
 
     const empty = new FormData()
     expect((await call(attachments.POST(new Request('http://test.local/x', { method: 'POST', body: empty })))).status).toBe(400)
+  })
+
+  it('registra y quita el token de FCM de la app, y enciende los avisos la primera vez', async () => {
+    const TOKEN = 'fcm-token-de-prueba-'.repeat(6)
+    const key = process.env.FCM_SERVICE_ACCOUNT_B64
+    delete process.env.FCM_SERVICE_ACCOUNT_B64
+    // Sin cuenta de servicio en el servidor, la app no puede registrarse.
+    expect((await call(notifDevices.POST(req('POST', { token: TOKEN, timezone: 'Europe/Madrid' })))).status).toBe(400)
+    process.env.FCM_SERVICE_ACCOUNT_B64 = Buffer.from(JSON.stringify({ project_id: 'p', client_email: 'e@x.iam', private_key: 'k' })).toString('base64')
+
+    expect((await call(notifState.GET(req('GET')))).body.data).toMatchObject({ fcm: true, devices: 0, prefs: { enabled: false } })
+    expect((await call(notifDevices.POST(req('POST', { token: 'corto', timezone: 'Europe/Madrid' })))).status).toBe(400)
+    const reg = await call(notifDevices.POST(req('POST', { token: TOKEN, userAgent: 'TaskZen Android', timezone: 'Europe/Madrid' })))
+    expect(reg.status).toBe(201)
+    expect(reg.body.data).toEqual({ devices: 1 })
+    expect((await call(notifState.GET(req('GET')))).body.data).toMatchObject({ devices: 1, prefs: { enabled: true, timezone: 'Europe/Madrid' } })
+
+    // Registrar el mismo token otra vez no duplica el dispositivo.
+    expect((await call(notifDevices.POST(req('POST', { token: TOKEN, timezone: 'Europe/Madrid' })))).body.data).toEqual({ devices: 1 })
+
+    const prefs = { enabled: true, due_soon: true, assigned: false, offsets_minutes: [60], quiet_start: null, quiet_end: null, timezone: 'Europe/Madrid' }
+    expect((await call(notifPrefs.PUT(req('PUT', prefs)))).body.data).toMatchObject({ assigned: false, offsets_minutes: [60] })
+    expect((await call(notifPrefs.PUT(req('PUT', { ...prefs, offsets_minutes: [7] })))).status).toBe(400)
+
+    // Al quitar el último dispositivo se apagan los avisos.
+    expect((await call(notifDevices.DELETE(req('DELETE', { endpoint: TOKEN })))).body.data).toEqual({ devices: 0 })
+    expect((await call(notifState.GET(req('GET')))).body.data.prefs.enabled).toBe(false)
+
+    if (key) process.env.FCM_SERVICE_ACCOUNT_B64 = key
+    else delete process.env.FCM_SERVICE_ACCOUNT_B64
   })
 })

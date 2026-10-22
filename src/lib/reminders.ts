@@ -117,3 +117,6 @@ export function planReminders(input: {
   }
   return out
 }
+
+/** Etiqueta de cada antelación elegible (la web y la app nativa muestran lo mismo). */
+export const OFFSET_LABEL: Record<number, string> = { 5: '5 min', 15: '15 min', 30: '30 min', 60: '1 hora', 120: '2 horas', 180: '3 horas', 360: '6 horas', 720: '12 horas', 1440: '1 día', 2880: '2 días' }
