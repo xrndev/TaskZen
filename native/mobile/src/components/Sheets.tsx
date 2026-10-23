@@ -1,4 +1,4 @@
-import { Check, Download, LogOut, Palette, Plus, Settings, Tag as TagIcon, User, Users } from 'lucide-react-native'
+import { Check, Download, FileText, LogOut, Palette, Plus, Settings, ShieldCheck, Tag as TagIcon, User, Users } from 'lucide-react-native'
 import * as Linking from 'expo-linking'
 import { Pressable, View } from 'react-native'
 import type { Tag, TeamMember } from '@domain/types'
@@ -136,6 +136,8 @@ export function MoreSheet(props: {
         </View>
 
         {row('profile', go(props.onProfile), <User {...ic} />, 'Mi perfil y seguridad')}
+        {row('privacy', () => { props.onClose(); void Linking.openURL(`${API_URL}/privacidad`) }, <ShieldCheck {...ic} />, 'Política de privacidad')}
+        {row('terms', () => { props.onClose(); void Linking.openURL(`${API_URL}/terminos`) }, <FileText {...ic} />, 'Condiciones del servicio')}
         {row('install', () => { props.onClose(); void Linking.openURL(`${API_URL}/instalar`) }, <Download {...ic} />, 'Instalar la app o compartirla')}
         <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderColor: alpha(p.outline, 0.15) }}>
           {row('logout', go(props.onLogout), <LogOut size={20} color={p.error} />, 'Cerrar sesión', p.error)}

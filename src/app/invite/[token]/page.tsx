@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { LegalLinks } from '@/components/LegalPage'
 import { db } from '@/server/db'
 import { ServiceError } from '@/server/services/common'
 import { previewInvite } from '@/server/services/invites'
@@ -43,6 +44,7 @@ export default async function InvitePage(props: { params: Promise<{ token: strin
             )}
           </>
         )}
+        <LegalLinks className="mt-6 justify-center text-xs text-on-surface-variant" />
       </div>
     </div>
   )

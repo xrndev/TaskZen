@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import Link from 'next/link'
+import { LegalLinks } from '@/components/LegalPage'
 import QRCode from 'qrcode'
 
 export const metadata: Metadata = { title: 'Instalar TaskZen' }
@@ -92,6 +93,7 @@ export default async function InstallPage() {
             </p>
           </div>
         </section>
+        <LegalLinks className="justify-center text-sm text-on-surface-variant" />
       </div>
     </main>
   )

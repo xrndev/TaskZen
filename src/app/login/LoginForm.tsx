@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import Link from 'next/link';
+import Link from 'next/link'
+import { LegalLinks } from '@/components/LegalPage';
 import { useRouter } from 'next/navigation';
 import { Fingerprint } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
@@ -153,6 +154,7 @@ export function LoginForm({
       <Link href="/instalar" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary">
         Instalar la app en el móvil
       </Link>
+      <LegalLinks className="mt-4 justify-center text-xs text-on-surface-variant" />
     </div>
   );
 }

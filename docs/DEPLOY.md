@@ -21,7 +21,8 @@ Cambios de esquema: edita `src/db/schema.ts`, `npm run db:generate`, revisa el S
 
 ## Variables (`/opt/taskzen/.env`, permisos 600)
 `SITE_ADDRESS`, `BETTER_AUTH_URL`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET` (generados en el servidor).
-Acceso: `BOOTSTRAP_EMAILS`, `GOOGLE_*`, `MICROSOFT_*`, `GITHUB_*` (ver [AUTH.md](AUTH.md)). Opcional: `TRUSTED_ORIGINS`. Dejar `ALLOW_OPEN_SIGNUP` sin definir.
+Acceso: `BOOTSTRAP_EMAILS`, `GOOGLE_*`, `MICROSOFT_*`, `GITHUB_*` (ver [AUTH.md](AUTH.md)).
+Páginas legales (`/privacidad` y `/terminos`): `LEGAL_OWNER_NAME` y `LEGAL_CONTACT_EMAIL` (obligatorias para que el texto identifique al responsable), y opcionales `LEGAL_OWNER_TAX_ID` y `LEGAL_ADDRESS`. Se leen en cada petición: tras editarlas basta `docker compose up -d`, sin reconstruir la imagen. Estas dos URL son las que pide Google en la pantalla de consentimiento de OAuth y las tiendas de aplicaciones. Opcional: `TRUSTED_ORIGINS`. Dejar `ALLOW_OPEN_SIGNUP` sin definir.
 Tras editarlas: `docker compose up -d`.
 
 ## Copias de seguridad

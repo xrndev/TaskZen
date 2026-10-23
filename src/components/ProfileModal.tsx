@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { uploadAvatar } from '@/lib/api'
 import { toast } from '@/lib/toast'
 import { Profile } from '@/types'
+import { LegalLinks } from './LegalPage'
 import { NotificationSettings } from './NotificationSettings'
 import { SecuritySettings } from './SecuritySettings'
 import { LogOut, Image as ImageIcon, Upload, X, Check } from 'lucide-react'
@@ -155,6 +156,7 @@ export function ProfileModal({
             >
                <LogOut className="w-4 h-4" /> Cerrar tu sesión
             </button>
+            <LegalLinks className="mt-4 justify-center text-xs text-on-surface-variant" />
          </div>
       </div>
     </div>

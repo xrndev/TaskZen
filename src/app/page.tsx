@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { LegalLinks } from '@/components/LegalPage'
 import { ThemeSwitcher } from '@/components/ThemeSwitcher'
 import { ArrowRight, LayoutDashboard, Zap, Shield, Sparkles } from 'lucide-react'
 
@@ -131,13 +132,14 @@ export default function LandingPage() {
                 <Shield className="w-6 h-6" />
               </div>
               <h3 className="text-xl font-bold text-on-surface">Autenticación Definitiva</h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">Tu información blindada por Row Level Security con PostgresQL y credenciales conectadas a tu navegador al segundo.</p>
+              <p className="text-sm text-on-surface-variant leading-relaxed">Tu información protegida en PostgreSQL, con permisos por rol comprobados en el servidor y acceso con Google, Microsoft, GitHub o passkey.</p>
             </div>
          </div>
       </section>
       
       <footer className="bg-surface-container-low border-t border-surface-container-high py-8 text-center text-sm text-on-surface-variant">
          <p>© {new Date().getFullYear()} TaskZen App. Construido a pulso y código.</p>
+         <LegalLinks className="mt-3 justify-center" />
       </footer>
     </div>
   )

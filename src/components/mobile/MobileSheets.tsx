@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, LogOut, Palette, Plus, Settings, Tag as TagIcon, User, Users } from 'lucide-react';
+import { Download, FileText, LogOut, Palette, Plus, Settings, ShieldCheck, Tag as TagIcon, User, Users } from 'lucide-react';
 import Link from 'next/link';
 import { fallbackAvatar } from '@/lib/avatar';
 import type { Tag, TeamMember } from '@/types';
@@ -129,6 +129,8 @@ export function MobileMoreSheet(props: {
         </div>
         <button type="button" className={row} onClick={go(props.onProfile)}><User className="h-5 w-5 text-on-surface-variant" aria-hidden /> Mi perfil y seguridad</button>
         <Link href="/instalar" className={row} onClick={props.onClose}><Download className="h-5 w-5 text-on-surface-variant" aria-hidden /> Instalar la app o compartirla</Link>
+        <Link href="/privacidad" className={row} onClick={props.onClose}><ShieldCheck className="h-5 w-5 text-on-surface-variant" aria-hidden /> Política de privacidad</Link>
+        <Link href="/terminos" className={row} onClick={props.onClose}><FileText className="h-5 w-5 text-on-surface-variant" aria-hidden /> Condiciones del servicio</Link>
         <div className="mt-2 border-t border-outline-variant/15 pt-2">
           <button type="button" className={`${row} text-error`} onClick={go(props.onLogout)}><LogOut className="h-5 w-5" aria-hidden /> Cerrar sesión</button>
         </div>
