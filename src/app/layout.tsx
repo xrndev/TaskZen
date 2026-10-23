@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   title: "TaskZen",
   description: "Organiza tus proyectos con paz y fluidez.",
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
   }
 };
 

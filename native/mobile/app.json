@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundColor": "#010014"
+        "backgroundColor": "#ffffff"
       },
       "predictiveBackGestureEnabled": true,
       "package": "io.github.xrndev.taskzen"

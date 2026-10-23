@@ -37,7 +37,7 @@ export default function Login() {
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }}>
         <View style={{ gap: 12 }}>
           <View style={{ width: 80, height: 80, borderRadius: 24, backgroundColor: '#ffffff', alignSelf: 'center', alignItems: 'center', justifyContent: 'center', padding: 8, marginBottom: 20, elevation: 8, shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
-            <Image source={require('../../assets/icon.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" accessibilityLabel="Logo de TaskZen" />
+            <Image source={require('../../assets/logo-mark.png')} style={{ width: '100%', height: '100%' }} resizeMode="contain" accessibilityLabel="Logo de TaskZen" />
           </View>
           <Txt w="700" size={24} style={{ textAlign: 'center' }}>Acceso Espacio de Trabajo</Txt>
           <Txt size={14} color={p.onSurfaceVariant} style={{ textAlign: 'center', marginBottom: 16 }}>Inicia sesión para ver tus tableros</Txt>

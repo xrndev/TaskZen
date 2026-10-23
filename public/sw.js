@@ -16,7 +16,7 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title || 'TaskZen', {
       body: data.body || '',
       icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      badge: '/badge-96.png', // silueta blanca: Android solo usa el canal alfa
       tag: data.tag || undefined,
       data: { url: typeof data.url === 'string' ? data.url : '/board' },
     }),

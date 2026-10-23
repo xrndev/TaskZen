@@ -83,7 +83,7 @@ export function LoginForm({
 
       <div className="w-20 h-20 rounded-3xl bg-white mx-auto mb-8 shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-center justify-center relative overflow-hidden p-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="TaskZen Logo" className="w-full h-full object-contain relative z-10" />
+        <img src="/logo-mark.png" alt="TaskZen Logo" className="w-full h-full object-contain relative z-10" />
       </div>
 
       <h1 className="text-2xl font-bold mb-2 text-on-surface tracking-tight">

@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/taskzen-logo-fondo-oscuro.png">
+    <img src="docs/brand/taskzen-logo.png" alt="TaskZen" width="220">
+  </picture>
+</p>
+
 # TaskZen
 
 Tablero Kanban para uso personal y en equipo: tareas, etiquetas jerárquicas, comentarios con hilos, adjuntos, roles por equipo y actualización en tiempo real.

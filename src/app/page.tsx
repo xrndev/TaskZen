@@ -10,7 +10,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
              <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-primary/10 flex items-center justify-center bg-white p-1">
-               <img src="/logo.png" alt="TaskZen Logo" className="w-full h-full object-contain" />
+               <img src="/logo-mark.png" alt="TaskZen Logo" className="w-full h-full object-contain" />
              </div>
              <span className="text-xl font-black tracking-tight text-on-surface">TaskZen</span>
           </div>
