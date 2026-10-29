@@ -48,7 +48,7 @@ server actions (web)   rutas /api/v1 (app)     ← adaptadores finos: sesión + 
 ## Despliegue (VPS en `/opt/taskzen`, Docker Compose + Caddy)
 - La VPS no compila: se construyen las imágenes en local y se suben (ver `docs/DEPLOY.md`). Usa un script con `set -euo pipefail`: un `| tail` oculta los fallos y subiría la imagen anterior.
 - Acceso por clave SSH (`~/.ssh/chollo_vps`). **No guardes contraseñas ni claves en el repositorio, en la memoria ni en el chat.**
-- El APK se publica copiándolo a `/opt/taskzen/downloads/Serenboard-nativa.apk` (se sirve en `/descargas/`).
+- El APK se publica copiándolo a `/opt/taskzen/downloads/Serenboard.apk` (se sirve en `/descargas/`).
 - Un Worker de Cloudflare (`workers/reminders`, cron cada 5 min) llama a `/api/internal/reminders/tick`.
 
 ## Trampas del entorno
