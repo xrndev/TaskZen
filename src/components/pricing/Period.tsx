@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import { formatPrice } from '@/lib/plans'
+import { useLang, useT } from '@/lib/i18n/client'
 
 /** Mensual o anual: un solo interruptor para todas las tarjetas de la página. */
 type Period = 'monthly' | 'yearly'
@@ -14,6 +15,7 @@ export function PeriodProvider({ children }: { children: ReactNode }) {
 
 export function PeriodToggle() {
   const { period, setPeriod } = useContext(PeriodContext)
+  const t = useT()
   const option = (value: Period, label: string, extra?: string) => (
     <button
       type="button"
@@ -27,9 +29,9 @@ export function PeriodToggle() {
     </button>
   )
   return (
-    <div role="radiogroup" aria-label="Periodo de facturación" className="mx-auto mb-12 flex w-fit items-center gap-1 rounded-full border border-outline-variant/30 bg-surface-container-low p-1">
-      {option('monthly', 'Mensual')}
-      {option('yearly', 'Anual', '2 meses gratis')}
+    <div role="radiogroup" aria-label={t('period.label')} className="mx-auto mb-12 flex w-fit items-center gap-1 rounded-full border border-outline-variant/30 bg-surface-container-low p-1">
+      {option('monthly', t('period.monthly'))}
+      {option('yearly', t('period.yearly'), t('period.twoFree'))}
     </div>
   )
 }
@@ -37,11 +39,13 @@ export function PeriodToggle() {
 /** Precio de una tarjeta según el periodo elegido. */
 export function Price({ monthly, yearly }: { monthly: number | null; yearly: number | null }) {
   const { period } = useContext(PeriodContext)
+  const t = useT()
+  const lang = useLang()
   if (monthly === null || yearly === null) {
     return (
       <>
-        <p className="mt-5 flex items-baseline gap-1"><span className="text-4xl font-black tracking-tight text-on-surface">0 €</span></p>
-        <p className="mt-1 min-h-5 text-xs text-on-surface-variant">Sin caducidad, sin tarjeta</p>
+        <p className="mt-5 flex items-baseline gap-1"><span className="text-4xl font-black tracking-tight text-on-surface">{formatPrice(0, lang)}</span></p>
+        <p className="mt-1 min-h-5 text-xs text-on-surface-variant">{t('period.noExpiry')}</p>
       </>
     )
   }
@@ -49,11 +53,11 @@ export function Price({ monthly, yearly }: { monthly: number | null; yearly: num
   return (
     <>
       <p className="mt-5 flex items-baseline gap-1">
-        <span className="text-4xl font-black tracking-tight text-on-surface">{formatPrice(yearlyView ? yearly : monthly)}</span>
-        <span className="text-sm text-on-surface-variant">{yearlyView ? '/ año' : '/ mes'}</span>
+        <span className="text-4xl font-black tracking-tight text-on-surface">{formatPrice(yearlyView ? yearly : monthly, lang)}</span>
+        <span className="text-sm text-on-surface-variant">{yearlyView ? t('period.perYear') : t('period.perMonth')}</span>
       </p>
       <p className="mt-1 min-h-5 text-xs text-on-surface-variant">
-        {yearlyView ? `equivale a ${formatPrice(Math.round((yearly / 12) * 100) / 100)} al mes` : `o ${formatPrice(yearly)} al año · 2 meses gratis`}
+        {yearlyView ? t('period.equiv', { price: formatPrice(Math.round((yearly / 12) * 100) / 100, lang) }) : t('period.or', { price: formatPrice(yearly, lang) })}
       </p>
     </>
   )

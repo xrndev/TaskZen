@@ -2,23 +2,25 @@ import type { Metadata } from 'next'
 import { LegalLinks } from '@/components/LegalPage'
 import { Faq, Pricing } from '@/components/pricing/Pricing'
 import { SiteHeader } from '@/components/pricing/SiteHeader'
+import { getT } from '@/lib/i18n/server'
 import { policyFromEnv } from '@/server/services/registration'
 
-export const metadata: Metadata = {
-  title: 'Planes y precios',
-  description: 'Compara los planes gratuitos, personales y de equipo de Serenboard y qué incluye cada uno.',
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT()
+  return { title: t('precios.metaTitle'), description: t('precios.metaDesc') }
 }
 
 export const dynamic = 'force-dynamic'
 
-export default function PreciosPage() {
+export default async function PreciosPage() {
+  const { t } = await getT()
   return (
     <div className="min-h-dvh overflow-x-hidden bg-background font-sans text-on-surface selection:bg-primary/30">
       <SiteHeader />
       <main className="pt-16">
         <div className="mx-auto max-w-3xl px-6 pb-4 pt-20 text-center">
-          <h1 className="text-5xl font-black tracking-tighter md:text-6xl">Planes y precios</h1>
-          <p className="mt-5 text-lg text-on-surface-variant">Compara lo que incluye cada plan, sin letra pequeña.</p>
+          <h1 className="text-5xl font-black tracking-tighter md:text-6xl">{t('precios.h1')}</h1>
+          <p className="mt-5 text-lg text-on-surface-variant">{t('precios.lead')}</p>
         </div>
         <Pricing heading={false} />
         <Faq openSignup={policyFromEnv().openSignup} />

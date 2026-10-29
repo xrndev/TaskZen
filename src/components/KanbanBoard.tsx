@@ -38,6 +38,7 @@ import { NewTaskModal, type NewTaskFormData } from './NewTaskModal';
 import { TaskDetailPanel } from './TaskDetailPanel';
 import { ProfileModal } from './ProfileModal';
 import { ThemeSwitcher } from './ThemeSwitcher';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { TaskListView } from './TaskListView';
 import { CalendarView } from './CalendarView';
 import { DueSoonBell } from './DueSoonBell';
@@ -72,6 +73,7 @@ function SortableTaskCard({ task, globalAvatar, onTaskClick, onDeleteTask, onTag
 
 // Reusable Task Renderer
 function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, onTagClick, setIsOpeningWithTagsFocused }: { task: Task, globalAvatar: string, isDragging?: boolean, onClick?: () => void, onDelete?: (id: string) => void, onTagClick?: (tagId: string) => void, setIsOpeningWithTagsFocused?: (val: boolean) => void }) {
+  const t = useT();
   const isOverdue = task.due_date ? new Date(task.due_date) < new Date() : false;
 
   return (
@@ -84,11 +86,11 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
         <button 
            onClick={(e) => { 
               e.stopPropagation(); 
-              if(window.confirm('¿Borrar esta tarea permanentemente?')) onDelete(task.id); 
+              if(window.confirm(t('board.confirmDeleteTask'))) onDelete(task.id); 
            }}
-           aria-label={`Borrar la tarea ${task.title}`}
+           aria-label={t('board.deleteTaskAria', { title: task.title })}
            className="absolute top-2 right-2 w-7 h-7 rounded bg-background/80 backdrop-blur border border-outline-variant/30 flex items-center justify-center text-on-surface-variant hover:text-white hover:bg-error hover:border-error transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100 z-10 shadow-sm"
-           title="Borrar rápidamente"
+           title={t('board.quickDelete')}
         >
            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
         </button>
@@ -122,7 +124,7 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
                      onClick?.();
                   }}
                   className="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-black transition-all shadow-sm"
-                  title="Quick Assign Category"
+                  title={t('board.quickTag')}
                >
                  <Plus className="w-3 h-3" />
                </button>
@@ -138,7 +140,7 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
                
                {/* Activity Indicator (Comments) */}
                {(task.comment_count ?? 0) > 0 && (
-                 <div className="flex items-center gap-1 text-on-surface-variant/60" title={`${task.comment_count} comentarios`}>
+                 <div className="flex items-center gap-1 text-on-surface-variant/60" title={t('board.commentsTitle', { n: task.comment_count ?? 0 })}>
                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                    <span className="text-[10px] font-bold">{task.comment_count}</span>
                  </div>
@@ -146,7 +148,7 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
                
                {/* Subtareas */}
                {(task.subtask_total ?? 0) > 0 && (
-                 <div className={`flex items-center gap-1 ${task.subtask_done === task.subtask_total ? 'text-tertiary' : 'text-on-surface-variant/60'}`} title={`${task.subtask_done} de ${task.subtask_total} subtareas hechas`}>
+                 <div className={`flex items-center gap-1 ${task.subtask_done === task.subtask_total ? 'text-tertiary' : 'text-on-surface-variant/60'}`} title={t('subtasks.badge', { done: task.subtask_done ?? 0, total: task.subtask_total ?? 0 })}>
                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                    <span className="text-[10px] font-bold">{task.subtask_done}/{task.subtask_total}</span>
                  </div>
@@ -154,7 +156,7 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
 
                {/* Attachment Indicator */}
                {(task.attachment_count ?? 0) > 0 && (
-                 <div className="flex items-center gap-1 text-on-surface-variant/60" title={`${task.attachment_count} archivos adjuntos`}>
+                 <div className="flex items-center gap-1 text-on-surface-variant/60" title={t('board.attachmentsTitle', { n: task.attachment_count ?? 0 })}>
                    <Paperclip className="w-3 h-3" strokeWidth={2.5} />
                    <span className="text-[10px] font-bold">{task.attachment_count}</span>
                  </div>
@@ -606,7 +608,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
             <input 
                type="text" 
                ref={searchRef}
-               placeholder="Buscar…  ( / )" 
+               placeholder={t('board.search')} 
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
                className="bg-surface-container-low border border-outline-variant/20 text-on-surface text-sm rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 w-full lg:max-w-xs transition-all placeholder:text-on-surface-variant/40 shadow-inner"
@@ -625,13 +627,13 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
           </div>
 
           <div className="flex items-center gap-2 pr-1 ml-auto lg:ml-0">
-            <button onClick={() => setIsTagManagerOpen(true)} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:px-4 sm:py-2 bg-secondary-container text-on-secondary-container rounded-xl font-medium border border-outline-variant/20 hover:brightness-110 active:scale-95 transition-all shadow-sm" title="Categorías">
+            <button onClick={() => setIsTagManagerOpen(true)} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:px-4 sm:py-2 bg-secondary-container text-on-secondary-container rounded-xl font-medium border border-outline-variant/20 hover:brightness-110 active:scale-95 transition-all shadow-sm" title={t('board.categories')}>
               <TagIcon className="w-4 h-4" /> 
-              <span className="hidden sm:inline ml-2 text-xs uppercase tracking-wider font-bold">Tags</span>
+              <span className="hidden sm:inline ml-2 text-xs uppercase tracking-wider font-bold">{t('board.tags')}</span>
             </button>
-            <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:px-4 sm:py-2 bg-primary text-black rounded-xl font-medium shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all" title="New Task">
+            <button onClick={() => setIsModalOpen(true)} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:px-4 sm:py-2 bg-primary text-black rounded-xl font-medium shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all" title={t('board.newTask')}>
               <Plus className="w-5 h-5" /> 
-              <span className="hidden sm:inline ml-2 text-xs uppercase tracking-wider font-bold">New Task</span>
+              <span className="hidden sm:inline ml-2 text-xs uppercase tracking-wider font-bold">{t('board.newTask')}</span>
             </button>
           </div>
           
@@ -639,7 +641,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
           <div className="hidden lg:flex items-center gap-4 pl-4 border-l border-outline-variant/20">
              <div className="flex items-center gap-3 bg-surface-container-high px-3 py-1.5 rounded-xl border border-outline-variant/10 shadow-inner">
                <div className="flex flex-col">
-                  <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-tighter">Equipo:</span>
+                  <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-tighter">{t('board.team')}</span>
                   <select 
                     value={selectedTeamId || ''} 
                     onChange={(e) => {
@@ -652,7 +654,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
                     className="bg-transparent text-xs font-bold text-on-surface focus:outline-none cursor-pointer pr-4"
                   >
                     {teams.map(t => <option key={t.id} value={t.id} className="bg-surface-container text-on-surface">{t.name}</option>)}
-                    <option value="NEW_TEAM" className="bg-surface-container text-primary font-bold">+ Nuevo Equipo</option>
+                    <option value="NEW_TEAM" className="bg-surface-container text-primary font-bold">{t('board.newTeam')}</option>
                   </select>
                </div>
                
@@ -660,13 +662,14 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
                  <button 
                   onClick={() => setIsTeamSettingsOpen(true)}
                   className="p-1.5 rounded-lg hover:bg-primary/20 hover:text-primary transition-colors border border-transparent hover:border-primary/20"
-                  title="Gestionar Miembros"
+                  title={t('board.manageMembers')}
                  >
                    <Users className="w-4 h-4" />
                  </button>
                )}
              </div>
              <DueSoonBell tasks={tasks} userId={currentUserId} onOpen={setSelectedTask} />
+             <LanguageSwitcher />
              <ThemeSwitcher />
              <div onClick={() => setIsProfileModalOpen(true)} className="w-9 h-9 rounded-full bg-surface-container-high border-2 border-outline-variant/30 cursor-pointer overflow-hidden shadow-md active:scale-90 transition-transform">
                <img src={userAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -679,7 +682,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
       <div className="hidden lg:flex px-4 lg:px-6 py-3 bg-surface-container-low border-b border-outline-variant/10 items-center gap-4 sm:gap-6 shrink-0 shadow-sm relative z-30">
         {/* Assignee Filter */}
         <div className="flex items-center gap-2 lg:gap-3">
-          <span className="text-[10px] font-bold uppercase text-on-surface-variant shrink-0 hidden sm:block">Responsable:</span>
+          <span className="text-[10px] font-bold uppercase text-on-surface-variant shrink-0 hidden sm:block">{t('board.assignee')}</span>
           <Users className="w-4 h-4 text-on-surface-variant sm:hidden" />
           <div className="flex items-center -space-x-2">
             <button 
@@ -719,7 +722,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
           {isDateRangeOpen && (
             <div className="absolute top-full left-0 mt-2 z-50 p-4 bg-surface-container border border-outline-variant/20 rounded-2xl shadow-2xl min-w-[280px]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-bold text-on-surface uppercase tracking-tighter">Rango de Fecha</h3>
+                <h3 className="text-xs font-bold text-on-surface uppercase tracking-tighter">{t('board.dateRange')}</h3>
                 {(dateRange.start || dateRange.end) && (
                   <button 
                     onClick={() => {
@@ -735,7 +738,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
               
               <div className="space-y-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black text-on-surface-variant uppercase ml-1">Desde:</label>
+                  <label className="text-[9px] font-black text-on-surface-variant uppercase ml-1">{t('board.from')}</label>
                   <input 
                     type="date" 
                     value={dateRange.start || ''}
@@ -745,7 +748,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
                 </div>
                 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[9px] font-black text-on-surface-variant uppercase ml-1">Hasta:</label>
+                  <label className="text-[9px] font-black text-on-surface-variant uppercase ml-1">{t('board.to')}</label>
                   <input 
                     type="date" 
                     value={dateRange.end || ''}
@@ -770,7 +773,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
           <div className="flex items-center gap-3 lg:pl-6 lg:border-l lg:border-outline-variant/20 flex-1 min-w-0 overflow-visible">
             {/* Desktop Version: Horizontal Scroll */}
             <div className="hidden lg:flex items-center gap-3 flex-1 min-w-0">
-              <span className="text-[10px] font-bold uppercase text-on-surface-variant shrink-0">Categoría:</span>
+              <span className="text-[10px] font-bold uppercase text-on-surface-variant shrink-0">{t('board.category')}</span>
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth flex-1">
                 {allTags.map(tag => {
                   const isActive = filterTagIds.includes(tag.id);
@@ -782,7 +785,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
                   );
                 })}
               </div>
-              {filterTagIds.length > 0 && <button onClick={() => setFilterTagIds([])} className="ml-2 text-[10px] font-bold text-primary hover:underline uppercase shrink-0">Limpiar</button>}
+              {filterTagIds.length > 0 && <button onClick={() => setFilterTagIds([])} className="ml-2 text-[10px] font-bold text-primary hover:underline uppercase shrink-0">{t('board.clear')}</button>}
             </div>
 
             {/* Mobile Version: Dropdown */}
@@ -792,7 +795,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all text-[10px] font-bold uppercase tracking-wider ${filterTagIds.length > 0 ? 'bg-primary/20 border-primary text-primary shadow-sm' : 'bg-surface-container-high border-outline-variant/10 text-on-surface-variant hover:text-on-surface'}`}
               >
                 <TagIcon className="w-4 h-4" />
-                <span>Categorías</span>
+                <span>{t('board.categories')}</span>
                 {filterTagIds.length > 0 && (
                   <span className="flex items-center justify-center w-4 h-4 rounded-full bg-primary text-black text-[9px] font-black">
                     {filterTagIds.length}
@@ -804,9 +807,9 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
               {isTagFilterOpen && (
                 <div className="absolute top-full left-0 mt-2 z-50 p-4 bg-surface-container border border-outline-variant/20 rounded-2xl shadow-2xl min-w-[200px] max-h-[300px] overflow-y-auto no-scrollbar">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xs font-bold text-on-surface uppercase tracking-tighter">Filtrar por Etiqueta</h3>
+                    <h3 className="text-xs font-bold text-on-surface uppercase tracking-tighter">{t('board.filterByTag')}</h3>
                     {filterTagIds.length > 0 && (
-                      <button onClick={() => setFilterTagIds([])} className="text-[10px] font-bold text-primary hover:underline">LIMPIAR</button>
+                      <button onClick={() => setFilterTagIds([])} className="text-[10px] font-bold text-primary hover:underline">{t('board.clear').toUpperCase()}</button>
                     )}
                   </div>
                   <div className="flex flex-col gap-2">
@@ -976,7 +979,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-background/60 backdrop-blur-md" onClick={() => setIsTagManagerOpen(false)} />
             <div className="relative w-full max-w-md bg-surface-container rounded-2xl border border-outline-variant/30 shadow-2xl">
-              <div className="p-4 border-b border-outline-variant/10 flex items-center justify-between"><h2 className="text-lg font-bold text-on-surface">Categorías</h2><button onClick={() => setIsTagManagerOpen(false)}><X className="w-5 h-5" /></button></div>
+              <div className="p-4 border-b border-outline-variant/10 flex items-center justify-between"><h2 className="text-lg font-bold text-on-surface">{t('board.categories')}</h2><button onClick={() => setIsTagManagerOpen(false)}><X className="w-5 h-5" /></button></div>
               <div className="p-6">
                  <TagSelector 
                    selectedTagIds={[]} 
@@ -988,7 +991,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
                    }} 
                  />
               </div>
-              <div className="p-4 flex justify-end"><button onClick={() => setIsTagManagerOpen(false)} className="px-6 py-2 bg-primary text-black font-bold uppercase text-[10px] rounded-lg">Listo</button></div>
+              <div className="p-4 flex justify-end"><button onClick={() => setIsTagManagerOpen(false)} className="px-6 py-2 bg-primary text-black font-bold uppercase text-[10px] rounded-lg">{t('board.done')}</button></div>
             </div>
         </div>
       )}

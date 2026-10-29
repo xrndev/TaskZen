@@ -34,7 +34,7 @@ test('rutas privadas redirigen al login', async () => {
 test('tarea, arrastrar, comentar y adjuntar', async () => {
   await signIn(page, alice)
 
-  await page.getByRole('button', { name: /New Task/ }).click()
+  await page.getByRole('button', { name: /Nueva tarea/ }).click()
   await page.getByPlaceholder(/Rediseñar/).fill('Mi primera tarea')
   await page.getByRole('button', { name: 'Añadir al Tablero' }).click()
   const card = visibleText(page, 'Mi primera tarea')

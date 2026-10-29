@@ -171,7 +171,7 @@ test.describe('enlace de un aviso: /board?task=<id>', () => {
     // Tarea de otro equipo, identificador inexistente o basura: la página carga y no abre ningún panel.
     for (const bad of [foreign.id, '00000000-0000-4000-8000-000000000000', 'no-es-un-id']) {
       await page.goto(`/board?task=${bad}`)
-      await expect(page.getByRole('button', { name: /New Task/ })).toBeVisible()
+      await expect(page.getByRole('button', { name: /Nueva tarea/ })).toBeVisible()
       await expect(page.getByText('Descripción larga')).toHaveCount(0)
       await expect(page.getByText('Tarea ajena')).toHaveCount(0)
     }

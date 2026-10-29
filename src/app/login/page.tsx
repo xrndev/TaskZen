@@ -1,21 +1,25 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getSession } from '@/server/session'
+import { getT } from '@/lib/i18n/server'
 import { LoginForm, type Provider } from './LoginForm'
 
-export const metadata: Metadata = { title: 'Acceso', robots: { index: false, follow: false } }
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getT()
+  return { title: t('login.metaTitle'), robots: { index: false, follow: false } }
+}
 // Solo rutas internas: evita redirecciones abiertas (//otro-sitio.com, https://...).
 function safeNext(next?: string) {
   return next && /^\/(?!\/)[\w\-./?=&%]*$/.test(next) ? next : '/board'
 }
 
-const ERRORS: Record<string, string> = {
-  access_denied: 'Cancelaste el acceso con el proveedor.',
+const ERRORS: Record<string, 'login.cancelled'> = {
+  access_denied: 'login.cancelled',
 }
-const REGISTRATION_CLOSED = 'No se pudo entrar. Si es tu primera vez, el registro es solo por invitación: abre el enlace que te enviaron y vuelve a intentarlo.'
 
 export default async function LoginPage(props: { searchParams: Promise<{ next?: string; error?: string }> }) {
   const params = await props.searchParams
+  const { t } = await getT()
   const next = safeNext(params.next)
   if (await getSession()) redirect(next)
 
@@ -24,7 +28,7 @@ export default async function LoginPage(props: { searchParams: Promise<{ next?: 
     ...(process.env.MICROSOFT_CLIENT_ID ? (['microsoft'] as const) : []),
     ...(process.env.GITHUB_CLIENT_ID ? (['github'] as const) : []),
   ]
-  const initialError = params.error ? (ERRORS[params.error] ?? REGISTRATION_CLOSED) : null
+  const initialError = params.error ? t(ERRORS[params.error] ?? 'login.closed') : null
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background p-4 relative">

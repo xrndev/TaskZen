@@ -26,7 +26,7 @@ export function LanguageSwitcher({ className = '' }: { className?: string }) {
           aria-pressed={l === lang}
           title={LANG_LABEL[l]}
           onClick={() => choose(l)}
-          className={`min-h-8 rounded-full px-2.5 transition-colors ${l === lang ? 'bg-primary text-black' : 'text-on-surface-variant hover:text-on-surface'}`}
+          className={`min-h-8 max-lg:min-h-11 max-lg:min-w-11 rounded-full px-2.5 transition-colors ${l === lang ? 'bg-primary text-black' : 'text-on-surface-variant hover:text-on-surface'}`}
         >
           {l}
         </button>

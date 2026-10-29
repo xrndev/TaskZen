@@ -15,11 +15,13 @@ La fuente única es [`src/lib/plans.ts`](../src/lib/plans.ts): de ahí salen los
 | **Equipo**: miembros | 5 | 15 | sin límite |
 | **Equipo**: adjuntos | 100 MB | 5 GB | 50 GB |
 | **Equipo**: tamaño máximo por archivo | 10 MB | 25 MB | 50 MB |
+| **Equipo**: columnas del tablero | 3 | 6 | 10 |
 | **Equipo**: exportar | — | CSV | CSV y JSON completo |
 | **Personal**: equipos propios | 1 | 5 | sin límite |
 | **Personal**: recordatorios antes del vencimiento (p. ej. 1 día y 1 hora antes = 2) | 2 | 4 | 6 |
 | **Personal**: adjuntos del espacio personal | 100 MB | 2 GB | 5 GB |
 | **Personal**: tamaño máximo por archivo | 10 MB | 25 MB | 50 MB |
+| **Personal**: columnas del tablero personal | 3 | 6 | 10 |
 | **Personal**: exportar mis tareas | — | CSV | CSV y JSON |
 
 Precios previstos (orientativos, en `plans.ts`): Personal Plus 3 €/mes; Equipo Plus 5 €/mes, Pro 15 €; anual = 10 meses. **Personal Pro existe y se puede conceder a mano, pero no se anuncia** (`listed: false` en `plans.ts`): hoy solo se diferencia de Plus en cantidades, y se anunciará cuando tenga funciones propias (calendario, asistente). Para anunciarlo, quita esa línea. Lo marcado «Próximamente» en `plans.ts` (`soon`) **no existe todavía**: se muestra como planificado, nunca como incluido.
@@ -34,6 +36,7 @@ Los límites viven en `src/server/services/billing.ts` y los demás servicios so
 | Espacio de adjuntos | `assertStorageAvailable` en `authorizeUpload` (antes de escribir en disco) |
 | Recordatorios antes del vencimiento | `assertCanSetReminderOffsets` en el caso de uso `updatePrefs` |
 | Exportación | `assertCanExport` en `services/export.ts` (solo admin y product owner exportan un equipo) |
+| Columnas | `assertCanAddColumn` en `services/columns.ts` (tope técnico `MAX_COLUMNS` = 12) |
 | Tamaño por archivo | `assertFileSize` en `authorizeUpload` (el tope técnico es `MAX_FILE_SIZE`; Caddy admite hasta 60 MB, ver `deploy/Caddyfile`) |
 
 Al superar un límite se lanza `ServiceError('LIMIT', mensaje, scope)` → HTTP **402** en `/api/v1`, con `scope` = `user` o `team` (qué plan habría que mejorar). La web lo convierte en un diálogo de mejora (`UpgradeDialog`) que lleva directo al plan correcto. **Los límites solo frenan lo nuevo**: bajar de plan o caducar una prueba nunca borra ni expulsa a nadie; el equipo que supera su plan lo ve avisado en su panel, y los recordatorios que sobran dejan de enviarse (se conservan, y vuelven al mejorar).

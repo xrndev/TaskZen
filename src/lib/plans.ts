@@ -186,8 +186,10 @@ export function formatBytes(bytes: number): string {
   return `${Math.round(bytes / MB)} MB`
 }
 
-export function formatPrice(eur: number | null): string {
-  return eur === null ? '0 €' : `${eur % 1 === 0 ? eur : eur.toFixed(2).replace('.', ',')} €`
+export function formatPrice(eur: number | null, lang: 'es' | 'en' = 'es'): string {
+  const n = eur ?? 0
+  if (lang === 'en') return `€${n % 1 === 0 ? n : n.toFixed(2)}`
+  return `${n % 1 === 0 ? n : n.toFixed(2).replace('.', ',')} €`
 }
 
 /** Celda de la tabla comparativa: texto, incluido / no incluido, o próximamente. */

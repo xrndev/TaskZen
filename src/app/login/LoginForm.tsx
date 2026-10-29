@@ -8,6 +8,8 @@ import { Fingerprint } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { usePasskeySupport } from '@/lib/usePasskeySupport';
 import { ProviderIcon } from './ProviderIcon';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useT } from '@/lib/i18n/client';
 
 type Mode = 'login' | 'signup';
 type Notice = { text: string; error: boolean } | null;
@@ -32,6 +34,7 @@ export function LoginForm({
   initialError?: string | null;
 }) {
   const router = useRouter();
+  const t = useT();
   const [mode, setMode] = useState<Mode>(invited ? 'signup' : 'login');
   const [notice, setNotice] = useState<Notice>(initialError ? { text: initialError, error: true } : null);
   const [busy, setBusy] = useState(false);
@@ -42,10 +45,10 @@ export function LoginForm({
     setNotice(null);
     try {
       const { error } = await fn();
-      if (error) setNotice({ text: error.message || 'No se pudo completar la operación.', error: true });
+      if (error) setNotice({ text: error.message || t('login.failed'), error: true });
       return !error;
     } catch {
-      setNotice({ text: 'Error de conexión. Inténtalo de nuevo.', error: true });
+      setNotice({ text: t('login.network'), error: true });
       return false;
     } finally {
       setBusy(false);
@@ -88,10 +91,10 @@ export function LoginForm({
       </div>
 
       <h1 className="text-2xl font-bold mb-2 text-on-surface tracking-tight">
-        {mode === 'login' ? 'Acceso Espacio de Trabajo' : invited ? 'Te han invitado a Serenboard' : 'Crear nueva cuenta'}
+        {mode === 'login' ? t('login.title.login') : invited ? t('login.title.invited') : t('login.title.signup')}
       </h1>
       <p className="text-sm text-on-surface-variant mb-6">
-        {mode === 'login' ? 'Inicia sesión para ver tus tableros' : 'Crea tu cuenta con un proveedor o con una contraseña'}
+        {mode === 'login' ? t('login.sub.login') : t('login.sub.signup')}
       </p>
 
       {providers.length > 0 && (
@@ -99,11 +102,11 @@ export function LoginForm({
           {providers.map((p) => (
             <button key={p} type="button" disabled={busy} onClick={() => onProvider(p)} className={SECONDARY}>
               <ProviderIcon provider={p} />
-              Continuar con {PROVIDER_LABEL[p]}
+              {t('login.continueWith', { provider: PROVIDER_LABEL[p] })}
             </button>
           ))}
           <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-on-surface-variant/60 mt-2">
-            <span className="flex-1 h-px bg-outline-variant/20" /> o con tu correo <span className="flex-1 h-px bg-outline-variant/20" />
+            <span className="flex-1 h-px bg-outline-variant/20" /> {t('login.orEmail').trim()} <span className="flex-1 h-px bg-outline-variant/20" />
           </div>
         </div>
       )}
@@ -111,36 +114,36 @@ export function LoginForm({
       <form onSubmit={onSubmit} className="flex flex-col gap-4 text-left">
         {mode === 'signup' && (
           <div>
-            <label className={LABEL} htmlFor="full_name">Nombre Completo</label>
-            <input id="full_name" name="full_name" type="text" required autoComplete="name" className={INPUT} placeholder="Tu nombre completo" />
+            <label className={LABEL} htmlFor="full_name">{t('login.fullName')}</label>
+            <input id="full_name" name="full_name" type="text" required autoComplete="name" className={INPUT} placeholder={t('login.fullNamePh')} />
           </div>
         )}
         <div>
-          <label className={LABEL} htmlFor="email">Email</label>
+          <label className={LABEL} htmlFor="email">{t('login.email')}</label>
           <input id="email" name="email" type="email" required autoComplete="email webauthn" className={INPUT} placeholder="ejemplo@email.com" />
         </div>
         <div className="mb-2">
-          <label className={LABEL} htmlFor="password">Contraseña</label>
+          <label className={LABEL} htmlFor="password">{t('login.password')}</label>
           <input id="password" name="password" type="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} className={INPUT} placeholder="••••••••" />
         </div>
 
         <div className="flex flex-col gap-3 mt-2">
           <button type="submit" disabled={busy} className="w-full flex justify-center items-center gap-2 bg-gradient-to-br from-primary to-primary-dim text-black font-semibold py-3 px-4 rounded-xl shadow-[0_0_20px_rgba(151,169,255,0.2)] hover:shadow-[0_0_30px_rgba(151,169,255,0.4)] transition-all disabled:opacity-60">
-            {busy ? 'Un momento…' : mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
+            {busy ? t('login.busy') : mode === 'login' ? t('login.submit') : t('login.create')}
           </button>
 
           {mode === 'login' && supportsPasskeys && (
             <button type="button" disabled={busy} onClick={onPasskey} className={SECONDARY}>
               <Fingerprint className="w-5 h-5 shrink-0" aria-hidden />
-              Entrar con passkey
+              {t('login.passkey')}
             </button>
           )}
 
           <div className="flex items-center justify-center mt-1 px-1">
             {mode === 'login' ? (
-              <button type="button" onClick={() => { setNotice(null); setMode('signup'); }} className={LINK}>Tengo una invitación</button>
+              <button type="button" onClick={() => { setNotice(null); setMode('signup'); }} className={LINK}>{t('login.haveInvite')}</button>
             ) : (
-              <button type="button" onClick={() => { setNotice(null); setMode('login'); }} className={LINK}>Ya tengo una cuenta, entrar</button>
+              <button type="button" onClick={() => { setNotice(null); setMode('login'); }} className={LINK}>{t('login.haveAccount')}</button>
             )}
           </div>
         </div>
@@ -148,12 +151,13 @@ export function LoginForm({
 
       <p className="mt-4 text-[11px] leading-relaxed text-on-surface-variant/70">
         {mode === 'signup'
-          ? 'El registro es solo por invitación: abre el enlace que te enviaron antes de crear la cuenta.'
-          : '¿Sin acceso? Entra con tu proveedor o con un passkey, o pide ayuda a quien administra tu equipo. Puedes cambiar la contraseña desde tu perfil.'}
+          ? t('login.hint.signup')
+          : t('login.hint.login')}
       </p>
       <Link href="/instalar" className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary">
-        Instalar la app en el móvil
+        {t('login.install')}
       </Link>
+      <div className="mt-4 flex justify-center"><LanguageSwitcher /></div>
       <LegalLinks className="mt-4 justify-center text-xs text-on-surface-variant" />
     </div>
   );
