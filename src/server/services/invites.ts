@@ -4,6 +4,7 @@ import { teamInvites, teamMembers, teams, user } from '@/db/schema'
 import { can } from '@/lib/permissions'
 import type { Db } from '@/server/db'
 import type { TeamRole } from '@/types'
+import { assertCanAddMember } from './billing'
 import { requireRole, roleIn, ServiceError } from './common'
 
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -81,6 +82,7 @@ export async function previewInvite(db: Db, token: string) {
 export async function acceptInvite(db: Db, userId: string, token: string): Promise<{ team_id: string }> {
   const inv = await findValid(db, token)
   if (!(await roleIn(db, userId, inv.team_id))) {
+    await assertCanAddMember(db, inv.team_id)
     await db.insert(teamMembers).values({ team_id: inv.team_id, user_id: userId, role: inv.role }).onConflictDoNothing()
   }
   return { team_id: inv.team_id }

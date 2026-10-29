@@ -64,6 +64,7 @@ export function NotificationSettings() {
   })
 
   const patch = (v: Partial<NotificationPrefs>) => setPrefs((cur) => (cur ? { ...cur, ...v } : cur))
+  // Se elige libremente; el tope del plan lo valida el servidor al guardar.
   const toggleOffset = (m: number) => patch({ offsets_minutes: prefs?.offsets_minutes.includes(m) ? prefs.offsets_minutes.filter((x) => x !== m) : [...(prefs?.offsets_minutes ?? []), m] })
 
   const row = (label: string, value: boolean, onChange: (v: boolean) => void) => (
@@ -95,7 +96,7 @@ export function NotificationSettings() {
           {row('Cuando una tarea mía esté por vencer', prefs.due_soon, (v) => patch({ due_soon: v }))}
           {prefs.due_soon && (
             <View style={{ gap: 8 }}>
-              <Label>Avisarme con esta antelación (hasta 4)</Label>
+              <Label>{`Avisarme con esta antelación (hasta ${state.maxOffsets})`}</Label>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {state.allowedOffsets.map((m) => <Chip key={m} label={OFFSET_LABEL[m] ?? `${m} min`} on={prefs.offsets_minutes.includes(m)} onPress={() => toggleOffset(m)} />)}
               </View>

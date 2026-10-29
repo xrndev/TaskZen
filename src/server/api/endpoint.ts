@@ -2,7 +2,7 @@ import { ZodError } from 'zod'
 import { auth } from '@/lib/auth'
 import { ServiceError, type ErrorCode } from '@/server/services/common'
 
-const STATUS: Record<ErrorCode, number> = { FORBIDDEN: 403, NOT_FOUND: 404, INVALID: 400, CONFLICT: 409 }
+const STATUS: Record<ErrorCode, number> = { FORBIDDEN: 403, NOT_FOUND: 404, INVALID: 400, CONFLICT: 409, LIMIT: 402 }
 
 export interface EndpointContext {
   userId: string

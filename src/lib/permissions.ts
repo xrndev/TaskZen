@@ -14,6 +14,7 @@ export type Action =
   | 'team:view'
   | 'team:manage_members'
   | 'team:delete'
+  | 'team:export'
 
 export interface Resource {
   /** Autor del recurso (tarea, comentario, adjunto). */
@@ -48,6 +49,8 @@ export function can(userId: string, role: TeamRole | null, action: Action, res: 
       return manager || owner
     case 'tag:manage':
       return manager || owner
+    case 'team:export':
+      return manager
     case 'comment:delete':
     case 'attachment:delete':
       return manager || owner

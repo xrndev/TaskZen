@@ -13,6 +13,7 @@ Tablero Kanban para uso personal y en equipo: tareas, etiquetas jerárquicas, co
 - **Acceso:** Google, Microsoft (Outlook), GitHub, passkeys o contraseña. No envía correos. El registro es solo por invitación ([docs/AUTH.md](docs/AUTH.md)).
 - **Equipos:** roles admin / product owner / member, invitación por correo de usuario o por enlace caducable.
 - **Móvil:** interfaz propia por debajo de 1024 px: navegación inferior, botón flotante, pestañas de estado con deslizamiento, menú "Mover a…" en cada tarjeta, filtros en una hoja y calendario con agenda del día. Objetivos táctiles de 44 px y sin violaciones WCAG 2.2 AA en las pruebas (axe). El escritorio no cambia.
+- **Planes:** gratuito sin caducidad y planes de pago personales y de equipo (miembros, espacio, equipos propios, avisos y exportación), con prueba de 14 días. Pagos en línea aún no activados ([docs/PLANES.md](docs/PLANES.md)).
 - **Atajos:** `N` nueva tarea · `/` buscar · `1` `2` `3` cambiar de vista.
 - **Avisos:** la campana lista las tareas asignadas a ti que vencen en 48 h o ya vencieron. Además, notificaciones push (Web Push) antes del vencimiento, con horas de silencio, y un aviso al asignarte una tarea.
 - **PWA:** se puede instalar desde el navegador (móvil y escritorio).

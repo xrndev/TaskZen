@@ -3,7 +3,8 @@ import { teamMembers, teams, user } from '@/db/schema'
 import { can } from '@/lib/permissions'
 import type { Db } from '@/server/db'
 import type { Team, TeamMember, TeamRole } from '@/types'
-import { profileColumns, requireRole, ServiceError } from './common'
+import { assertCanAddMember, assertCanCreateTeam } from './billing'
+import { profileColumns, requireRole, roleIn, ServiceError } from './common'
 
 export async function ensurePersonalTeam(db: Db, userId: string, displayName: string): Promise<Team> {
   const [existing] = await db
@@ -36,6 +37,7 @@ export async function listTeams(db: Db, userId: string): Promise<Team[]> {
 export async function createTeam(db: Db, userId: string, name: string): Promise<Team> {
   const clean = name.trim()
   if (!clean) throw new ServiceError('INVALID', 'El nombre del equipo es obligatorio.')
+  await assertCanCreateTeam(db, userId)
   return db.transaction(async (tx) => {
     const [team] = await tx.insert(teams).values({ name: clean, owner_id: userId }).returning()
     await tx.insert(teamMembers).values({ team_id: team.id, user_id: userId, role: 'admin' })
@@ -78,6 +80,8 @@ export async function inviteMember(db: Db, userId: string, teamId: string, email
   if (!target) {
     throw new ServiceError('NOT_FOUND', 'Usuario no encontrado. Asegúrate de que el correo esté registrado en Serenboard.')
   }
+  if (await roleIn(db, target.id, teamId)) throw new ServiceError('CONFLICT', 'El usuario ya es miembro de este equipo.')
+  await assertCanAddMember(db, teamId)
   const inserted = await db
     .insert(teamMembers)
     .values({ team_id: teamId, user_id: target.id, role })

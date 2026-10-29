@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  boolean, doublePrecision, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid,
+  boolean, check, doublePrecision, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
 
@@ -157,6 +157,26 @@ export const teamInvites = pgTable('team_invites', {
   revoked_at: ts('revoked_at'),
   created_at: ts('created_at').notNull().defaultNow(),
 }, (t) => [index('team_invites_team_idx').on(t.team_id)])
+
+/* ---------- Planes ---------- */
+// Una fila por dueño (una persona o un equipo, nunca los dos). Se conserva al caducar: así la prueba gratuita
+// solo se puede usar una vez por dueño. `ends_at` es el fin de la prueba o del periodo pagado (null = sin caducidad).
+export const subscriptions = pgTable('subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+  team_id: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }),
+  plan: text('plan').notNull(),
+  status: text('status').notNull().default('active'), // 'trialing' | 'active' | 'canceled'
+  ends_at: ts('ends_at'),
+  provider: text('provider').notNull().default('manual'), // 'trial' | 'manual' | (futuro) el proveedor de pagos
+  provider_ref: text('provider_ref'),
+  created_at: ts('created_at').notNull().defaultNow(),
+  updated_at: ts('updated_at').notNull().defaultNow(),
+}, (t) => [
+  check('subscriptions_one_owner', sql`num_nonnulls(${t.user_id}, ${t.team_id}) = 1`),
+  uniqueIndex('subscriptions_user_uq').on(t.user_id).where(sql`${t.user_id} is not null`),
+  uniqueIndex('subscriptions_team_uq').on(t.team_id).where(sql`${t.team_id} is not null`),
+])
 
 /* ---------- Notificaciones push y recordatorios ---------- */
 export const notificationEndpoints = pgTable('notification_endpoints', {

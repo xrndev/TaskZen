@@ -51,6 +51,10 @@ export default function PrivacyPage() {
             Firebase Cloud Messaging de la app), tus preferencias de aviso, tu zona horaria y un registro de los avisos ya enviados para no repetirlos.
           </li>
           <li>
+            <Strong>Datos de tu plan:</Strong> el plan que tienes (personal o de equipo), si es una prueba o está activo y su fecha de fin. No guardamos
+            datos de tarjeta ni de pago: los pagos en línea aún no están activados.
+          </li>
+          <li>
             <Strong>Registros técnicos del servidor:</Strong> fecha, ruta solicitada y dirección IP de las peticiones, con rotación automática.
           </li>
         </List>
@@ -100,6 +104,7 @@ export default function PrivacyPage() {
         <List>
           <li><Strong>Tu cuenta y tu contenido:</Strong> mientras mantengas la cuenta. Si pides su baja, los eliminamos en un máximo de 30 días.</li>
           <li><Strong>Sesiones:</Strong> hasta que caducan o cierras sesión.</li>
+          <li><Strong>Datos de tu plan:</Strong> mientras mantengas la cuenta o el equipo al que pertenecen.</li>
           <li><Strong>Dispositivos de notificaciones:</Strong> hasta que los desactivas, cierras sesión en la app o el servicio de push informa de que ya no existen.</li>
           <li><Strong>Copias de seguridad:</Strong> diarias y rotativas; se conservan 14 días y después se eliminan. Un dato borrado puede permanecer en ellas hasta ese momento.</li>
           <li><Strong>Registros técnicos:</Strong> se rotan automáticamente y se conservan solo unos días.</li>

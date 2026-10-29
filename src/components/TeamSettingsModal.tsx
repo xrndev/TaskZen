@@ -6,6 +6,7 @@ import { fetchTeamMembers, inviteMemberByEmail, removeTeamMember, updateMemberRo
 import { toast } from '@/lib/toast'
 import { UserPlus, Trash2, Shield, ShieldCheck, User, X, Link2, Copy } from 'lucide-react'
 import { fallbackAvatar } from '@/lib/avatar';
+import { PlanPanel } from './PlanPanel';
 
 export function TeamSettingsModal({ 
   isOpen, 
@@ -132,6 +133,11 @@ export function TeamSettingsModal({
           
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8">
             
+            {/* Plan del equipo: límites, prueba gratuita y exportación */}
+            <section className="bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-inner">
+              <PlanPanel scope="team" teamId={team.id} />
+            </section>
+
             {/* Enlace de invitación */}
             {canManage && !team.is_personal && (
               <section className="bg-surface-container rounded-2xl p-5 border border-outline-variant/20 shadow-inner">

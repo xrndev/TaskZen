@@ -1,64 +1,58 @@
 import Link from 'next/link'
 import { LegalLinks } from '@/components/LegalPage'
-import { ThemeSwitcher } from '@/components/ThemeSwitcher'
-import { ArrowRight, LayoutDashboard, Zap, Shield, Sparkles } from 'lucide-react'
+import { Faq, Pricing } from '@/components/pricing/Pricing'
+import { SiteHeader } from '@/components/pricing/SiteHeader'
+import { ArrowRight, Bell, MessageSquare, Shield, Smartphone, Sparkles, Users, Zap } from 'lucide-react'
+
+const FEATURES = [
+  { icon: Zap, tone: 'primary', title: 'Tablero en tiempo real', text: 'Arrastra tareas entre columnas y mira cómo se actualiza para todo el equipo al instante, en tablero, lista o calendario.' },
+  { icon: Users, tone: 'secondary', title: 'Equipos y roles', text: 'Invita con un enlace o por correo y reparte permisos: administrador, product owner o miembro. Todo se comprueba en el servidor.' },
+  { icon: Bell, tone: 'tertiary', title: 'Avisos que llegan', text: 'Recibe una notificación antes de que venza una tarea y cuando te asignan una. Con horas de silencio para que descanses.' },
+  { icon: MessageSquare, tone: 'primary', title: 'Etiquetas, comentarios y adjuntos', text: 'Organiza con etiquetas jerárquicas, discute en hilos y adjunta archivos a cada tarea o comentario.' },
+  { icon: Smartphone, tone: 'secondary', title: 'En tu móvil', text: 'Instálala como app desde el navegador o descarga la app nativa para Android, con la misma cuenta y los mismos datos.' },
+  { icon: Shield, tone: 'tertiary', title: 'Acceso seguro', text: 'Entra con Google, Microsoft, GitHub, un passkey o contraseña. Tus datos viven en una base de datos PostgreSQL propia.' },
+] as const
+
+const TONE = {
+  primary: 'bg-primary/10 text-primary',
+  secondary: 'bg-secondary/10 text-secondary',
+  tertiary: 'bg-tertiary/10 text-tertiary',
+} as const
 
 export default function LandingPage() {
   return (
     <div className="min-h-dvh bg-background text-on-surface font-sans overflow-x-hidden selection:bg-primary/30">
-      {/* Header NavBar */}
-      <header className="fixed top-0 w-full z-50 border-b border-surface-container-high/50 bg-background/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-             <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-primary/10 flex items-center justify-center bg-white p-1">
-               <img src="/logo-mark.png" alt="Serenboard Logo" className="w-full h-full object-contain" />
-             </div>
-             <span className="text-xl font-black tracking-tight text-on-surface">Serenboard</span>
-          </div>
-          
-          <div className="flex items-center gap-6">
-             <div className="hidden sm:flex items-center gap-3 text-sm font-medium text-on-surface-variant">
-               <span>Pruébate un color</span> <ArrowRight className="w-4 h-4 opacity-50"/> 
-               <ThemeSwitcher />
-             </div>
-             <div className="sm:hidden">
-               <ThemeSwitcher />
-             </div>
-             
-             <a 
-               href="/login" 
-               className="relative z-[60] px-5 py-2 text-sm font-bold bg-surface-container border border-outline-variant/30 text-on-surface hover:text-primary hover:border-primary/50 rounded-xl transition-all hover:shadow-[0_0_15px_rgba(var(--color-primary),0.2)]"
-             >
-               Acceder
-             </a>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
-      {/* Hero Section */}
+      {/* Hero */}
       <main className="pt-32 pb-16 px-6 max-w-7xl mx-auto relative flex flex-col items-center justify-center text-center min-h-[85vh]">
-         {/* Background Glow */}
          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] max-w-[800px] max-h-[800px] bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
-         
+
          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant/30 text-xs font-bold uppercase tracking-widest text-primary mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-           <Sparkles className="w-3.5 h-3.5" /> Ahora en Fase Beta
+           <Sparkles className="w-3.5 h-3.5" /> Ahora en fase beta
          </div>
-         
+
          <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-on-surface mb-6 max-w-4xl leading-[1.1] animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150 fill-mode-both">
-           Tus ideas por fin ordenadas en <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Cristal</span>.
+           Organiza tu equipo con <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">calma</span>.
          </h1>
-         
+
          <p className="text-lg md:text-xl text-on-surface-variant max-w-2xl mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 fill-mode-both leading-relaxed">
-           Serenboard es un lienzo en blanco para tu productividad. Un tablero Kanban ultrarrápido, arrastrable, y con sincronización en tiempo real gestionando múltiples temas estéticos.
+           Serenboard es un tablero Kanban rápido y en tiempo real para trabajar en equipo o por tu cuenta. Empieza gratis y mejora solo lo que necesites.
          </p>
-         
+
          <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500 fill-mode-both relative z-10">
-            <a 
-              href="/board" 
+            <a
+              href="/board"
               className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-br from-primary to-primary-dim text-black font-extrabold text-sm uppercase tracking-widest rounded-2xl shadow-[0_0_40px] shadow-primary/40 hover:shadow-[0_0_60px] hover:shadow-primary/60 hover:scale-105 transition-all"
             >
-              Comenzar Gratis <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              Empezar gratis <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
+            <Link
+              href="/precios"
+              className="px-8 py-4 border border-outline-variant/40 text-on-surface font-bold text-sm uppercase tracking-widest rounded-2xl hover:border-primary hover:text-primary transition-all"
+            >
+              Ver planes
+            </Link>
          </div>
 
          {/* Faux Kanban UI Sneak Peek */}
@@ -109,36 +103,43 @@ export default function LandingPage() {
             </div>
          </div>
       </main>
-      
-      {/* Features */}
-      <section className="bg-surface-container-lowest border-t border-surface-container-high py-24 relative z-20">
-         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="flex flex-col gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                <LayoutDashboard className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-on-surface">Arquitectura Glassmorphism</h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">Inspirado en los cristales oscuros de MacOS. Sombras paramétricas, bordes sutiles de la paleta y texturas esmeriladas.</p>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary shadow-inner">
-                <Zap className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-on-surface">Arrastrar y Soltar Mítico</h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">No tienes que esperar a que el servidor piense. Movimientos proyectados fluidos controlados por un motor físico frontend reactivo.</p>
-            </div>
-            <div className="flex flex-col gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-tertiary/10 flex items-center justify-center text-tertiary shadow-inner">
-                <Shield className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-on-surface">Autenticación Definitiva</h3>
-              <p className="text-sm text-on-surface-variant leading-relaxed">Tu información protegida en PostgreSQL, con permisos por rol comprobados en el servidor y acceso con Google, Microsoft, GitHub o passkey.</p>
+
+      {/* Qué incluye */}
+      <section className="bg-surface-container-lowest border-t border-surface-container-high py-24 relative z-20" aria-labelledby="funciones-title">
+         <div className="max-w-7xl mx-auto px-6">
+            <h2 id="funciones-title" className="mb-14 text-center text-3xl md:text-4xl font-black tracking-tight text-on-surface">Todo lo que necesitas para avanzar</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+              {FEATURES.map(({ icon: Icon, tone, title, text }) => (
+                <div key={title} className="flex flex-col gap-4">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${TONE[tone]}`}>
+                    <Icon className="w-6 h-6" aria-hidden />
+                  </div>
+                  <h3 className="text-xl font-bold text-on-surface">{title}</h3>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">{text}</p>
+                </div>
+              ))}
             </div>
          </div>
       </section>
-      
+
+      <Pricing />
+      <Faq />
+
+      {/* Llamada final */}
+      <section className="border-t border-surface-container-high py-24 px-6 text-center">
+        <h2 className="mx-auto max-w-2xl text-3xl md:text-4xl font-black tracking-tight text-on-surface">Pon orden hoy. Decide después si necesitas más.</h2>
+        <p className="mx-auto mt-4 max-w-xl text-on-surface-variant">El plan gratuito no caduca. Cuando tu equipo crezca, pruebas cualquier plan 14 días sin tarjeta.</p>
+        <a
+          href="/board"
+          className="group mt-8 inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-br from-primary to-primary-dim text-black font-extrabold text-sm uppercase tracking-widest rounded-2xl shadow-[0_0_40px] shadow-primary/40 hover:scale-105 transition-all"
+        >
+          Empezar gratis <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </a>
+      </section>
+
       <footer className="bg-surface-container-low border-t border-surface-container-high py-8 text-center text-sm text-on-surface-variant">
-         <p>© {new Date().getFullYear()} Serenboard App. Construido a pulso y código.</p>
+         <p>© {new Date().getFullYear()} Serenboard</p>
+         <p className="mt-2"><Link href="/precios" className="font-semibold text-primary hover:underline">Planes y precios</Link></p>
          <LegalLinks className="mt-3 justify-center" />
       </footer>
     </div>

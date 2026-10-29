@@ -5,6 +5,7 @@
 !src/lib/permissions.ts
 !src/lib/initials.ts
 !src/lib/reminders.ts
+!src/lib/plans.ts
 native/mobile/node_modules
 native/mobile/android
 native/mobile/ios

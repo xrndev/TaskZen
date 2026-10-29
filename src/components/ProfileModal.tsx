@@ -6,6 +6,7 @@ import { toast } from '@/lib/toast'
 import { Profile } from '@/types'
 import { LegalLinks } from './LegalPage'
 import { NotificationSettings } from './NotificationSettings'
+import { PlanPanel } from './PlanPanel'
 import { SecuritySettings } from './SecuritySettings'
 import { LogOut, Image as ImageIcon, Upload, X, Check } from 'lucide-react'
 import { fallbackAvatar } from '@/lib/avatar';
@@ -145,6 +146,7 @@ export function ProfileModal({
             </button>
          </div>
 
+         <div className="mt-6 border-t border-outline-variant/10 pt-4"><PlanPanel scope="user" /></div>
          <SecuritySettings />
          <NotificationSettings />
 

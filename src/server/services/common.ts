@@ -3,7 +3,7 @@ import { teamMembers, user } from '@/db/schema'
 import type { Db } from '@/server/db'
 import type { Profile, TeamRole } from '@/types'
 
-export type ErrorCode = 'FORBIDDEN' | 'NOT_FOUND' | 'INVALID' | 'CONFLICT'
+export type ErrorCode = 'FORBIDDEN' | 'NOT_FOUND' | 'INVALID' | 'CONFLICT' | 'LIMIT'
 
 /** Error de negocio con mensaje apto para mostrar al usuario. */
 export class ServiceError extends Error {

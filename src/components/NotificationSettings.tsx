@@ -30,7 +30,7 @@ const TIME = 'h-11 w-full rounded-lg border border-outline-variant/30 bg-surface
 
 export function NotificationSettings() {
   const env = usePushEnvironment();
-  const [state, setState] = useState<{ publicKey: string | null; prefs: Prefs; devices: number; allowedOffsets: number[] } | null>(null);
+  const [state, setState] = useState<{ publicKey: string | null; prefs: Prefs; devices: number; allowedOffsets: number[]; maxOffsets: number } | null>(null);
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [thisDevice, setThisDevice] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -117,6 +117,7 @@ export function NotificationSettings() {
   };
 
   const patch = (p: Partial<Prefs>) => setPrefs((cur) => (cur ? { ...cur, ...p } : cur));
+  // Se elige libremente (para cambiar un aviso por otro hay que pasar un instante por uno más); el tope del plan lo valida el servidor al guardar.
   const toggleOffset = (m: number) => patch({ offsets_minutes: prefs?.offsets_minutes.includes(m) ? prefs.offsets_minutes.filter((x) => x !== m) : [...(prefs?.offsets_minutes ?? []), m] });
 
   let intro: React.ReactNode = null;
@@ -158,7 +159,7 @@ export function NotificationSettings() {
           </label>
           {prefs.due_soon && (
             <fieldset>
-              <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Avisarme con esta antelación (hasta 4)</legend>
+              <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Avisarme con esta antelación (hasta {state.maxOffsets})</legend>
               <div className="flex flex-wrap gap-2">
                 {state.allowedOffsets.map((m) => {
                   const on = prefs.offsets_minutes.includes(m);

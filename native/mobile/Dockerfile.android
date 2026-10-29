@@ -31,7 +31,7 @@ COPY native/mobile/package.json native/mobile/package-lock.json native/mobile/.n
 RUN npm ci
 
 COPY src/types /repo/src/types
-COPY src/lib/permissions.ts src/lib/initials.ts src/lib/reminders.ts /repo/src/lib/
+COPY src/lib/permissions.ts src/lib/initials.ts src/lib/reminders.ts src/lib/plans.ts /repo/src/lib/
 COPY native/mobile/ ./
 RUN npx expo prebuild --platform android --no-install
 RUN cd android && ./gradlew assembleRelease --no-daemon --console=plain \

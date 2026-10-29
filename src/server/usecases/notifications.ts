@@ -4,6 +4,7 @@ import { fcmFromEnv } from '@/server/push/fcm'
 import { getPushSender } from '@/server/push/sender'
 import { vapidFromEnv } from '@/server/push/webpush'
 import { ServiceError } from '@/server/services/common'
+import { assertCanSetReminderOffsets, userLimits } from '@/server/services/billing'
 import * as svc from '@/server/services/notifications'
 
 const prefsSchema = z.object({
@@ -37,6 +38,7 @@ export async function getState(db: Db, userId: string) {
     prefs: await svc.getPrefs(db, userId),
     devices: await svc.countActiveEndpoints(db, userId),
     allowedOffsets: [...svc.ALLOWED_OFFSETS],
+    maxOffsets: (await userLimits(db, userId)).maxReminderOffsets,
   }
 }
 
@@ -73,7 +75,11 @@ export async function unregister(db: Db, userId: string, input: unknown) {
   return { devices }
 }
 
-export const updatePrefs = (db: Db, userId: string, input: unknown) => svc.savePrefs(db, userId, prefsSchema.parse(input))
+export async function updatePrefs(db: Db, userId: string, input: unknown) {
+  const prefs = prefsSchema.parse(input)
+  await assertCanSetReminderOffsets(db, userId, new Set(prefs.offsets_minutes).size, (await svc.getPrefs(db, userId)).offsets_minutes.length)
+  return svc.savePrefs(db, userId, prefs)
+}
 
 export async function sendTest(db: Db, userId: string) {
   const sender = getPushSender()

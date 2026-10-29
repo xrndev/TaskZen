@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Db } from '@/server/db'
+import { grantPlan } from '@/server/services/billing'
 import { createTestDb, createUser } from './helpers/testdb'
 
 const state = vi.hoisted(() => ({ userId: null as string | null, db: null as unknown }))
@@ -30,6 +31,11 @@ import * as teamMembers from '@/app/api/v1/teams/[id]/members/route'
 import * as teamTags from '@/app/api/v1/teams/[id]/tags/route'
 import * as team from '@/app/api/v1/teams/[id]/route'
 import * as me from '@/app/api/v1/me/route'
+import * as myBilling from '@/app/api/v1/me/billing/route'
+import * as myBillingTrial from '@/app/api/v1/me/billing/trial/route'
+import * as myExport from '@/app/api/v1/me/export/route'
+import * as teamBilling from '@/app/api/v1/teams/[id]/billing/route'
+import * as teamExport from '@/app/api/v1/teams/[id]/export/route'
 import * as taskComments from '@/app/api/v1/tasks/[id]/comments/route'
 import * as move from '@/app/api/v1/tasks/[id]/move/route'
 import * as task from '@/app/api/v1/tasks/[id]/route'
@@ -55,6 +61,7 @@ beforeAll(async () => {
   state.db = db
   alice = await createUser(db, 'Alice')
   bob = await createUser(db, 'Bob')
+  await grantPlan(db, { userId: alice.id }, 'user_pro') // varios equipos en las pruebas
 })
 beforeEach(() => { state.userId = alice.id })
 
@@ -221,5 +228,40 @@ describe('API v1', () => {
 
     if (key) process.env.FCM_SERVICE_ACCOUNT_B64 = key
     else delete process.env.FCM_SERVICE_ACCOUNT_B64
+  })
+
+  it('planes: estado, prueba gratuita y exportación con 402 al superar el plan', async () => {
+    const withQuery = (q: string) => new Request(`http://test.local/api/v1/x?${q}`, { method: 'GET' })
+
+    // Alice tiene plan Pro (fixture): ve su plan y exporta.
+    state.userId = alice.id
+    const mine = await call(myBilling.GET(req('GET')))
+    expect(mine.status).toBe(200)
+    expect(mine.body.data).toMatchObject({ scope: 'user', plan: 'user_pro', limits: { maxOwnedTeams: null } })
+    const csv = await call(myExport.GET(withQuery('format=csv')))
+    expect(csv.status).toBe(200)
+    expect(csv.body.data.filename).toMatch(/^serenboard-mis-tareas-.*\.csv$/)
+
+    // Bob es gratuito: 402 con código LIMIT y un mensaje que explica cómo mejorarlo.
+    state.userId = bob.id
+    const denied = await call(myExport.GET(withQuery('format=csv')))
+    expect(denied.status).toBe(402)
+    expect(denied.body).toMatchObject({ code: 'LIMIT' })
+    expect(denied.body.error).toContain('plan')
+    expect((await call(myExport.GET(withQuery('format=xml')))).status).toBe(400)
+
+    // Prueba gratuita: una vez; después 409.
+    expect((await call(myBillingTrial.POST(req('POST', { plan: 'user_free' })))).status).toBe(400)
+    expect((await call(myBillingTrial.POST(req('POST', { plan: 'user_plus' })))).status).toBe(201)
+    expect((await call(myBillingTrial.POST(req('POST', { plan: 'user_pro' })))).status).toBe(409)
+    expect((await call(myExport.GET(withQuery('format=csv')))).status).toBe(200)
+    expect((await call(myExport.GET(withQuery('format=json')))).status).toBe(402) // el JSON es de Pro
+
+    // Equipos: un ajeno no ve ni prueba el plan (se trata como inexistente o sin acceso).
+    const mineTeam = (await call(teams.POST(req('POST', { name: 'Equipo planes' })))).body.data.id as string
+    state.userId = alice.id
+    expect((await call(teamBilling.GET(req('GET'), ctx(mineTeam)))).status).toBe(403)
+    expect((await call(teamExport.GET(withQuery('format=csv'), ctx(mineTeam)))).status).toBe(403)
+    expect((await call(teamBilling.GET(req('GET'), ctx('no-es-un-id')))).status).toBe(404)
   })
 })

@@ -7,6 +7,7 @@ import * as tasksSvc from '@/server/services/tasks'
 import * as tagsSvc from '@/server/services/tags'
 import * as commentsSvc from '@/server/services/comments'
 import * as attSvc from '@/server/services/attachments'
+import { grantPlan } from '@/server/services/billing'
 import { createTestDb, createUser } from './helpers/testdb'
 
 let db: Db
@@ -24,6 +25,8 @@ beforeAll(async () => {
   alice = await createUser(db, 'Alice')
   bob = await createUser(db, 'Bob')
   carol = await createUser(db, 'Carol')
+  // Estas pruebas crean varios equipos con la misma persona: necesita un plan sin tope de equipos.
+  await grantPlan(db, { userId: alice.id }, 'user_pro')
   // Equipo compartido: Alice admin, Bob member. Carol queda fuera.
   shared = await teamsSvc.createTeam(db, alice.id, 'Shared')
   await teamsSvc.inviteMember(db, alice.id, shared.id, 'bob@test.dev', 'member')

@@ -3,6 +3,7 @@ import { attachments, comments } from '@/db/schema'
 import { can } from '@/lib/permissions'
 import type { Db } from '@/server/db'
 import type { Attachment } from '@/types'
+import { assertStorageAvailable } from './billing'
 import { notifyTeam, ServiceError } from './common'
 import { taskAccess } from './comments'
 
@@ -42,13 +43,15 @@ export interface NewAttachment {
 }
 
 /** Registra un archivo ya guardado en disco. Quien llama debe haber comprobado permisos con `authorizeUpload`. */
-export async function authorizeUpload(db: Db, userId: string, target: { taskId?: string | null; commentId?: string | null }) {
+export async function authorizeUpload(db: Db, userId: string, target: { taskId?: string | null; commentId?: string | null; size?: number }) {
   if (!!target.taskId === !!target.commentId) {
     throw new ServiceError('INVALID', 'Indica la tarea o el comentario de destino (solo uno).')
   }
   const taskId = await resolveTaskId(db, { task_id: target.taskId ?? null, comment_id: target.commentId ?? null })
   const { task, role } = await taskAccess(db, userId, taskId)
   if (!can(userId, role, 'attachment:upload')) throw new ServiceError('FORBIDDEN', 'No puedes adjuntar archivos aquí.')
+  // El espacio depende del plan del equipo (o del personal, en el espacio personal). Se mira antes de escribir en disco.
+  if (target.size) await assertStorageAvailable(db, task.team_id, target.size)
   return task
 }
 

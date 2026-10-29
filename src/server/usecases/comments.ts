@@ -26,7 +26,7 @@ export async function uploadAttachment(db: Db, userId: string, file: unknown, ta
   const taskId = target.taskId ? parseId(target.taskId) : null
   const commentId = target.commentId ? parseId(target.commentId) : null
   // Autorizar ANTES de escribir en disco.
-  await attSvc.authorizeUpload(db, userId, { taskId, commentId })
+  await attSvc.authorizeUpload(db, userId, { taskId, commentId, size: upload.size })
   const saved = await saveUpload(upload, { dir: 'attachments', maxSize: attSvc.MAX_FILE_SIZE })
   try {
     return await attSvc.recordAttachment(db, userId, {

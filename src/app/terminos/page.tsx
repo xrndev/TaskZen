@@ -52,7 +52,7 @@ export default function TermsPage() {
           <li>Sobrecargar el servicio con peticiones automatizadas, hacer scraping o ingeniería inversa para fines abusivos.</li>
           <li>Usar el servicio para enviar spam o para hostigar a otras personas.</li>
         </List>
-        <P>El servicio tiene límites técnicos (por ejemplo, 10 MB por archivo adjunto y tipos de archivo permitidos) que pueden ajustarse.</P>
+        <P>El servicio tiene límites técnicos (por ejemplo, 10 MB por archivo adjunto, el espacio total de cada plan y los tipos de archivo permitidos) que pueden ajustarse.</P>
       </Section>
 
       <Section id="contenido" title="5. Tu contenido">
@@ -78,7 +78,29 @@ export default function TermsPage() {
         </P>
       </Section>
 
-      <Section id="disponibilidad" title="8. Disponibilidad y copias de seguridad">
+      <Section id="planes" title="8. Planes, pruebas y límites">
+        <List>
+          <li>
+            Serenboard ofrece un <Strong>plan gratuito sin caducidad</Strong> y planes de pago, personales y de equipo, con límites distintos (miembros por
+            equipo, espacio de adjuntos, equipos propios, avisos por tarea y exportación de datos). Lo que incluye cada uno se describe en la página de planes.
+          </li>
+          <li>
+            Los planes de pago pueden probarse <Strong>14 días gratis, una sola vez por persona o por equipo</Strong>, sin facilitar datos de pago. Al terminar la
+            prueba se vuelve al plan gratuito automáticamente.
+          </li>
+          <li>
+            A fecha de estas condiciones <Strong>los pagos en línea no están activados</Strong>. Antes de cobrar nada se informará del precio, los impuestos, la
+            periodicidad y cómo cancelar, y estas condiciones se actualizarán.
+          </li>
+          <li>
+            Bajar de plan o terminar una prueba <Strong>no borra tu contenido</Strong>: solo impide superar los límites del plan gratuito (por ejemplo, añadir
+            miembros o subir más archivos).
+          </li>
+          <li>Las funciones marcadas como «Próximamente» son una intención, no un compromiso, y pueden cambiar o no llegar a ofrecerse.</li>
+        </List>
+      </Section>
+
+      <Section id="disponibilidad" title="9. Disponibilidad y copias de seguridad">
         <P>
           El servicio se ofrece «tal cual», sin garantía de disponibilidad continua: puede haber interrupciones por mantenimiento, fallos o causas ajenas. Hacemos
           copias de seguridad diarias que se conservan 14 días, pero no garantizamos la recuperación de un dato concreto. Te recomendamos guardar por tu cuenta lo
@@ -86,7 +108,7 @@ export default function TermsPage() {
         </P>
       </Section>
 
-      <Section id="responsabilidad" title="9. Responsabilidad">
+      <Section id="responsabilidad" title="10. Responsabilidad">
         <P>
           En la medida que permita la ley, no respondemos de los daños indirectos, de la pérdida de datos o de beneficios derivados del uso o de la
           imposibilidad de usar el servicio, ni del contenido que publiquen otras personas. Esto no limita la responsabilidad que no pueda excluirse legalmente
@@ -94,7 +116,7 @@ export default function TermsPage() {
         </P>
       </Section>
 
-      <Section id="baja" title="10. Baja y suspensión">
+      <Section id="baja" title="11. Baja y suspensión">
         <P>
           Puedes dejar de usar el servicio cuando quieras y pedir la baja de tu cuenta escribiendo a {contact}. Podemos suspender o cancelar una cuenta si se
           incumplen estas condiciones, si hay riesgo para la seguridad o si lo exige una autoridad. Tras la baja, tus datos se tratan como indica la{' '}
@@ -102,21 +124,21 @@ export default function TermsPage() {
         </P>
       </Section>
 
-      <Section id="datos" title="11. Protección de datos">
+      <Section id="datos" title="12. Protección de datos">
         <P>
           El tratamiento de tus datos personales se describe en la{' '}
           <a href={PRIVACY_PATH} className="font-medium text-primary underline underline-offset-2">Política de privacidad</a>, que forma parte de estas condiciones.
         </P>
       </Section>
 
-      <Section id="cambios" title="12. Cambios en estas condiciones">
+      <Section id="cambios" title="13. Cambios en estas condiciones">
         <P>
           Podemos actualizar estas condiciones. Publicaremos la nueva versión con su fecha y, si el cambio es relevante, te lo avisaremos. Si sigues usando el
           servicio después, entendemos que las aceptas; si no estás de acuerdo, puedes pedir la baja.
         </P>
       </Section>
 
-      <Section id="ley" title="13. Ley aplicable y jurisdicción">
+      <Section id="ley" title="14. Ley aplicable y jurisdicción">
         <P>
           Estas condiciones se rigen por la legislación española. Si eres consumidor, podrás acudir a los juzgados y tribunales de tu domicilio; en otro caso, a los
           de la ciudad del responsable del servicio. Si alguna cláusula resultara inválida, el resto seguirá en vigor.

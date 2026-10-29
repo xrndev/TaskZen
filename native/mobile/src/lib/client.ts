@@ -1,3 +1,4 @@
+import type { UserBilling, UserPlanId } from '@domain/lib/plans'
 import type { Attachment, Profile, Tag, Task, TaskComment, TaskStatus, Team, TeamMember, TeamRole } from '@domain/types'
 import { api, upload, type PickedFile } from './api'
 
@@ -23,7 +24,7 @@ export interface NotificationPrefs {
   quiet_end: string | null
   timezone: string
 }
-export interface NotificationState { publicKey: string | null; fcm: boolean; prefs: NotificationPrefs; devices: number; allowedOffsets: number[] }
+export interface NotificationState { publicKey: string | null; fcm: boolean; prefs: NotificationPrefs; devices: number; allowedOffsets: number[]; maxOffsets: number }
 
 export interface InviteInfo { id: string; role: TeamRole; expires_at: string; created_at: string }
 
@@ -33,6 +34,8 @@ export const apiClient = {
   setPassword: (password: string) => api<null>('POST', '/me/password', { password }),
   uploadAvatar: (file: PickedFile) => upload<string>('/uploads/avatar', file),
   providers: () => api<string[]>('GET', '/auth/providers'),
+  billing: () => api<UserBilling>('GET', '/me/billing'),
+  startTrial: (plan: UserPlanId) => api<null>('POST', '/me/billing/trial', { plan }),
 
   teams: () => api<Team[]>('GET', '/teams'),
   createTeam: (name: string) => api<Team>('POST', '/teams', { name }),

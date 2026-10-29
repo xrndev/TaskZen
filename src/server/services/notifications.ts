@@ -7,7 +7,7 @@ import { ServiceError } from './common'
 
 /** Antelaciones que se pueden elegir, en minutos. */
 export const ALLOWED_OFFSETS = [5, 15, 30, 60, 120, 180, 360, 720, 1440, 2880] as const
-export const MAX_OFFSETS = 4
+export const MAX_OFFSETS = 6
 export const MAX_ENDPOINTS_PER_USER = 10
 /** Los avisos se buscan hasta esta distancia en el futuro (la mayor antelación es de 2 días). */
 const HORIZON_MS = 3 * 24 * 60 * 60_000

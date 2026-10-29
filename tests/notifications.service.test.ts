@@ -124,7 +124,7 @@ describe('preferencias', () => {
 
   it('valida antelaciones, horas y zona horaria', async () => {
     await expectCode(svc.savePrefs(db, alice.id, prefs({ offsets_minutes: [7] })), 'INVALID')
-    await expectCode(svc.savePrefs(db, alice.id, prefs({ offsets_minutes: [5, 15, 30, 60, 120] })), 'INVALID')
+    await expectCode(svc.savePrefs(db, alice.id, prefs({ offsets_minutes: [5, 15, 30, 60, 120, 180, 360] })), 'INVALID')
     await expectCode(svc.savePrefs(db, alice.id, prefs({ offsets_minutes: [] })), 'INVALID')
     await expectCode(svc.savePrefs(db, alice.id, prefs({ quiet_start: '22:00', quiet_end: null })), 'INVALID')
     await expectCode(svc.savePrefs(db, alice.id, prefs({ quiet_start: '25:00', quiet_end: '08:00' })), 'INVALID')

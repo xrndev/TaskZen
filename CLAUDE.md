@@ -32,11 +32,12 @@ server actions (web)   rutas /api/v1 (app)     ← adaptadores finos: sesión + 
 - Las rutas `/api/v1` y las actions no validan ni llaman a servicios directamente.
 - Los errores de negocio son `ServiceError` (`FORBIDDEN | NOT_FOUND | INVALID | CONFLICT`); un id mal formado es `NOT_FOUND` (no se distingue de "sin acceso").
 - No hay RLS: toda la autorización está en servidor y cubierta por tests (`tests/services.test.ts`, `tests/api.v1.test.ts`).
+- Planes: el catálogo y los límites están en `src/lib/plans.ts` (código puro, lo comparten servicios, landing y app) y se aplican en `services/billing.ts`; los demás servicios solo llaman a sus `assert...` y lanzan `ServiceError('LIMIT')` (HTTP 402). Lo no construido se rotula «Próximamente», nunca como incluido. Detalle y cómo conceder planes a mano: `docs/PLANES.md`.
 - Notificaciones: `src/server/push/` (Web Push con VAPID y FCM con cuenta de servicio, repartidos por `RoutingSender`). Detalle en `docs/PUSH-FCM.md`.
 
 ## App nativa (`native/mobile`)
 - Expo SDK 58 + Expo Router; **lee su `AGENTS.md`** antes de tocar APIs de Expo (cambian entre versiones). `npx tsc --noEmit` y `npx expo-doctor` desde esa carpeta.
-- Comparte con la web solo código puro, importado como `@domain/...` (alias en `tsconfig.json` + `metro.config.js`): `src/types`, `src/lib/permissions.ts`, `src/lib/initials.ts`, `src/lib/reminders.ts`. Esos archivos **no pueden importar `@/...` ni nada del framework** (usa rutas relativas).
+- Comparte con la web solo código puro, importado como `@domain/...` (alias en `tsconfig.json` + `metro.config.js`): `src/types`, `src/lib/permissions.ts`, `src/lib/initials.ts`, `src/lib/reminders.ts`, `src/lib/plans.ts` (si añades otro, ponlo también en el `COPY` de `Dockerfile.android` y en su `.dockerignore`, que es una lista blanca). Esos archivos **no pueden importar `@/...` ni nada del framework** (usa rutas relativas).
 - Todas las llamadas HTTP pasan por `src/lib/client.ts` (mismos nombres que los casos de uso). La sesión es la cookie de Better Auth (plugin Expo) enviada a mano en la cabecera `Cookie`.
 - Diseño = web móvil: mismos 5 temas (`lib/theme.tsx`, por defecto "cyber"), fuente Geist, mismas pantallas. Si cambias algo en `src/components/mobile/*`, cambia también su equivalente nativo.
 - Hermes no entiende las fechas de Postgres: usa siempre `lib/dates.ts` (`parseDate`), nunca `new Date(string)`.
