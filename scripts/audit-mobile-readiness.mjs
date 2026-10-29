@@ -151,7 +151,7 @@ if (json) {
   console.log(JSON.stringify({ tally, results }, null, 2))
 } else {
   const icon = { BLOQUEO: '✖', AVISO: '▲', INFO: 'i', OK: '✔' }
-  console.log('\nAuditoría de preparación móvil y push — TaskZen\n')
+  console.log('\nAuditoría de preparación móvil y push — Serenboard\n')
   for (const r of results) {
     console.log(`${icon[r.level]} [${r.level}] ${r.title}`)
     console.log(`    ${r.detail}`)

@@ -10,7 +10,7 @@ test('assetlinks.json asocia el dominio con la app firmada y descarta huellas ma
   const body = await res.json()
   expect(body).toHaveLength(1)
   expect(body[0].relation).toEqual(['delegate_permission/common.handle_all_urls'])
-  expect(body[0].target).toMatchObject({ namespace: 'android_app', package_name: 'io.github.xrndev.taskzen' })
+  expect(body[0].target).toMatchObject({ namespace: 'android_app', package_name: 'io.github.xrndev.serenboard' })
   // Solo la huella válida: la de prueba mal formada (configurada en playwright.config.ts) se descarta.
   expect(body[0].target.sha256_cert_fingerprints).toEqual([FAKE_FINGERPRINT])
 })
@@ -21,9 +21,9 @@ for (const [name, viewport] of [['escritorio', { width: 1280, height: 800 }], ['
     const page = await ctx.newPage()
     await page.goto('/instalar')
 
-    await expect(page.getByRole('heading', { name: 'Instala TaskZen en tu móvil' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Instala Serenboard en tu móvil' })).toBeVisible()
     const apk = page.getByRole('link', { name: /Descargar la app/ })
-    await expect(apk).toHaveAttribute('href', '/descargas/TaskZen.apk')
+    await expect(apk).toHaveAttribute('href', '/descargas/Serenboard.apk')
     await expect(page.getByRole('heading', { name: 'iPhone y iPad' })).toBeVisible()
     await expect(page.getByText('Añadir a pantalla de inicio').first()).toBeVisible()
     await expect(page.getByRole('img', { name: /Código QR/ })).toBeVisible()

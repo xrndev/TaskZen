@@ -1,11 +1,11 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/taskzen-logo-fondo-oscuro.png">
-    <img src="docs/brand/taskzen-logo.png" alt="TaskZen" width="220">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/serenboard-logo-fondo-oscuro.png">
+    <img src="docs/brand/serenboard-logo.png" alt="Serenboard" width="220">
   </picture>
 </p>
 
-# TaskZen
+# Serenboard
 
 Tablero Kanban para uso personal y en equipo: tareas, etiquetas jerárquicas, comentarios con hilos, adjuntos, roles por equipo y actualización en tiempo real.
 
@@ -23,7 +23,7 @@ Tablero Kanban para uso personal y en equipo: tareas, etiquetas jerárquicas, co
 ## Arquitectura
 Todo corre en una VPS propia: Caddy como puerta de entrada con HTTPS, la app Next.js, PostgreSQL y un volumen para los archivos subidos. No depende de Vercel ni de Supabase. Lo único externo es un Worker de Cloudflare, gratuito, que hace de temporizador para los recordatorios.
 
-![Recorrido de una visita a TaskZen: DuckDNS, Caddy, Next.js y PostgreSQL dentro de la VPS](docs/arquitectura-visita.svg)
+![Recorrido de una visita a Serenboard: DuckDNS, Caddy, Next.js y PostgreSQL dentro de la VPS](docs/arquitectura-visita.svg)
 
 1. El navegador resuelve el nombre en DuckDNS y recibe la IP de la VPS.
 2. Entra por el puerto 443. Caddy descifra el HTTPS con un certificado de Let's Encrypt que renueva él solo.

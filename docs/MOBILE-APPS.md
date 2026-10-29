@@ -77,7 +77,7 @@ No se publica en ninguna tienda por ahora (cuestan dinero y pasan revisión). Lo
 
 | Plataforma | Qué se reparte | Coste | Cómo se instala |
 |---|---|---|---|
-| **Android** | `TaskZen.apk` firmado, servido desde la propia VPS (`/descargas/TaskZen.apk`) | 0 | Descargar, permitir "instalar de esta fuente" y, si aparece, el aviso de Play Protect |
+| **Android** | `Serenboard.apk` firmado, servido desde la propia VPS (`/descargas/Serenboard.apk`) | 0 | Descargar, permitir "instalar de esta fuente" y, si aparece, el aviso de Play Protect |
 | **iPhone / iPad** | La web instalada como app desde Safari (*Compartir → Añadir a pantalla de inicio*) | 0 | Cualquiera, sin cuenta ni ordenador |
 
 La página pública **`/instalar`** explica ambos casos y trae un código QR para pasárselo a otra persona.

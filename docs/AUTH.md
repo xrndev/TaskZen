@@ -1,6 +1,6 @@
 # Acceso y registro
 
-TaskZen no envía correos. Se entra con **Google, Microsoft (Outlook), GitHub, un passkey o usuario y contraseña**.
+Serenboard no envía correos. Se entra con **Google, Microsoft (Outlook), GitHub, un passkey o usuario y contraseña**.
 
 ## Quién puede crear una cuenta
 El registro está **cerrado**. Solo se puede crear una cuenta si se cumple una de estas condiciones:

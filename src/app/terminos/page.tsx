@@ -3,8 +3,8 @@ import { LegalPage, List, P, Section, Strong } from '@/components/LegalPage'
 import { legalInfo, PRIVACY_PATH } from '@/lib/legal'
 
 export const metadata: Metadata = {
-  title: 'Condiciones del servicio · TaskZen',
-  description: 'Las reglas de uso de TaskZen: acceso, uso aceptable, contenido, disponibilidad y responsabilidad.',
+  title: 'Condiciones del servicio · Serenboard',
+  description: 'Las reglas de uso de Serenboard: acceso, uso aceptable, contenido, disponibilidad y responsabilidad.',
 }
 
 // Los datos del responsable se leen del entorno en cada petición.
@@ -17,11 +17,11 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Condiciones del servicio"
-      intro="Estas condiciones regulan el uso de TaskZen, la aplicación web y Android para organizar tareas y proyectos en equipo. Al crear una cuenta o usar el servicio las aceptas; si no estás de acuerdo, no lo utilices."
+      intro="Estas condiciones regulan el uso de Serenboard, la aplicación web y Android para organizar tareas y proyectos en equipo. Al crear una cuenta o usar el servicio las aceptas; si no estás de acuerdo, no lo utilices."
     >
       <Section id="quien" title="1. Quién presta el servicio">
         <P>
-          TaskZen es prestado por <Strong>{info.owner ?? 'la persona que administra este servicio'}</Strong>
+          Serenboard es prestado por <Strong>{info.owner ?? 'la persona que administra este servicio'}</Strong>
           {info.taxId ? <> (NIF/CIF {info.taxId})</> : null}, accesible en <Strong>{info.site}</Strong>. Puedes contactar en {contact}.
         </P>
       </Section>
@@ -57,7 +57,7 @@ export default function TermsPage() {
 
       <Section id="contenido" title="5. Tu contenido">
         <P>
-          Lo que creas en TaskZen (tareas, comentarios, archivos…) sigue siendo tuyo. Nos concedes únicamente el permiso necesario para alojarlo, procesarlo y
+          Lo que creas en Serenboard (tareas, comentarios, archivos…) sigue siendo tuyo. Nos concedes únicamente el permiso necesario para alojarlo, procesarlo y
           mostrarlo a los miembros de tus equipos con el fin de prestar el servicio. Eres responsable de que tengas derecho a publicarlo. Podemos retirar
           contenido o suspender una cuenta cuando incumpla estas condiciones o lo exija la ley.
         </P>
@@ -65,7 +65,7 @@ export default function TermsPage() {
 
       <Section id="propiedad" title="6. Propiedad intelectual">
         <P>
-          El software, el diseño y la marca TaskZen pertenecen a su titular. Estas condiciones no te transfieren ningún derecho sobre ellos más allá del uso
+          El software, el diseño y la marca Serenboard pertenecen a su titular. Estas condiciones no te transfieren ningún derecho sobre ellos más allá del uso
           del servicio tal y como se ofrece.
         </P>
       </Section>

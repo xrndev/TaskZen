@@ -6,7 +6,7 @@ import { apiClient } from './client'
 
 /** Debe coincidir con `channel_id` del servidor (src/server/push/fcm.ts). */
 export const CHANNEL = 'avisos'
-const TOKEN_KEY = 'taskzen.fcm'
+const TOKEN_KEY = 'serenboard.fcm'
 
 // Con la app abierta también se muestra el aviso (por defecto Android lo silenciaría).
 Notifications.setNotificationHandler({
@@ -14,7 +14,7 @@ Notifications.setNotificationHandler({
 })
 
 const timezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone
-const agent = () => `TaskZen Android ${Platform.Version}`
+const agent = () => `Serenboard Android ${Platform.Version}`
 
 async function ensureChannel() {
   // El canal debe existir antes de pedir el permiso: en Android 13+ el aviso no aparece sin canal.

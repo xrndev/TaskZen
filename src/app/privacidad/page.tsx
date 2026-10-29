@@ -3,8 +3,8 @@ import { Ext, LegalPage, List, P, Section, Strong } from '@/components/LegalPage
 import { legalInfo, TERMS_PATH } from '@/lib/legal'
 
 export const metadata: Metadata = {
-  title: 'Política de privacidad · TaskZen',
-  description: 'Qué datos trata TaskZen, para qué, con quién se comparten, cuánto tiempo se conservan y cómo ejercer tus derechos.',
+  title: 'Política de privacidad · Serenboard',
+  description: 'Qué datos trata Serenboard, para qué, con quién se comparten, cuánto tiempo se conservan y cómo ejercer tus derechos.',
 }
 
 // Los datos del responsable se leen del entorno en cada petición.
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Política de privacidad"
-      intro="TaskZen es una aplicación para organizar tareas y proyectos en equipo, disponible en la web y como app para Android. Esta política explica, con claridad, qué datos personales trata, para qué, con quién los comparte y cómo puedes controlarlos."
+      intro="Serenboard es una aplicación para organizar tareas y proyectos en equipo, disponible en la web y como app para Android. Esta política explica, con claridad, qué datos personales trata, para qué, con quién los comparte y cómo puedes controlarlos."
     >
       <Section id="responsable" title="1. Quién es el responsable">
         <P>
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           {info.taxId ? <> (NIF/CIF {info.taxId})</> : null}
           {info.address ? <>, con domicilio de contacto en {info.address}</> : null}. Puedes escribirle a {contact} para cualquier asunto de privacidad.
         </P>
-        <P>El servicio se ofrece en <Strong>{info.site}</Strong> y en la app de Android de TaskZen.</P>
+        <P>El servicio se ofrece en <Strong>{info.site}</Strong> y en la app de Android de Serenboard.</P>
       </Section>
 
       <Section id="datos" title="2. Qué datos tratamos">
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
       </Section>
 
       <Section id="menores" title="10. Menores">
-        <P>TaskZen no está dirigido a menores de 16 años y no recopilamos a sabiendas datos suyos. Si crees que un menor se ha registrado, avísanos y eliminaremos la cuenta.</P>
+        <P>Serenboard no está dirigido a menores de 16 años y no recopilamos a sabiendas datos suyos. Si crees que un menor se ha registrado, avísanos y eliminaremos la cuenta.</P>
       </Section>
 
       <Section id="cambios" title="11. Cambios en esta política">

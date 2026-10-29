@@ -125,7 +125,7 @@ export function NotificationSettings() {
   else if (!env.supported && env.isIOS && !env.standalone) {
     intro = (
       <p className="text-xs leading-relaxed text-on-surface-variant">
-        En iPhone los avisos solo funcionan con TaskZen abierta desde el icono de la pantalla de inicio. Añádela desde Safari (<strong>Compartir → Añadir a pantalla de inicio</strong>) y vuelve aquí. <Link href="/instalar" className="font-semibold text-primary underline">Ver instrucciones</Link>.
+        En iPhone los avisos solo funcionan con Serenboard abierta desde el icono de la pantalla de inicio. Añádela desde Safari (<strong>Compartir → Añadir a pantalla de inicio</strong>) y vuelve aquí. <Link href="/instalar" className="font-semibold text-primary underline">Ver instrucciones</Link>.
       </p>
     );
   } else if (!env.supported) intro = <p className="text-xs text-on-surface-variant">Este navegador no admite notificaciones.</p>;

@@ -203,7 +203,7 @@ describe('API v1', () => {
 
     expect((await call(notifState.GET(req('GET')))).body.data).toMatchObject({ fcm: true, devices: 0, prefs: { enabled: false } })
     expect((await call(notifDevices.POST(req('POST', { token: 'corto', timezone: 'Europe/Madrid' })))).status).toBe(400)
-    const reg = await call(notifDevices.POST(req('POST', { token: TOKEN, userAgent: 'TaskZen Android', timezone: 'Europe/Madrid' })))
+    const reg = await call(notifDevices.POST(req('POST', { token: TOKEN, userAgent: 'Serenboard Android', timezone: 'Europe/Madrid' })))
     expect(reg.status).toBe(201)
     expect(reg.body.data).toEqual({ devices: 1 })
     expect((await call(notifState.GET(req('GET')))).body.data).toMatchObject({ devices: 1, prefs: { enabled: true, timezone: 'Europe/Madrid' } })

@@ -11,9 +11,9 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
              <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-primary/10 flex items-center justify-center bg-white p-1">
-               <img src="/logo-mark.png" alt="TaskZen Logo" className="w-full h-full object-contain" />
+               <img src="/logo-mark.png" alt="Serenboard Logo" className="w-full h-full object-contain" />
              </div>
-             <span className="text-xl font-black tracking-tight text-on-surface">TaskZen</span>
+             <span className="text-xl font-black tracking-tight text-on-surface">Serenboard</span>
           </div>
           
           <div className="flex items-center gap-6">
@@ -49,7 +49,7 @@ export default function LandingPage() {
          </h1>
          
          <p className="text-lg md:text-xl text-on-surface-variant max-w-2xl mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300 fill-mode-both leading-relaxed">
-           TaskZen es un lienzo en blanco para tu productividad. Un tablero Kanban ultrarrápido, arrastrable, y con sincronización en tiempo real gestionando múltiples temas estéticos.
+           Serenboard es un lienzo en blanco para tu productividad. Un tablero Kanban ultrarrápido, arrastrable, y con sincronización en tiempo real gestionando múltiples temas estéticos.
          </p>
          
          <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500 fill-mode-both relative z-10">
@@ -75,7 +75,7 @@ export default function LandingPage() {
                    <h2 className="font-semibold text-on-surface uppercase tracking-wider text-[10px]">Backlog</h2>
                  </div>
                  <div className="bg-surface-container rounded-lg p-3 border border-outline-variant/10 shadow-sm">
-                    <p className="text-sm font-semibold text-on-surface">Logo de TaskZen Completado</p>
+                    <p className="text-sm font-semibold text-on-surface">Logo de Serenboard Completado</p>
                     <p className="text-xs text-on-surface-variant mt-2">&quot;Que transmita paz y fluidez.&quot;</p>
                  </div>
                  <div className="bg-surface-container rounded-lg p-3 border border-outline-variant/10 shadow-sm border-l-2 border-l-error">
@@ -138,7 +138,7 @@ export default function LandingPage() {
       </section>
       
       <footer className="bg-surface-container-low border-t border-surface-container-high py-8 text-center text-sm text-on-surface-variant">
-         <p>© {new Date().getFullYear()} TaskZen App. Construido a pulso y código.</p>
+         <p>© {new Date().getFullYear()} Serenboard App. Construido a pulso y código.</p>
          <LegalLinks className="mt-3 justify-center" />
       </footer>
     </div>

@@ -1,6 +1,6 @@
 ---
 name: push-reminders-design
-description: Plan completo para implementar notificaciones push y recordatorios de fecha límite en TaskZen (Web Push hoy, FCM/APNs mañana). Úsala al diseñar, implementar o revisar suscripciones, el programador de recordatorios, las preferencias del usuario o su prueba.
+description: Plan completo para implementar notificaciones push y recordatorios de fecha límite en Serenboard (Web Push hoy, FCM/APNs mañana). Úsala al diseñar, implementar o revisar suscripciones, el programador de recordatorios, las preferencias del usuario o su prueba.
 ---
 # Notificaciones push y recordatorios
 

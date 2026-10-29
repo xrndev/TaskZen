@@ -35,7 +35,7 @@ export default defineConfig({
       TICK_SECRET: E2E_TICK_SECRET,
       VAPID_PUBLIC_KEY: vapid.publicKey,
       VAPID_PRIVATE_KEY: vapid.privateKey,
-      VAPID_SUBJECT: 'mailto:e2e@taskzen.invalid',
+      VAPID_SUBJECT: 'mailto:e2e@serenboard.invalid',
       // Una huella válida y otra mal formada (debe descartarse): ver e2e/install.spec.ts
       ANDROID_SHA256_FINGERPRINTS: 'AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99,no-es-una-huella',
     },

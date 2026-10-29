@@ -11,7 +11,7 @@ export interface VapidConfig {
 export function vapidFromEnv(env: Record<string, string | undefined> = process.env): VapidConfig | null {
   const { VAPID_PUBLIC_KEY: publicKey, VAPID_PRIVATE_KEY: privateKey } = env
   if (!publicKey || !privateKey) return null
-  return { publicKey, privateKey, subject: env.VAPID_SUBJECT || 'mailto:admin@taskzen.invalid' }
+  return { publicKey, privateKey, subject: env.VAPID_SUBJECT || 'mailto:admin@serenboard.invalid' }
 }
 
 export class WebPushSender implements PushSender {

@@ -1,6 +1,6 @@
 ---
 name: store-release-checklist
-description: Lista ordenada para publicar TaskZen en Google Play (TWA) y App Store (Capacitor), con requisitos previos, recursos de la ficha, respuestas de privacidad y riesgos de revisión. Úsala al preparar o revisar una publicación en tiendas.
+description: Lista ordenada para publicar Serenboard en Google Play (TWA) y App Store (Capacitor), con requisitos previos, recursos de la ficha, respuestas de privacidad y riesgos de revisión. Úsala al preparar o revisar una publicación en tiendas.
 ---
 # Lista de publicación en tiendas
 
@@ -25,7 +25,7 @@ Una Trusted Web Activity abre la PWA en Chrome sin barra del navegador. La web e
 - [ ] Reclutar a los 12 testers desde el primer día; el reloj de 14 días no admite atajos.
 
 ## Fase 2: iOS (solo si hay valor nativo que justifique el riesgo)
-**Riesgo principal (Apple 4.2)**: la app debe elevarse "por encima de un sitio web reempaquetado". Un WebView sin más puede ser rechazado. Aporta funciones nativas reales: push, bloqueo con Face ID/Touch ID, compartir hacia TaskZen, widget.
+**Riesgo principal (Apple 4.2)**: la app debe elevarse "por encima de un sitio web reempaquetado". Un WebView sin más puede ser rechazado. Aporta funciones nativas reales: push, bloqueo con Face ID/Touch ID, compartir hacia Serenboard, widget.
 - [ ] Apple Developer Program (suscripción anual; **por confirmar el importe actual**).
 - [ ] Decisión de arquitectura (ADR): `server.url` de Capacitor carga la web remota pero su documentación dice que **no está pensado para producción**; la alternativa soportada es empaquetar la web y hablar con una API (`/api/v1`) sobre los servicios actuales. Elegir con el agente `mobile-architect`.
 - [ ] **Apple 4.8**: o se añade Iniciar con Apple, o se ocultan los proveedores sociales en la build de iOS. Interpretación nuestra (confirmar con Apple): mientras se mantengan Google/GitHub/Microsoft, el correo y contraseña propios no cuentan como el "otro servicio" que exige la regla.

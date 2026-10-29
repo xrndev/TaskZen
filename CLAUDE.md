@@ -1,8 +1,12 @@
 @AGENTS.md
 
-# TaskZen
+# Serenboard
 
 Tablero Kanban en equipo. Web (Next.js 16, React 19, Tailwind 4) + app Android nativa (Expo / React Native) sobre el mismo servidor (PostgreSQL + Drizzle + Better Auth). Idioma del código, comentarios, commits y respuestas: **español**.
+
+## Marca
+- El producto se llama **Serenboard** (antes TaskZen). Logo y activos: `docs/brand/serenboard-marca.svg` es la fuente única; `node scripts/generar-marca.mjs` regenera todos los PNG (web, app y docs).
+- **Siguen con el nombre antiguo a propósito** (renombrarlos rompe lo desplegado): `/opt/taskzen`, volúmenes/imágenes Docker, usuario y base de datos `taskzen`, el host `taskzen.duckdns.org`, el Worker `taskzen-reminders`, y la app TWA antigua en `native/android` (su clave de firma). Se cambian el día que haya dominio propio (`docs/DEPLOY.md`).
 
 ## Comandos
 ```bash
@@ -38,13 +42,13 @@ server actions (web)   rutas /api/v1 (app)     ← adaptadores finos: sesión + 
 - Hermes no entiende las fechas de Postgres: usa siempre `lib/dates.ts` (`parseDate`), nunca `new Date(string)`.
 - No sirve Expo Go (SDK 58 + módulos nativos): se prueba con el APK.
 - **Compilar el APK en Windows falla** (rutas de más de 260 caracteres). Se hace en Docker, desde la raíz del repo:
-  `docker build -f native/mobile/Dockerfile.android --output type=local,dest=native/mobile/out .` → `native/mobile/out/TaskZen.apk` (firmado con clave de depuración, solo arm64).
+  `docker build -f native/mobile/Dockerfile.android --output type=local,dest=native/mobile/out .` → `native/mobile/out/Serenboard.apk` (firmado con clave de depuración, solo arm64).
 - Las notificaciones nativas necesitan `native/mobile/google-services.json` (Firebase) y `FCM_SERVICE_ACCOUNT_B64` en el servidor. Sin ellos la app compila, pero avisa de que no están configuradas.
 
 ## Despliegue (VPS en `/opt/taskzen`, Docker Compose + Caddy)
 - La VPS no compila: se construyen las imágenes en local y se suben (ver `docs/DEPLOY.md`). Usa un script con `set -euo pipefail`: un `| tail` oculta los fallos y subiría la imagen anterior.
 - Acceso por clave SSH (`~/.ssh/chollo_vps`). **No guardes contraseñas ni claves en el repositorio, en la memoria ni en el chat.**
-- El APK se publica copiándolo a `/opt/taskzen/downloads/TaskZen-nativa.apk` (se sirve en `/descargas/`).
+- El APK se publica copiándolo a `/opt/taskzen/downloads/Serenboard-nativa.apk` (se sirve en `/descargas/`).
 - Un Worker de Cloudflare (`workers/reminders`, cron cada 5 min) llama a `/api/internal/reminders/tick`.
 
 ## Trampas del entorno

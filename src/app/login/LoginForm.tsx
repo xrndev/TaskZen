@@ -84,11 +84,11 @@ export function LoginForm({
 
       <div className="w-20 h-20 rounded-3xl bg-white mx-auto mb-8 shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex items-center justify-center relative overflow-hidden p-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-mark.png" alt="TaskZen Logo" className="w-full h-full object-contain relative z-10" />
+        <img src="/logo-mark.png" alt="Serenboard Logo" className="w-full h-full object-contain relative z-10" />
       </div>
 
       <h1 className="text-2xl font-bold mb-2 text-on-surface tracking-tight">
-        {mode === 'login' ? 'Acceso Espacio de Trabajo' : invited ? 'Te han invitado a TaskZen' : 'Crear nueva cuenta'}
+        {mode === 'login' ? 'Acceso Espacio de Trabajo' : invited ? 'Te han invitado a Serenboard' : 'Crear nueva cuenta'}
       </h1>
       <p className="text-sm text-on-surface-variant mb-6">
         {mode === 'login' ? 'Inicia sesión para ver tus tableros' : 'Crea tu cuenta con un proveedor o con una contraseña'}

@@ -36,9 +36,9 @@ export const auth = betterAuth({
   baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, { provider: 'pg', schema }),
-  // `taskzen://` es el enlace de retorno de la app nativa tras entrar con un proveedor (los comodines `exp://` solo en desarrollo).
+  // `serenboard://` es el enlace de retorno de la app nativa tras entrar con un proveedor (los comodines `exp://` solo en desarrollo).
   trustedOrigins: [
-    'taskzen://',
+    'serenboard://',
     ...(isProd ? [] : ['exp://', 'exp://**']),
     ...(process.env.TRUSTED_ORIGINS?.split(',').map((s) => s.trim()).filter(Boolean) ?? []),
   ],
@@ -49,8 +49,8 @@ export const auth = betterAuth({
   // Los errores de los flujos de proveedor vuelven al login con ?error=...
   onAPIError: { errorURL: '/login' },
   plugins: [
-    passkey({ rpID, rpName: 'TaskZen', origin: new URL(baseURL).origin }),
-    expo(), // app nativa: devuelve la sesión por el enlace `taskzen://` al terminar el flujo del proveedor
+    passkey({ rpID, rpName: 'Serenboard', origin: new URL(baseURL).origin }),
+    expo(), // app nativa: devuelve la sesión por el enlace `serenboard://` al terminar el flujo del proveedor
     bearer(), // clientes nativos: `Authorization: Bearer <token>` equivale a la cookie de sesión
     nextCookies(), // debe ir el último
   ],

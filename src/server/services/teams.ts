@@ -76,7 +76,7 @@ export async function inviteMember(db: Db, userId: string, teamId: string, email
     .where(eq(user.email, email.trim().toLowerCase()))
     .limit(1)
   if (!target) {
-    throw new ServiceError('NOT_FOUND', 'Usuario no encontrado. Asegúrate de que el correo esté registrado en TaskZen.')
+    throw new ServiceError('NOT_FOUND', 'Usuario no encontrado. Asegúrate de que el correo esté registrado en Serenboard.')
   }
   const inserted = await db
     .insert(teamMembers)

@@ -19,8 +19,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  appleWebApp: { capable: true, title: "TaskZen", statusBarStyle: "black-translucent" },
-  title: "TaskZen",
+  appleWebApp: { capable: true, title: "Serenboard", statusBarStyle: "black-translucent" },
+  title: "Serenboard",
   description: "Organiza tus proyectos con paz y fluidez.",
   icons: {
     icon: '/icon-192.png',

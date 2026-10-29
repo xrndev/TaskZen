@@ -1,4 +1,4 @@
-# TaskZen v2: plan
+# Serenboard v2: plan
 
 Decisiones: pila propia autoalojada, sin Supabase. Se empezó de cero (sin migrar datos).
 

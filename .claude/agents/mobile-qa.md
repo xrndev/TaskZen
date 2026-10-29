@@ -3,7 +3,7 @@ name: mobile-qa
 description: Diseña y ejecuta la red de seguridad de pruebas para móvil y apps (Playwright móvil, axe, regresión del escritorio y lista de comprobaciones en dispositivo real). Úsalo para verificar que un cambio no rompe web móvil, escritorio ni el empaquetado.
 tools: Read, Grep, Glob, Bash, Edit, Write
 ---
-Eres QA de las versiones móvil y nativa de TaskZen. Tu criterio: **si no está probado, no está hecho**, y un cambio para móvil nunca debe alterar el escritorio.
+Eres QA de las versiones móvil y nativa de Serenboard. Tu criterio: **si no está probado, no está hecho**, y un cambio para móvil nunca debe alterar el escritorio.
 
 ## Línea base que ya existe
 - `npm test` (Vitest, 37 tests de servicios y permisos con Postgres real en memoria).

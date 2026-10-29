@@ -13,10 +13,10 @@ Worker de Cloudflare (cada 5 min) → /api/internal/reminders/tick → plan de r
 ```
 
 ## 1. Crear el proyecto de Firebase (una vez, ~5 minutos)
-1. Entra en <https://console.firebase.google.com> con tu cuenta de Google y pulsa **Crear un proyecto** (por ejemplo `taskzen`). Google Analytics no hace falta.
+1. Entra en <https://console.firebase.google.com> con tu cuenta de Google y pulsa **Crear un proyecto** (por ejemplo `serenboard`). Google Analytics no hace falta.
 2. En el proyecto: **Configuración del proyecto** (engranaje) → pestaña **General** → **Tus apps** → icono de Android.
-   - **Nombre del paquete de Android:** `io.github.xrndev.taskzen` (exactamente así).
-   - Apodo: `TaskZen`. No hace falta el certificado SHA-1.
+   - **Nombre del paquete de Android:** `io.github.xrndev.serenboard` (exactamente así).
+   - Apodo: `Serenboard`. No hace falta el certificado SHA-1.
    - Pulsa **Registrar app** y **Descargar google-services.json**. El resto de pasos del asistente se pueden saltar.
 3. Copia `google-services.json` a `native/mobile/google-services.json`. No es un secreto (lo lleva cualquier APK), así que puede ir al repositorio.
 4. Misma pantalla de configuración → pestaña **Cuentas de servicio** → **Generar nueva clave privada**. Se descarga un `.json`: **este sí es secreto**, no lo subas al repositorio ni lo pegues en ningún chat.

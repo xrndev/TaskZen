@@ -507,10 +507,10 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-primary/10 flex items-center justify-center bg-white p-1">
-              <img src="/logo-mark.png" alt="TaskZen Logo" className="w-full h-full object-contain hover:scale-110 transition-transform duration-300" />
+              <img src="/logo-mark.png" alt="Serenboard Logo" className="w-full h-full object-contain hover:scale-110 transition-transform duration-300" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-xl font-black tracking-tight text-on-surface">TaskZen</h1>
+              <h1 className="text-xl font-black tracking-tight text-on-surface">Serenboard</h1>
               <div className="lg:hidden flex items-center gap-2 mt-0.5">
                 <select 
                   value={selectedTeamId || ''} 

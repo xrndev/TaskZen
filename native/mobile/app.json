@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "TaskZen",
-    "slug": "taskzen",
+    "name": "Serenboard",
+    "slug": "serenboard",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "io.github.xrndev.taskzen"
+      "bundleIdentifier": "io.github.xrndev.serenboard"
     },
     "android": {
       "adaptiveIcon": {
@@ -16,7 +16,7 @@
         "backgroundColor": "#ffffff"
       },
       "predictiveBackGestureEnabled": true,
-      "package": "io.github.xrndev.taskzen"
+      "package": "io.github.xrndev.serenboard"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,11 +30,11 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "TaskZen necesita acceso a tus fotos para elegir portadas y avatares."
+          "photosPermission": "Serenboard necesita acceso a tus fotos para elegir portadas y avatares."
         }
       ]
     ],
-    "scheme": "taskzen",
+    "scheme": "serenboard",
     "experiments": {
       "typedRoutes": true
     }

@@ -5,9 +5,9 @@ import { API_URL } from './config'
 
 /**
  * Mismo Better Auth que la web. La sesión (cookie) vive en el almacén seguro del sistema y se envía
- * en la cabecera `Cookie` a /api/v1. El retorno de los proveedores llega por el enlace `taskzen://`.
+ * en la cabecera `Cookie` a /api/v1. El retorno de los proveedores llega por el enlace `serenboard://`.
  */
 export const authClient = createAuthClient({
   baseURL: API_URL,
-  plugins: [expoClient({ scheme: 'taskzen', storagePrefix: 'taskzen', storage: SecureStore })],
+  plugins: [expoClient({ scheme: 'serenboard', storagePrefix: 'serenboard', storage: SecureStore })],
 })

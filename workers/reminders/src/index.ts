@@ -1,5 +1,5 @@
 /**
- * Worker de Cloudflare "despertador" de los recordatorios de TaskZen.
+ * Worker de Cloudflare "despertador" de los recordatorios de Serenboard.
  *
  * No tiene datos ni lógica de negocio: cada 5 minutos (Cron Trigger) llama al endpoint protegido de la app y
  * la app decide qué avisos tocan. Así Cloudflare nunca ve tareas ni personas, solo una petición con una clave.

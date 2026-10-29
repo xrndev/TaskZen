@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'TaskZen',
-    short_name: 'TaskZen',
+    name: 'Serenboard',
+    short_name: 'Serenboard',
     description: 'Organiza tus proyectos con paz y fluidez.',
     start_url: '/board',
     scope: '/',

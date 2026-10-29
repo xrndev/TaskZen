@@ -5,7 +5,7 @@
 #   docker build -f native/mobile/Dockerfile.android --output type=local,dest=native/mobile/out .
 #
 # El contexto es la raíz porque la app comparte con la web su código de dominio (tipos y permisos, en `src/`).
-# Deja `native/mobile/out/TaskZen.apk`. Sin clave propia, Gradle lo firma con la clave de depuración: sirve para probar,
+# Deja `native/mobile/out/Serenboard.apk`. Sin clave propia, Gradle lo firma con la clave de depuración: sirve para probar,
 # no para publicar. Solo arm64-v8a (casi todos los móviles actuales); quita ARCH para compilar las cuatro.
 FROM eclipse-temurin:21-jdk-jammy AS build
 
@@ -39,4 +39,4 @@ RUN cd android && ./gradlew assembleRelease --no-daemon --console=plain \
     --max-workers=4 -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m"
 
 FROM scratch
-COPY --from=build /repo/native/mobile/android/app/build/outputs/apk/release/app-release.apk /TaskZen.apk
+COPY --from=build /repo/native/mobile/android/app/build/outputs/apk/release/app-release.apk /Serenboard.apk

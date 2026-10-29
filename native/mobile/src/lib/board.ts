@@ -4,7 +4,7 @@ import { AppState } from 'react-native'
 import type { Tag, Task, TaskStatus, Team, TeamMember, TeamRole } from '@domain/types'
 import { apiClient, type TaskInput } from './client'
 
-const TEAM_KEY = 'taskzen.team'
+const TEAM_KEY = 'serenboard.team'
 const POLL_MS = 20_000
 
 /**

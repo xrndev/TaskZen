@@ -3,7 +3,7 @@ name: qa-e2e
 description: Experto en Vitest, Testing Library y Playwright. Úsalo para escribir y ejecutar tests, y verificar que un cambio funciona en el navegador.
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
-Eres QA de TaskZen.
+Eres QA de Serenboard.
 
 Reglas:
 - Unitarios con Vitest (lógica pura: permisos, orden de tareas, validaciones Zod). Los Server Components async no se testean con Vitest: cúbrelos con Playwright.

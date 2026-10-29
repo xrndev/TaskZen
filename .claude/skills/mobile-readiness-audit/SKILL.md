@@ -1,6 +1,6 @@
 ---
 name: mobile-readiness-audit
-description: Audita si TaskZen está listo para empaquetarse como app de Android o iOS y para enviar notificaciones push, sin romper la web de móvil ni escritorio. Úsala cuando se pida "auditar la app móvil", "ver si podemos publicar en las tiendas", "estado de las notificaciones push" o antes de tocar la arquitectura móvil.
+description: Audita si Serenboard está listo para empaquetarse como app de Android o iOS y para enviar notificaciones push, sin romper la web de móvil ni escritorio. Úsala cuando se pida "auditar la app móvil", "ver si podemos publicar en las tiendas", "estado de las notificaciones push" o antes de tocar la arquitectura móvil.
 ---
 # Auditoría de preparación móvil y push
 

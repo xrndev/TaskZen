@@ -2,7 +2,7 @@
   "name": "taskzen-reminders-worker",
   "private": true,
   "version": "1.0.0",
-  "description": "Worker de Cloudflare que despierta cada 5 minutos al servidor de TaskZen para enviar recordatorios.",
+  "description": "Worker de Cloudflare que despierta cada 5 minutos al servidor de Serenboard para enviar recordatorios.",
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev --test-scheduled",

@@ -13,7 +13,7 @@ export function LegalPage({ title, intro, children }: { title: string; intro: st
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-mark.png" alt="" className="h-full w-full object-contain" />
             </span>
-            <span className="text-xl font-black tracking-tight">TaskZen</span>
+            <span className="text-xl font-black tracking-tight">Serenboard</span>
           </Link>
           <Link href="/login" className="text-sm font-semibold text-primary hover:underline">Entrar</Link>
         </div>

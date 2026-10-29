@@ -35,7 +35,7 @@ export const THEME_IDS = Object.keys(THEMES) as ThemeId[]
 
 // La web arranca en "cyber" cuando no hay nada guardado (ThemeSwitcher.tsx).
 const DEFAULT_THEME: ThemeId = 'cyber'
-const KEY = 'taskzen.theme'
+const KEY = 'serenboard.theme'
 
 /** `#rrggbb` + opacidad (0–1) → `#rrggbbaa`. Equivale a `bg-primary/20` de Tailwind. */
 export function alpha(hex: string, opacity: number) {

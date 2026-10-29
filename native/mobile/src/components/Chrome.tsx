@@ -104,7 +104,7 @@ export function Header(props: {
       ) : (
         <View style={{ height: 56, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Pressable onPress={() => setTeamsOpen(true)} accessibilityRole="button" accessibilityLabel="Equipo" style={{ flex: 1, height: 44, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8 }}>
-            <Txt w="700" size={15} numberOfLines={1} style={{ flexShrink: 1 }}>{team?.name ?? 'TaskZen'}</Txt>
+            <Txt w="700" size={15} numberOfLines={1} style={{ flexShrink: 1 }}>{team?.name ?? 'Serenboard'}</Txt>
             <ChevronDown size={16} color={p.onSurfaceVariant} />
           </Pressable>
           <IconBtn

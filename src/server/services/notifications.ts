@@ -248,6 +248,6 @@ export async function notifyTaskAssigned(db: Db, sender: PushSender, input: { ac
 export async function sendTestNotification(db: Db, sender: PushSender, userId: string): Promise<{ sent: number; failed: number }> {
   const endpoints = (await activeEndpointsFor(db, [userId])).get(userId) ?? []
   if (endpoints.length === 0) throw new ServiceError('NOT_FOUND', 'No hay ningún dispositivo con las notificaciones activadas.')
-  const out = await deliver(db, sender, endpoints, { title: 'TaskZen', body: 'Las notificaciones funcionan en este dispositivo.', url: '/board', tag: 'test' })
+  const out = await deliver(db, sender, endpoints, { title: 'Serenboard', body: 'Las notificaciones funcionan en este dispositivo.', url: '/board', tag: 'test' })
   return { sent: out.ok, failed: out.failed + out.gone }
 }

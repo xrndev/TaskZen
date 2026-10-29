@@ -6,7 +6,7 @@
 export const dynamic = 'force-dynamic'
 
 export function GET() {
-  const pkg = process.env.ANDROID_PACKAGE || 'io.github.xrndev.taskzen'
+  const pkg = process.env.ANDROID_PACKAGE || 'io.github.xrndev.serenboard'
   const fingerprints = (process.env.ANDROID_SHA256_FINGERPRINTS ?? '')
     .split(',')
     .map((f) => f.trim().toUpperCase())

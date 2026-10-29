@@ -1,4 +1,4 @@
-/* TaskZen: service worker solo para notificaciones push. No guarda páginas en caché a propósito:
+/* Serenboard: service worker solo para notificaciones push. No guarda páginas en caché a propósito:
    así nunca puede dejar a nadie con una versión antigua de la app. */
 
 self.addEventListener('install', () => self.skipWaiting())
@@ -13,7 +13,7 @@ self.addEventListener('push', (event) => {
   }
   // Cada push debe mostrar una notificación (obligatorio en iOS y Chrome para userVisibleOnly).
   event.waitUntil(
-    self.registration.showNotification(data.title || 'TaskZen', {
+    self.registration.showNotification(data.title || 'Serenboard', {
       body: data.body || '',
       icon: '/icon-192.png',
       badge: '/badge-96.png', // silueta blanca: Android solo usa el canal alfa

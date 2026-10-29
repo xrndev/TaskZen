@@ -49,7 +49,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         await refresh()
       },
       signInWith: async (provider) => {
-        // Abre el navegador del sistema; al terminar, el servidor vuelve a la app por `taskzen://` con la sesión.
+        // Abre el navegador del sistema; al terminar, el servidor vuelve a la app por `serenboard://` con la sesión.
         const { error } = await authClient.signIn.social({ provider, callbackURL: '/' })
         if (error) throw new Error('No se pudo entrar con ese proveedor.')
         try {

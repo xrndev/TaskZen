@@ -58,7 +58,7 @@ afterAll(async () => {
   await new Promise((r) => server.close(r))
 })
 
-const sender = () => new WebPushSender({ publicKey: vapid.publicKey, privateKey: vapid.privateKey, subject: 'mailto:test@taskzen.invalid' })
+const sender = () => new WebPushSender({ publicKey: vapid.publicKey, privateKey: vapid.privateKey, subject: 'mailto:test@serenboard.invalid' })
 const payload = { title: 'Vence pronto', body: 'Revisar permisos · vence en 1 h', url: '/board?task=abc', tag: 'due-abc' }
 
 describe('WebPushSender', () => {
@@ -117,7 +117,7 @@ describe('vapidFromEnv', () => {
   it('lee las claves del entorno y devuelve null si faltan', () => {
     expect(vapidFromEnv({})).toBeNull()
     expect(vapidFromEnv({ VAPID_PUBLIC_KEY: 'a' })).toBeNull()
-    expect(vapidFromEnv({ VAPID_PUBLIC_KEY: 'a', VAPID_PRIVATE_KEY: 'b' })).toEqual({ publicKey: 'a', privateKey: 'b', subject: 'mailto:admin@taskzen.invalid' })
+    expect(vapidFromEnv({ VAPID_PUBLIC_KEY: 'a', VAPID_PRIVATE_KEY: 'b' })).toEqual({ publicKey: 'a', privateKey: 'b', subject: 'mailto:admin@serenboard.invalid' })
     expect(vapidFromEnv({ VAPID_PUBLIC_KEY: 'a', VAPID_PRIVATE_KEY: 'b', VAPID_SUBJECT: 'mailto:yo@x.dev' })?.subject).toBe('mailto:yo@x.dev')
   })
 })

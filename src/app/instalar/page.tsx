@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { LegalLinks } from '@/components/LegalPage'
 import QRCode from 'qrcode'
 
-export const metadata: Metadata = { title: 'Instalar TaskZen' }
+export const metadata: Metadata = { title: 'Instalar Serenboard' }
 export const dynamic = 'force-dynamic'
 
 const STEP = 'flex gap-3 text-[15px] leading-relaxed text-on-surface'
@@ -35,8 +35,8 @@ export default async function InstallPage() {
     <main className="min-h-dvh bg-background px-4 py-10 text-on-surface" style={{ paddingLeft: 'max(16px, env(safe-area-inset-left, 0px))', paddingRight: 'max(16px, env(safe-area-inset-right, 0px))' }}>
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
         <header>
-          <Link href="/login" className="text-sm font-semibold text-primary hover:underline">← Volver a TaskZen</Link>
-          <h1 className="mt-4 text-3xl font-black tracking-tight">Instala TaskZen en tu móvil</h1>
+          <Link href="/login" className="text-sm font-semibold text-primary hover:underline">← Volver a Serenboard</Link>
+          <h1 className="mt-4 text-3xl font-black tracking-tight">Instala Serenboard en tu móvil</h1>
           <p className="mt-2 max-w-prose text-[15px] leading-relaxed text-on-surface/80">
             Se abre como una app, a pantalla completa y con su icono. No está en las tiendas de aplicaciones, así que se instala desde aquí.
           </p>
@@ -45,7 +45,7 @@ export default async function InstallPage() {
         <section aria-labelledby="android" className="rounded-2xl border border-outline-variant/20 bg-surface-container p-5">
           <h2 id="android" className="text-xl font-bold">Android</h2>
           <a
-            href="/descargas/TaskZen.apk"
+            href="/descargas/Serenboard.apk"
             download
             className="mt-4 flex min-h-12 items-center justify-center rounded-xl bg-primary px-5 text-base font-bold text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
@@ -56,7 +56,7 @@ export default async function InstallPage() {
               <>Descarga el archivo y ábrelo desde las notificaciones o desde <strong>Descargas</strong>.</>,
               <>Si el móvil lo pide, activa <strong>Permitir desde esta fuente</strong> para tu navegador o gestor de archivos.</>,
               <>Si Google Play Protect avisa de una app desconocida, pulsa <strong>Más detalles → Instalar de todos modos</strong>. Sale porque la app no pasa por Google Play.</>,
-              <>Abre TaskZen e inicia sesión. Para actualizarla, descarga e instala el archivo nuevo encima.</>,
+              <>Abre Serenboard e inicia sesión. Para actualizarla, descarga e instala el archivo nuevo encima.</>,
             ]}
           />
           <p className="mt-4 text-sm leading-relaxed text-on-surface/80">
@@ -74,7 +74,7 @@ export default async function InstallPage() {
               <>Abre <strong>{origin.replace(/^https?:\/\//, '')}</strong> en <strong>Safari</strong>.</>,
               <>Toca el botón <strong>Compartir</strong> (el cuadrado con una flecha hacia arriba).</>,
               <>Elige <strong>Añadir a pantalla de inicio</strong> y confirma con <strong>Añadir</strong>.</>,
-              <>Abre TaskZen desde el icono nuevo, no desde Safari. Es la única forma de que funcionen las notificaciones.</>,
+              <>Abre Serenboard desde el icono nuevo, no desde Safari. Es la única forma de que funcionen las notificaciones.</>,
             ]}
           />
         </section>
