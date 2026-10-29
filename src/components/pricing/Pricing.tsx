@@ -12,7 +12,7 @@ import { PeriodProvider, PeriodToggle, Price } from './Period'
  * va en las tablas, rotulado «Próximamente».
  */
 
-const GRID = { 2: 'lg:grid-cols-2 lg:max-w-3xl', 3: 'lg:grid-cols-3' } as const
+const GRID = { 2: 'lg:grid-cols-2 lg:max-w-3xl lg:mx-auto', 3: 'lg:grid-cols-3' } as const
 
 function PlanCard({ plan }: { plan: TeamPlan | UserPlan }) {
   const free = plan.monthly === null
