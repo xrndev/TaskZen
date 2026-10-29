@@ -10,6 +10,7 @@ import * as profileA from '@/server/actions/profile'
 import * as tagsA from '@/server/actions/tags'
 import * as tasksA from '@/server/actions/tasks'
 import * as teamsA from '@/server/actions/teams'
+import * as templatesA from '@/server/actions/templates'
 import * as invitesA from '@/server/actions/invites'
 import type { Result } from '@/server/actions/run'
 import { reportError } from './upgrade'
@@ -81,6 +82,9 @@ export async function uploadCover(file: File): Promise<string | null> {
   form.set('file', file)
   return soft(tasksA.uploadCoverAction(form), null)
 }
+
+export const applyTemplate = async (teamId: string, template: string) =>
+  (await soft(templatesA.applyTemplateAction(teamId, { template }), false)) !== false
 
 /* ---------- Etiquetas ---------- */
 export const fetchUserTags = (teamId: string): Promise<Tag[]> => soft(tagsA.listTagsAction(teamId), [] as Tag[])

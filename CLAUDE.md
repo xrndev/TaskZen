@@ -33,6 +33,7 @@ server actions (web)   rutas /api/v1 (app)     ← adaptadores finos: sesión + 
 - Los errores de negocio son `ServiceError` (`FORBIDDEN | NOT_FOUND | INVALID | CONFLICT`); un id mal formado es `NOT_FOUND` (no se distingue de "sin acceso").
 - No hay RLS: toda la autorización está en servidor y cubierta por tests (`tests/services.test.ts`, `tests/api.v1.test.ts`).
 - Planes: el catálogo y los límites están en `src/lib/plans.ts` (código puro, lo comparten servicios, landing y app) y se aplican en `services/billing.ts`; los demás servicios solo llaman a sus `assert...` y lanzan `ServiceError('LIMIT')` (HTTP 402). Lo no construido se rotula «Próximamente», nunca como incluido. Los errores LIMIT llevan `scope` (`user`/`team`) y la web abre `UpgradeDialog` en vez de un aviso. `/admin/planes` (solo lectura, `ADMIN_EMAILS`) y `scripts/plan.mjs` (concede, quita, `stats`; queda auditado). Personal Pro no se anuncia (`listed: false`). Detalle: `docs/PLANES.md`.
+- Plantillas de tablero: catálogo puro en `src/lib/templates.ts`; `services/templates.ts` las aplica solo a tableros vacíos (`POST /api/v1/teams/:id/template`). La web las ofrece en la guía de «Primeros pasos» del tablero vacío.
 - Notificaciones: `src/server/push/` (Web Push con VAPID y FCM con cuenta de servicio, repartidos por `RoutingSender`). Detalle en `docs/PUSH-FCM.md`.
 
 ## App nativa (`native/mobile`)

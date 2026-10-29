@@ -6,8 +6,9 @@ import { Task, TaskStatus, Profile, Tag, Team, TeamMember } from '@/types';
 import { Trash, Search, Plus, Tag as TagIcon, LayoutGrid, X, Users, Calendar, Settings, ChevronDown, Paperclip, List, CalendarDays } from 'lucide-react';
 import { TagBadge } from './TagBadge';
 import { TagSelector } from './TagSelector';
-import { fetchUserTags, fetchTasks, createTask, updateTask, moveTask, deleteTask, uploadCover, updateProfile, fetchTeamMembers } from '@/lib/api';
+import { applyTemplate, fetchUserTags, fetchTasks, createTask, updateTask, moveTask, deleteTask, uploadCover, updateProfile, fetchTeamMembers } from '@/lib/api';
 import { authClient } from '@/lib/auth-client';
+import { BOARD_TEMPLATES } from '@/lib/templates';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -268,6 +269,19 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
       if (updated) setSelectedTask(updated);
     }
   }, [selectedTeamId]);
+
+  const [applyingTemplate, setApplyingTemplate] = useState(false);
+  // Carga una plantilla en el tablero vacío y recarga etiquetas y tareas.
+  const loadTemplate = async (templateId: string) => {
+    if (!selectedTeamId) return;
+    setApplyingTemplate(true);
+    const ok = await applyTemplate(selectedTeamId, templateId);
+    if (ok) {
+      const [freshTags] = await Promise.all([fetchUserTags(selectedTeamId), refreshTasksWithTags()]);
+      setAllTags(freshTags);
+    }
+    setApplyingTemplate(false);
+  };
 
   // Cambio de equipo (manejador de evento): recarga miembros, etiquetas y tareas.
   const switchTeam = (teamId: string) => {
@@ -797,6 +811,34 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
           </div>
         )}
       </div>
+
+      {tasks.length === 0 && (
+        <section aria-label="Primeros pasos" className="mx-4 mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5 lg:mx-6">
+          <h2 className="text-base font-bold text-on-surface">Tu tablero está vacío. Empieza en tres pasos</h2>
+          <ol className="mt-3 grid gap-3 text-sm text-on-surface-variant sm:grid-cols-3">
+            <li><span className="font-bold text-primary">1.</span> Crea tu primera tarea y ponle una fecha límite.</li>
+            <li><span className="font-bold text-primary">2.</span> Arrástrala entre columnas según avance: pendiente, en curso, hecha.</li>
+            <li><span className="font-bold text-primary">3.</span> Activa los recordatorios en tu perfil para que te avisemos antes de que venza.</li>
+          </ol>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button onClick={() => setIsModalOpen(true)} className="min-h-11 rounded-xl bg-primary px-4 py-2 text-xs font-extrabold uppercase tracking-widest text-black transition-all hover:brightness-110 active:scale-95">
+              Crear la primera tarea
+            </button>
+            <span className="text-xs text-on-surface-variant">o empieza con una plantilla:</span>
+            {BOARD_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.id}
+                onClick={() => void loadTemplate(tpl.id)}
+                disabled={applyingTemplate}
+                title={tpl.description}
+                className="min-h-11 rounded-xl border border-outline-variant/40 px-3 py-2 text-xs font-bold text-on-surface transition-all hover:border-primary hover:text-primary disabled:opacity-50"
+              >
+                {tpl.name}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {view === 'list' ? (
         <>
