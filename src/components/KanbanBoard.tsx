@@ -43,6 +43,8 @@ import { MobileFiltersSheet, MobileMoreSheet } from './mobile/MobileSheets';
 import { MobileTaskList } from './mobile/MobileTaskList';
 import { CreateTeamModal } from './CreateTeamModal';
 import { TeamSettingsModal } from './TeamSettingsModal';
+import { PlanBanner } from './PlanBanner';
+import { OPEN_SETTINGS_EVENT } from '@/lib/upgrade';
 import { fallbackAvatar, rememberName } from '@/lib/avatar';
 
 const COLUMNS: { id: TaskStatus; title: string; color: string }[] = [
@@ -306,6 +308,17 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
     }
   };
 
+  // El diálogo de mejora del plan pide abrir el perfil (plan personal) o los ajustes del equipo (plan del equipo).
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const target = (e as CustomEvent<'profile' | 'team'>).detail;
+      if (target === 'profile') setIsProfileModalOpen(true);
+      else if (target === 'team') setIsTeamSettingsOpen(true);
+    };
+    window.addEventListener(OPEN_SETTINGS_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_SETTINGS_EVENT, onOpen);
+  }, []);
+
   const handleLogout = async () => {
     await authClient.signOut();
     router.push('/login');
@@ -501,6 +514,8 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
         avatarUrl={userAvatarUrl}
         onProfile={() => setIsProfileModalOpen(true)}
       />
+
+      <PlanBanner teamId={selectedTeamId} isAdmin={currentUserRole === 'admin'} isPersonal={!!teams.find((t) => t.id === selectedTeamId)?.is_personal} />
 
       <header className="hidden lg:flex lg:flex-row items-stretch lg:items-center justify-between px-4 py-3 lg:px-6 lg:py-4 border-b border-surface-container-high backdrop-blur-md bg-surface/80 z-20 gap-4">
         {/* Top Row: Logo & Search (Mobile) / Logo (Desktop) */}

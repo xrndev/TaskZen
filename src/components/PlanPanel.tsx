@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Crown, Download, Lock, Sparkles } from 'lucide-react';
+import { Crown, Download, Lock, Sparkles, TriangleAlert } from 'lucide-react';
 import { toast } from '@/lib/toast';
+import { reportError } from '@/lib/upgrade';
 import {
-  formatBytes, TEAM_PLANS, TRIAL_DAYS, USER_PLANS, type PlanState, type TeamBilling, type TeamPlanId, type UserBilling, type UserPlanId,
+  formatBytes, isPaidPlan, PLANS, TEAM_PLAN_LISTED, TEAM_PLANS, TRIAL_DAYS, USER_PLAN_LISTED, USER_PLANS, type PlanState, type TeamBilling, type TeamPlanId, type UserBilling, type UserPlanId,
 } from '@/lib/plans';
 import {
   exportMineAction, exportTeamAction, getMyBillingAction, getTeamBillingAction, startTeamTrialAction, startUserTrialAction,
@@ -76,7 +77,7 @@ export function PlanPanel(props: Props) {
     setBusy(true);
     const r = teamId ? await startTeamTrialAction(teamId, plan) : await startUserTrialAction(plan);
     setBusy(false);
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) return reportError(r);
     toast.success(`Prueba de ${TRIAL_DAYS} días activada. No hace falta ningún dato de pago.`);
     load();
   };
@@ -85,7 +86,7 @@ export function PlanPanel(props: Props) {
     setBusy(true);
     const r = teamId ? await exportTeamAction(teamId, format) : await exportMineAction(format);
     setBusy(false);
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) return reportError(r);
     download(r.data);
   };
 
@@ -97,9 +98,13 @@ export function PlanPanel(props: Props) {
   const state: PlanState = isTeam ? data : data.own;
   const gifted = !isTeam && data.source === 'team';
   const canManage = isTeam ? data.is_admin && !data.personal : true;
-  const trialOptions: [TeamPlanId | UserPlanId, string][] = isTeam
-    ? [['team_plus', TEAM_PLANS.team_plus.name], ['team_pro', TEAM_PLANS.team_pro.name]]
-    : [['user_plus', USER_PLANS.user_plus.name], ['user_pro', USER_PLANS.user_pro.name]];
+  const trialOptions: [TeamPlanId | UserPlanId, string][] = (isTeam ? TEAM_PLAN_LISTED : USER_PLAN_LISTED).filter(isPaidPlan).map((id) => [id, PLANS[id].name]);
+  const endedText = state.ended
+    ? `${state.ended.trial ? 'Tu prueba de' : 'Tu plan'} ${PLANS[state.ended.plan].name} terminó el ${new Date(state.ended.ended_at).toLocaleDateString()}. No se ha borrado nada.`
+    : null;
+  // Un equipo que ya supera su plan (por ejemplo, tras bajar de plan) sigue funcionando, pero no admite más.
+  const overMembers = isTeam && !data.personal && data.limits.maxMembers !== null && data.usage.members > data.limits.maxMembers;
+  const overStorage = isTeam ? data.usage.storage_bytes > data.limits.storageBytes : data.usage.storage_bytes > data.limits.personalStorageBytes;
   const canCsv = data.limits.exportCsv;
   const canJson = data.limits.exportFull;
   const mayExport = isTeam ? data.can_export : true;
@@ -115,6 +120,7 @@ export function PlanPanel(props: Props) {
           <p className="text-xs text-on-surface-variant" aria-live="polite">
             {gifted ? 'Incluido por un equipo con plan Pro' : isTeam && data.personal ? 'Tu espacio personal usa tu plan personal' : statusText(state.status, state.ends_at)}
           </p>
+          {endedText && state.status === 'free' && <p className="mt-1 text-xs text-on-surface-variant/80">{endedText}</p>}
         </div>
         <Link href="/precios" target="_blank" className="shrink-0 text-xs font-semibold text-primary underline">Ver planes</Link>
       </div>
@@ -123,13 +129,21 @@ export function PlanPanel(props: Props) {
         <div className="flex flex-col gap-3">
           {!data.personal && <Meter label="Miembros" used={data.usage.members} max={data.limits.maxMembers} format={(n) => String(n)} />}
           <Meter label="Adjuntos" used={data.usage.storage_bytes} max={data.limits.storageBytes} format={formatBytes} />
+          <p className="text-xs text-on-surface-variant">Archivos de hasta {formatBytes(data.limits.maxFileBytes)} cada uno.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           <Meter label="Equipos propios" used={data.usage.owned_teams} max={data.limits.maxOwnedTeams} format={(n) => String(n)} />
           <Meter label="Adjuntos de tu espacio personal" used={data.usage.storage_bytes} max={data.limits.personalStorageBytes} format={formatBytes} />
-          <p className="text-xs text-on-surface-variant">Avisos por tarea: hasta {data.limits.maxReminderOffsets}.</p>
+          <p className="text-xs text-on-surface-variant">Recordatorios antes del vencimiento: hasta {data.limits.maxReminderOffsets} por tarea. Archivos de hasta {formatBytes(data.limits.maxFileBytes)} cada uno.</p>
         </div>
+      )}
+
+      {(overMembers || overStorage) && (
+        <p role="status" className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/5 p-3 text-xs text-on-surface">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-error" aria-hidden />
+          <span>{overMembers ? 'Este equipo supera los miembros de su plan actual: sigue funcionando, pero no se podrán añadir más hasta mejorar el plan. ' : ''}{overStorage ? 'Se supera el espacio del plan: se conservan los archivos, pero no se podrán subir más. ' : ''}</span>
+        </p>
       )}
 
       {canManage && state.trial_available && (

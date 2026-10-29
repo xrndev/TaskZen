@@ -43,6 +43,13 @@
       "when": 1793279346092,
       "tag": "0005_planes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793288989927,
+      "tag": "0006_metricas_y_auditoria",
+      "breakpoints": true
     }
   ]
 }

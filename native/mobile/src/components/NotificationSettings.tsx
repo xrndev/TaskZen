@@ -96,7 +96,7 @@ export function NotificationSettings() {
           {row('Cuando una tarea mía esté por vencer', prefs.due_soon, (v) => patch({ due_soon: v }))}
           {prefs.due_soon && (
             <View style={{ gap: 8 }}>
-              <Label>{`Avisarme con esta antelación (hasta ${state.maxOffsets})`}</Label>
+              <Label>{`Recordarme antes del vencimiento (hasta ${state.maxOffsets} recordatorios)`}</Label>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {state.allowedOffsets.map((m) => <Chip key={m} label={OFFSET_LABEL[m] ?? `${m} min`} on={prefs.offsets_minutes.includes(m)} onPress={() => toggleOffset(m)} />)}
               </View>

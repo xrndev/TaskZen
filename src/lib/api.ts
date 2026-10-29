@@ -12,7 +12,7 @@ import * as tasksA from '@/server/actions/tasks'
 import * as teamsA from '@/server/actions/teams'
 import * as invitesA from '@/server/actions/invites'
 import type { Result } from '@/server/actions/run'
-import { toast } from './toast'
+import { reportError } from './upgrade'
 import { rememberName } from './avatar'
 
 /** Devuelve el dato o lanza con el mensaje del servidor. */
@@ -25,7 +25,7 @@ export function unwrap<T>(r: Result<T>): T {
 async function soft<T, F>(p: Promise<Result<T>>, fallback: F): Promise<T | F> {
   const r = await p
   if (r.ok) return r.data
-  toast.error(r.error)
+  reportError(r)
   return fallback
 }
 
@@ -40,6 +40,7 @@ export const createNewTeam = (name: string): Promise<Team | null> => soft(teamsA
 
 export async function inviteMemberByEmail(teamId: string, email: string, role: TeamRole = 'member') {
   const r = await teamsA.inviteMemberAction(teamId, email, role)
+  if (!r.ok && r.code === 'LIMIT') reportError(r) // además del mensaje en el propio formulario
   return r.ok ? { success: true } : { success: false, error: r.error }
 }
 export const removeTeamMember = async (teamId: string, userId: string) => (await soft(teamsA.removeMemberAction(teamId, userId), false)) !== false

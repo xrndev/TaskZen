@@ -1,5 +1,5 @@
 import { and, count, eq, sql } from 'drizzle-orm'
-import { attachments, comments, subscriptions, tasks, teamMembers, teams } from '@/db/schema'
+import { attachments, comments, planAudit, planMetrics, subscriptions, tasks, teamMembers, teams, user } from '@/db/schema'
 import { can } from '@/lib/permissions'
 import {
   bestUserPlan, formatBytes, isActive, isPaidPlan, isTeamPlan, isUserPlan, PLANS, TEAM_PLANS, TEAM_PRO_GIVES, TRIAL_DAYS, USER_PLANS,
@@ -21,6 +21,29 @@ type Owner = { userId: string } | { teamId: string }
 const DAY = 24 * 60 * 60_000
 const addDays = (days: number, now = new Date()) => new Date(now.getTime() + days * DAY).toISOString()
 
+/* ---------- Métricas anónimas ---------- */
+/**
+ * Cuenta un suceso del día (sin identificar a nadie). Es de mejor esfuerzo: medir nunca debe romper la operación
+ * del usuario, así que un fallo aquí se ignora.
+ */
+export async function recordMetric(db: Db, event: string, kind: string) {
+  try {
+    const day = new Date().toISOString().slice(0, 10)
+    await db
+      .insert(planMetrics)
+      .values({ day, event, kind, n: 1 })
+      .onConflictDoUpdate({ target: [planMetrics.day, planMetrics.event, planMetrics.kind], set: { n: sql`${planMetrics.n} + 1` } })
+  } catch (e) {
+    console.error('[metrics]', e)
+  }
+}
+
+/** Error de límite: lo cuenta y lo devuelve listo para lanzar, con el plan (personal o de equipo) que habría que mejorar. */
+async function limitError(db: Db, kind: string, message: string, scope: 'user' | 'team') {
+  await recordMetric(db, 'limit_hit', kind)
+  return new ServiceError('LIMIT', message, scope)
+}
+
 async function findSubscription(db: Db, owner: Owner) {
   const where = 'userId' in owner ? eq(subscriptions.user_id, owner.userId) : eq(subscriptions.team_id, owner.teamId)
   const [row] = await db.select().from(subscriptions).where(where).limit(1)
@@ -30,9 +53,15 @@ async function findSubscription(db: Db, owner: Owner) {
 type SubRow = typeof subscriptions.$inferSelect
 
 function stateOf(row: SubRow | null, now: Date): PlanState {
-  if (!row) return { status: 'free', ends_at: null, trial_available: true }
+  if (!row) return { status: 'free', ends_at: null, trial_available: true, ended: null }
   const live = isActive(row as SubscriptionLike, now)
-  return { status: live ? (row.status as PlanState['status']) : 'free', ends_at: live ? row.ends_at : null, trial_available: false }
+  return {
+    status: live ? (row.status as PlanState['status']) : 'free',
+    ends_at: live ? row.ends_at : null,
+    trial_available: false,
+    // Se conserva qué plan fue y cuándo acabó, para poder avisar una vez de que ya no lo tiene.
+    ended: !live && row.ends_at ? { plan: row.plan as PlanId, ended_at: row.ends_at, trial: row.status === 'trialing' } : null,
+  }
 }
 
 /* ---------- Plan vigente ---------- */
@@ -72,7 +101,7 @@ export async function teamLimits(db: Db, teamId: string): Promise<TeamLimits & {
   if (!team) throw new ServiceError('NOT_FOUND', 'Equipo no encontrado.')
   if (team.is_personal) {
     const u = await userLimits(db, team.owner_id)
-    return { maxMembers: 1, storageBytes: u.personalStorageBytes, exportCsv: u.exportCsv, exportFull: u.exportFull, personal: true }
+    return { maxMembers: 1, storageBytes: u.personalStorageBytes, maxFileBytes: u.maxFileBytes, exportCsv: u.exportCsv, exportFull: u.exportFull, personal: true }
   }
   return { ...TEAM_PLANS[await teamPlanOf(db, teamId)].limits, personal: false }
 }
@@ -114,7 +143,11 @@ export async function assertCanAddMember(db: Db, teamId: string) {
   const limits = await teamLimits(db, teamId)
   if (limits.maxMembers === null) return
   if ((await memberCount(db, teamId)) >= limits.maxMembers) {
-    throw new ServiceError('LIMIT', `Este equipo ha alcanzado el máximo de ${limits.maxMembers} miembros de su plan. ${limits.personal ? 'Tu espacio personal no admite más personas; crea un equipo.' : HINT_TEAM}`)
+    throw await limitError(
+      db, 'members',
+      `Este equipo ha alcanzado el máximo de ${limits.maxMembers} miembros de su plan. ${limits.personal ? 'Tu espacio personal no admite más personas; crea un equipo.' : HINT_TEAM}`,
+      limits.personal ? 'user' : 'team',
+    )
   }
 }
 
@@ -122,7 +155,15 @@ export async function assertCanCreateTeam(db: Db, userId: string) {
   const limits = await userLimits(db, userId)
   if (limits.maxOwnedTeams === null) return
   if ((await ownedTeamCount(db, userId)) >= limits.maxOwnedTeams) {
-    throw new ServiceError('LIMIT', `Tu plan permite ${limits.maxOwnedTeams === 1 ? 'un equipo propio' : `hasta ${limits.maxOwnedTeams} equipos propios`}. ${HINT_USER}`)
+    throw await limitError(db, 'teams', `Tu plan permite ${limits.maxOwnedTeams === 1 ? 'un equipo propio' : `hasta ${limits.maxOwnedTeams} equipos propios`}. ${HINT_USER}`, 'user')
+  }
+}
+
+/** Tamaño máximo de un archivo según el plan (el del equipo, o el personal en el espacio personal). */
+export async function assertFileSize(db: Db, teamId: string, bytes: number) {
+  const limits = await teamLimits(db, teamId)
+  if (bytes > limits.maxFileBytes) {
+    throw await limitError(db, 'file_size', `El archivo pesa ${formatBytes(bytes)} y tu plan admite hasta ${formatBytes(limits.maxFileBytes)} por archivo. ${limits.personal ? HINT_USER : HINT_TEAM}`, limits.personal ? 'user' : 'team')
   }
 }
 
@@ -130,7 +171,11 @@ export async function assertStorageAvailable(db: Db, teamId: string, incomingByt
   const limits = await teamLimits(db, teamId)
   const used = await teamStorageUsed(db, teamId)
   if (used + incomingBytes > limits.storageBytes) {
-    throw new ServiceError('LIMIT', `No queda espacio para adjuntos: el plan incluye ${formatBytes(limits.storageBytes)} y se usan ${formatBytes(used)}. ${limits.personal ? HINT_USER : HINT_TEAM}`)
+    throw await limitError(
+      db, 'storage',
+      `No queda espacio para adjuntos: el plan incluye ${formatBytes(limits.storageBytes)} y se usan ${formatBytes(used)}. ${limits.personal ? HINT_USER : HINT_TEAM}`,
+      limits.personal ? 'user' : 'team',
+    )
   }
 }
 
@@ -138,15 +183,30 @@ export async function assertCanSetReminderOffsets(db: Db, userId: string, next: 
   const { maxReminderOffsets } = await userLimits(db, userId)
   // Reducir siempre se puede, aunque se haya bajado de plan y se conserve un número mayor.
   if (next > maxReminderOffsets && next > current) {
-    throw new ServiceError('LIMIT', `Tu plan permite ${maxReminderOffsets} avisos por tarea. ${HINT_USER}`)
+    throw await limitError(db, 'reminders', `Tu plan permite ${maxReminderOffsets} recordatorios antes del vencimiento (por ejemplo, 1 día y 1 hora antes). ${HINT_USER}`, 'user')
   }
 }
 
-export async function assertCanExport(db: Db, limits: Pick<TeamLimits, 'exportCsv' | 'exportFull'>, format: 'csv' | 'json', teamScope: boolean) {
+export async function assertCanExport(db: Db, limits: Pick<TeamLimits, 'exportCsv' | 'exportFull'> & { personal?: boolean }, format: 'csv' | 'json', teamScope: boolean) {
   const ok = format === 'csv' ? limits.exportCsv : limits.exportFull
   if (!ok) {
-    throw new ServiceError('LIMIT', `${format === 'csv' ? 'Exportar a CSV' : 'La copia completa en JSON'} no está incluido en el plan actual. ${teamScope ? HINT_TEAM : HINT_USER}`)
+    throw await limitError(
+      db, `export_${format}`,
+      `${format === 'csv' ? 'Exportar a CSV' : 'La copia completa en JSON'} no está incluido en el plan actual. ${teamScope && !limits.personal ? HINT_TEAM : HINT_USER}`,
+      teamScope && !limits.personal ? 'team' : 'user',
+    )
   }
+}
+
+/**
+ * Recordatorios que se envían de verdad. Si alguien bajó de plan y conserva más de los permitidos, se envían solo los
+ * de mayor antelación hasta el máximo; no se borra nada y, al mejorar el plan, vuelven todos.
+ */
+export async function effectiveOffsets(db: Db, userId: string, offsets: number[]): Promise<number[]> {
+  // Atajo: ningún plan permite menos que el gratuito, así que lo habitual no consulta nada.
+  if (offsets.length <= USER_PLANS.user_free.limits.maxReminderOffsets) return offsets
+  const { maxReminderOffsets } = await userLimits(db, userId)
+  return [...offsets].sort((a, b) => b - a).slice(0, maxReminderOffsets)
 }
 
 /* ---------- Lo que ven los clientes ---------- */
@@ -155,7 +215,7 @@ export async function getTeamBilling(db: Db, userId: string, teamId: string): Pr
   const limits = await teamLimits(db, teamId)
   const now = new Date()
   const row = limits.personal ? null : await findSubscription(db, { teamId })
-  const state = limits.personal ? { status: 'free' as const, ends_at: null, trial_available: false } : stateOf(row, now)
+  const state: PlanState = limits.personal ? { status: 'free', ends_at: null, trial_available: false, ended: null } : stateOf(row, now)
   const { personal, ...teamLimitsOnly } = limits
   return {
     scope: 'team',
@@ -203,6 +263,7 @@ export async function startTrial(db: Db, userId: string, input: { teamId: string
       .onConflictDoNothing()
       .returning({ id: subscriptions.id })
     if (inserted.length === 0) throw new ServiceError('CONFLICT', 'Este equipo ya ha usado su prueba gratuita o tiene un plan.')
+    await recordMetric(db, 'trial_started', input.plan)
     return
   }
   if (!isUserPlan(input.plan) || !isPaidPlan(input.plan)) throw new ServiceError('INVALID', 'Plan no válido para una persona.')
@@ -212,20 +273,30 @@ export async function startTrial(db: Db, userId: string, input: { teamId: string
     .onConflictDoNothing()
     .returning({ id: subscriptions.id })
   if (inserted.length === 0) throw new ServiceError('CONFLICT', 'Ya has usado tu prueba gratuita o tienes un plan.')
+  await recordMetric(db, 'trial_started', input.plan)
+}
+
+/** Nombre legible del dueño para el registro de auditoría: el correo de la persona o `equipo:<id>`. */
+async function ownerLabel(db: Db, owner: Owner): Promise<string> {
+  if ('teamId' in owner) return `equipo:${owner.teamId}`
+  const [u] = await db.select({ email: user.email }).from(user).where(eq(user.id, owner.userId))
+  return u?.email ?? owner.userId
 }
 
 /**
  * Concede un plan de pago (lo usa el operador desde `scripts/plan.mjs` y, más adelante, el webhook del proveedor
  * de pagos). `days = null` deja el plan sin caducidad. Sustituye cualquier suscripción o prueba anterior.
+ * Queda anotado quién lo concedió (`actor`).
  */
-export async function grantPlan(db: Db, owner: Owner, plan: PlanId, opts: { days?: number | null; provider?: string; providerRef?: string } = {}) {
+export async function grantPlan(db: Db, owner: Owner, plan: PlanId, opts: { days?: number | null; provider?: string; providerRef?: string; actor?: string } = {}) {
   if (!(plan in PLANS)) throw new ServiceError('INVALID', 'Plan desconocido.')
   if ('teamId' in owner && !isTeamPlan(plan)) throw new ServiceError('INVALID', 'Ese plan es personal, no de equipo.')
   if ('userId' in owner && !isUserPlan(plan)) throw new ServiceError('INVALID', 'Ese plan es de equipo, no personal.')
+  const endsAt = opts.days == null ? null : addDays(opts.days)
   const values = {
     plan,
     status: 'active',
-    ends_at: opts.days == null ? null : addDays(opts.days),
+    ends_at: endsAt,
     provider: opts.provider ?? 'manual',
     provider_ref: opts.providerRef ?? null,
     updated_at: new Date().toISOString(),
@@ -235,5 +306,17 @@ export async function grantPlan(db: Db, owner: Owner, plan: PlanId, opts: { days
   } else {
     await db.insert(subscriptions).values({ team_id: owner.teamId, ...values }).onConflictDoUpdate({ target: subscriptions.team_id, targetWhere: sql`${subscriptions.team_id} is not null`, set: values })
   }
+  await db.insert(planAudit).values({ actor: opts.actor ?? 'system', action: 'grant', owner: await ownerLabel(db, owner), plan, ends_at: endsAt })
+  await recordMetric(db, 'plan_granted', plan)
 }
 
+/** Quita el plan (o la prueba) de un dueño. Vuelve a los límites gratuitos y, al desaparecer la fila, podría volver a probar. */
+export async function revokePlan(db: Db, owner: Owner, opts: { actor?: string } = {}): Promise<boolean> {
+  const label = await ownerLabel(db, owner)
+  const where = 'userId' in owner ? eq(subscriptions.user_id, owner.userId) : eq(subscriptions.team_id, owner.teamId)
+  const removed = await db.delete(subscriptions).where(where).returning({ plan: subscriptions.plan })
+  if (removed.length === 0) return false
+  await db.insert(planAudit).values({ actor: opts.actor ?? 'system', action: 'revoke', owner: label, plan: removed[0].plan })
+  await recordMetric(db, 'plan_revoked', removed[0].plan)
+  return true
+}

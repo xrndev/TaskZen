@@ -2,11 +2,14 @@ import type { Metadata } from 'next'
 import { LegalLinks } from '@/components/LegalPage'
 import { Faq, Pricing } from '@/components/pricing/Pricing'
 import { SiteHeader } from '@/components/pricing/SiteHeader'
+import { policyFromEnv } from '@/server/services/registration'
 
 export const metadata: Metadata = {
   title: 'Planes y precios · Serenboard',
   description: 'Compara los planes gratuitos, personales y de equipo de Serenboard y qué incluye cada uno.',
 }
+
+export const dynamic = 'force-dynamic'
 
 export default function PreciosPage() {
   return (
@@ -18,7 +21,7 @@ export default function PreciosPage() {
           <p className="mt-5 text-lg text-on-surface-variant">Compara lo que incluye cada plan, sin letra pequeña.</p>
         </div>
         <Pricing heading={false} />
-        <Faq />
+        <Faq openSignup={policyFromEnv().openSignup} />
       </main>
       <footer className="border-t border-surface-container-high bg-surface-container-low py-8 text-center text-sm text-on-surface-variant">
         <p>© {new Date().getFullYear()} Serenboard</p>

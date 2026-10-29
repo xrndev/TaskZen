@@ -19,8 +19,17 @@ ssh root@VPS 'cd /opt/taskzen && docker load < images.tgz && rm images.tgz && do
 `docker compose up -d` ejecuta antes el servicio `migrate`, que aplica las migraciones pendientes (`drizzle/`).
 Cambios de esquema: edita `src/db/schema.ts`, `npm run db:generate`, revisa el SQL y súbelo con la imagen.
 
+### Si cambias `deploy/Caddyfile`
+El Caddyfile se monta desde `/opt/taskzen/Caddyfile`, no va dentro de la imagen: súbelo y recárgalo.
+```bash
+scp deploy/Caddyfile root@VPS:/opt/taskzen/Caddyfile
+ssh root@VPS 'cd /opt/taskzen && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile'
+```
+(El límite de subida de 60 MB que admiten los planes depende de este archivo.)
+
 ## Variables (`/opt/taskzen/.env`, permisos 600)
 `SITE_ADDRESS`, `BETTER_AUTH_URL`, `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET` (generados en el servidor).
+Pantalla de administración de planes (`/admin/planes`, solo lectura): `ADMIN_EMAILS` (ver [PLANES.md](PLANES.md)).
 Acceso: `BOOTSTRAP_EMAILS`, `GOOGLE_*`, `MICROSOFT_*`, `GITHUB_*` (ver [AUTH.md](AUTH.md)).
 Páginas legales (`/privacidad` y `/terminos`): `LEGAL_OWNER_NAME` y `LEGAL_CONTACT_EMAIL` (obligatorias para que el texto identifique al responsable), y opcionales `LEGAL_OWNER_TAX_ID` y `LEGAL_ADDRESS`. Se leen en cada petición: tras editarlas basta `docker compose up -d`, sin reconstruir la imagen. Estas dos URL son las que pide Google en la pantalla de consentimiento de OAuth y las tiendas de aplicaciones. Opcional: `TRUSTED_ORIGINS`. Dejar `ALLOW_OPEN_SIGNUP` sin definir.
 Tras editarlas: `docker compose up -d`.

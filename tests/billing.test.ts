@@ -1,15 +1,16 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { subscriptions } from '@/db/schema'
+import { planAudit, planMetrics, subscriptions } from '@/db/schema'
 import {
-  bestUserPlan, formatBytes, isActive, teamComparison, TEAM_PLANS, TRIAL_DAYS, userComparison, USER_PLANS,
+  bestUserPlan, formatBytes, isActive, teamComparison, TEAM_PLANS, TRIAL_DAYS, USER_PLAN_LISTED, userComparison, USER_PLANS,
 } from '@/lib/plans'
 import type { Db } from '@/server/db'
 import * as attSvc from '@/server/services/attachments'
 import * as billing from '@/server/services/billing'
 import * as exportSvc from '@/server/services/export'
 import * as invitesSvc from '@/server/services/invites'
+import * as adminSvc from '@/server/services/planAdmin'
 import * as tasksSvc from '@/server/services/tasks'
 import * as teamsSvc from '@/server/services/teams'
 import { createTestDb, createUser } from './helpers/testdb'
@@ -50,8 +51,11 @@ describe('catálogo', () => {
     for (const label of ['Automatizaciones sencillas', 'Registro de auditoría', 'Historial completo de cada tarea']) {
       expect(rows.find((r) => r.label === label)?.cells.includes(true)).toBe(false)
     }
-    for (const label of ['Sincronizar con tu calendario', 'Asistente de planificación', 'Notas privadas']) {
-      expect(userComparison().find((r) => r.label === label)?.cells.includes(true)).toBe(false)
+    expect(userComparison().find((r) => r.label === 'Notas privadas')?.cells.includes(true)).toBe(false)
+    // Personal Pro no se anuncia: dos columnas y sin sus filas exclusivas.
+    expect(userComparison().every((r) => r.cells.length === 2)).toBe(true)
+    for (const label of ['Sincronizar con tu calendario', 'Asistente de planificación']) {
+      expect(userComparison().find((r) => r.label === label)).toBeUndefined()
     }
   })
 
@@ -161,7 +165,7 @@ describe('espacio de adjuntos', () => {
     await att(t.id, 100 * MB)
     await expectCode(attSvc.authorizeUpload(db, alice.id, { taskId: t.id, size: 1 }), 'LIMIT')
     await billing.grantPlan(db, { userId: alice.id }, 'user_plus')
-    await attSvc.authorizeUpload(db, alice.id, { taskId: t.id, size: 500 * MB })
+    await attSvc.authorizeUpload(db, alice.id, { taskId: t.id, size: 20 * MB }) // cabe: 2 GB de espacio y 25 MB por archivo
   })
 
   it('sin tamaño no se comprueba el espacio (el registro posterior reutiliza authorizeUpload)', async () => {
@@ -171,8 +175,8 @@ describe('espacio de adjuntos', () => {
   })
 })
 
-describe('avisos por tarea', () => {
-  it('Gratis permite 2, Plus 4 y Pro 6; reducir siempre se puede', async () => {
+describe('recordatorios antes del vencimiento', () => {
+  it('Gratis permite 2 recordatorios, Plus 4 y Pro 6; reducir siempre se puede', async () => {
     await expectCode(billing.assertCanSetReminderOffsets(db, alice.id, 3, 2), 'LIMIT')
     await billing.assertCanSetReminderOffsets(db, alice.id, 2, 2)
     await billing.grantPlan(db, { userId: alice.id }, 'user_plus')
@@ -341,5 +345,158 @@ describe('exportación', () => {
     const json = JSON.parse((await exportSvc.exportMine(db, alice.id, 'json')).content)
     expect(json.tasks.every((t: { team: string }) => t.team === 'Equipo Ñandú')).toBe(true)
     void team
+  })
+})
+
+
+describe('planes anunciados', () => {
+  it('Personal Pro existe y se puede conceder, pero no se anuncia', async () => {
+    expect(USER_PLAN_LISTED).toEqual(['user_free', 'user_plus'])
+    await billing.grantPlan(db, { userId: alice.id }, 'user_pro')
+    expect(await billing.userPlanOf(db, alice.id)).toBe('user_pro')
+  })
+})
+
+describe('tamaño máximo por archivo', () => {
+  async function team(plan?: 'team_plus' | 'team_pro') {
+    const t = await teamsSvc.createTeam(db, alice.id, 'Equipo')
+    if (plan) await billing.grantPlan(db, { teamId: t.id }, plan)
+    return { team: t, task: await tasksSvc.createTask(db, alice.id, t.id, { title: 'T' }) }
+  }
+
+  it('Gratis admite 10 MB, Plus 25 MB y Pro 50 MB', async () => {
+    const free = await team()
+    await attSvc.authorizeUpload(db, alice.id, { taskId: free.task.id, size: 10 * MB })
+    await expectCode(attSvc.authorizeUpload(db, alice.id, { taskId: free.task.id, size: 10 * MB + 1 }), 'LIMIT')
+
+    await billing.grantPlan(db, { teamId: free.team.id }, 'team_plus')
+    await attSvc.authorizeUpload(db, alice.id, { taskId: free.task.id, size: 25 * MB })
+    await expectCode(attSvc.authorizeUpload(db, alice.id, { taskId: free.task.id, size: 26 * MB }), 'LIMIT')
+
+    await billing.grantPlan(db, { teamId: free.team.id }, 'team_pro')
+    await attSvc.authorizeUpload(db, alice.id, { taskId: free.task.id, size: 50 * MB })
+  })
+
+  it('el espacio personal usa el tamaño de archivo del plan personal', async () => {
+    const t = await tasksSvc.createTask(db, alice.id, alice.team.id, { title: 'T' })
+    await expectCode(attSvc.authorizeUpload(db, alice.id, { taskId: t.id, size: 11 * MB }), 'LIMIT')
+    await billing.grantPlan(db, { userId: alice.id }, 'user_plus')
+    await attSvc.authorizeUpload(db, alice.id, { taskId: t.id, size: 25 * MB })
+  })
+})
+
+describe('errores de límite', () => {
+  it('indican qué plan mejorar: el del equipo o el personal', async () => {
+    const team = await teamsSvc.createTeam(db, alice.id, 'Equipo')
+    // Miembros y exportación de un equipo → plan del equipo.
+    for (const n of ['P1', 'P2', 'P3', 'P4']) {
+      await createUser(db, n)
+      await teamsSvc.inviteMember(db, alice.id, team.id, `${n.toLowerCase()}@test.dev`)
+    }
+    await createUser(db, 'P5')
+    await expect(teamsSvc.inviteMember(db, alice.id, team.id, 'p5@test.dev')).rejects.toMatchObject({ code: 'LIMIT', scope: 'team' })
+    await expect(exportSvc.exportTeam(db, alice.id, team.id, 'csv')).rejects.toMatchObject({ code: 'LIMIT', scope: 'team' })
+    // Crear otro equipo, recordatorios y exportar lo propio → plan personal.
+    await expect(teamsSvc.createTeam(db, alice.id, 'Otro')).rejects.toMatchObject({ code: 'LIMIT', scope: 'user' })
+    await expect(billing.assertCanSetReminderOffsets(db, alice.id, 3, 2)).rejects.toMatchObject({ code: 'LIMIT', scope: 'user' })
+    await expect(exportSvc.exportMine(db, alice.id, 'csv')).rejects.toMatchObject({ code: 'LIMIT', scope: 'user' })
+    // En el espacio personal los límites de archivo y espacio son del plan personal, no de un equipo.
+    const t = await tasksSvc.createTask(db, alice.id, alice.team.id, { title: 'T' })
+    await expect(attSvc.authorizeUpload(db, alice.id, { taskId: t.id, size: 11 * MB })).rejects.toMatchObject({ code: 'LIMIT', scope: 'user' })
+  })
+})
+
+describe('métricas anónimas', () => {
+  const total = async (event: string, kind: string) => {
+    const rows = await db.select().from(planMetrics)
+    return rows.filter((r) => r.event === event && r.kind === kind).reduce((a, r) => a + r.n, 0)
+  }
+
+  it('cuentan límites alcanzados y pruebas iniciadas, sin identificar a nadie', async () => {
+    await teamsSvc.createTeam(db, alice.id, 'Uno')
+    await expectCode(teamsSvc.createTeam(db, alice.id, 'Dos'), 'LIMIT')
+    await expectCode(teamsSvc.createTeam(db, alice.id, 'Tres'), 'LIMIT')
+    expect(await total('limit_hit', 'teams')).toBe(2)
+
+    await billing.startTrial(db, alice.id, { plan: 'user_plus' })
+    expect(await total('trial_started', 'user_plus')).toBe(1)
+    // El contador solo guarda día, suceso, tipo y número: ningún dato de la persona.
+    expect(Object.keys((await db.select().from(planMetrics))[0]).sort()).toEqual(['day', 'event', 'kind', 'n'])
+  })
+
+  it('un fallo al medir nunca rompe la operación', async () => {
+    const broken = new Proxy(db, { get: (t, p) => (p === 'insert' ? () => { throw new Error('sin base de datos') } : Reflect.get(t, p)) }) as Db
+    await expect(billing.recordMetric(broken, 'limit_hit', 'x')).resolves.toBeUndefined()
+  })
+})
+
+describe('auditoría de concesiones', () => {
+  it('anota quién concede y quita planes', async () => {
+    await billing.grantPlan(db, { userId: alice.id }, 'user_plus', { days: 30, actor: 'cli:dioni' })
+    const team = await teamsSvc.createTeam(db, bob.id, 'Equipo')
+    await billing.grantPlan(db, { teamId: team.id }, 'team_pro', { actor: 'cli:dioni' })
+    expect(await billing.revokePlan(db, { userId: alice.id }, { actor: 'cli:dioni' })).toBe(true)
+    expect(await billing.revokePlan(db, { userId: alice.id }, { actor: 'cli:dioni' })).toBe(false) // ya no había nada
+
+    const log = await db.select().from(planAudit)
+    expect(log.map((l) => [l.action, l.owner, l.plan, l.actor])).toEqual(
+      expect.arrayContaining([
+        ['grant', 'alice@test.dev', 'user_plus', 'cli:dioni'],
+        ['grant', `equipo:${team.id}`, 'team_pro', 'cli:dioni'],
+        ['revoke', 'alice@test.dev', 'user_plus', 'cli:dioni'],
+      ]),
+    )
+    expect((await billing.getMyBilling(db, alice.id)).plan).toBe('user_free')
+  })
+})
+
+describe('plan terminado', () => {
+  it('se recuerda qué plan fue y cuándo acabó, para avisar una vez', async () => {
+    await billing.startTrial(db, alice.id, { plan: 'user_plus' })
+    expect((await billing.getMyBilling(db, alice.id)).own.ended).toBeNull() // en curso
+    const endedAt = new Date(Date.now() - 2 * 86_400_000).toISOString()
+    await db.update(subscriptions).set({ ends_at: endedAt }).where(eq(subscriptions.user_id, alice.id))
+    const b = await billing.getMyBilling(db, alice.id)
+    expect(b.own.status).toBe('free')
+    expect(b.own.ended).toMatchObject({ plan: 'user_plus', trial: true })
+    expect(new Date(b.own.ended!.ended_at).getTime()).toBe(new Date(endedAt).getTime())
+  })
+
+  it('un equipo que supera los límites tras bajar de plan lo refleja en el uso', async () => {
+    const team = await teamsSvc.createTeam(db, alice.id, 'Equipo')
+    await billing.grantPlan(db, { teamId: team.id }, 'team_plus')
+    for (const n of ['P1', 'P2', 'P3', 'P4', 'P5']) {
+      await createUser(db, n)
+      await teamsSvc.inviteMember(db, alice.id, team.id, `${n.toLowerCase()}@test.dev`)
+    }
+    await billing.revokePlan(db, { teamId: team.id })
+    const b = await billing.getTeamBilling(db, alice.id, team.id)
+    expect(b.usage.members).toBe(6)
+    expect(b.limits.maxMembers).toBe(5)
+  })
+})
+
+describe('administración de planes', () => {
+  it('solo entra quien está en ADMIN_EMAILS y tiene el correo verificado', () => {
+    const env = { ADMIN_EMAILS: ' Dioni@Ejemplo.com , otra@ejemplo.com ' }
+    expect(adminSvc.adminEmailsFromEnv(env)).toEqual(['dioni@ejemplo.com', 'otra@ejemplo.com'])
+    expect(adminSvc.isPlanAdmin({ email: 'dioni@ejemplo.com', emailVerified: true }, env)).toBe(true)
+    expect(adminSvc.isPlanAdmin({ email: 'DIONI@ejemplo.com', emailVerified: true }, env)).toBe(true)
+    // Con contraseña el correo no está verificado: nadie accede registrándose con el correo del administrador.
+    expect(adminSvc.isPlanAdmin({ email: 'dioni@ejemplo.com', emailVerified: false }, env)).toBe(false)
+    expect(adminSvc.isPlanAdmin({ email: 'intruso@ejemplo.com', emailVerified: true }, env)).toBe(false)
+    expect(adminSvc.isPlanAdmin({ email: 'dioni@ejemplo.com', emailVerified: true }, {})).toBe(false) // sin lista, nadie
+  })
+
+  it('el resumen junta planes, contadores y registro', async () => {
+    await billing.grantPlan(db, { userId: alice.id }, 'user_plus', { actor: 'cli:dioni' })
+    await billing.startTrial(db, bob.id, { plan: 'user_plus' })
+    const carol = await createUser(db, 'Carol') // gratuita: un equipo propio
+    await teamsSvc.createTeam(db, carol.id, 'Uno')
+    await expectCode(teamsSvc.createTeam(db, carol.id, 'Dos'), 'LIMIT')
+    const o = await adminSvc.planOverview(db)
+    expect(o.subscriptions.map((s) => [s.owner, s.state])).toEqual(expect.arrayContaining([['alice@test.dev', 'activo'], ['bob@test.dev', 'prueba']]))
+    expect(o.metrics.some((m) => m.event === 'plan_granted')).toBe(true)
+    expect(o.audit[0]).toMatchObject({ actor: 'cli:dioni', action: 'grant' })
   })
 })

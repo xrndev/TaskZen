@@ -2,7 +2,7 @@ import { ChevronDown, ChevronUp, Crown } from 'lucide-react-native'
 import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import {
-  formatBytes, formatPrice, TEAM_PLAN_ORDER, TEAM_PLANS, TRIAL_DAYS, USER_PLAN_ORDER, USER_PLANS,
+  formatBytes, formatPrice, isPaidPlan, PLANS, TEAM_PLAN_LISTED, TEAM_PLANS, TRIAL_DAYS, USER_PLAN_LISTED, USER_PLANS,
   type PlanId, type PlanState, type UserBilling, type UserPlanId,
 } from '@domain/lib/plans'
 import { apiClient } from '@/lib/client'
@@ -17,6 +17,7 @@ function statusText(b: UserBilling) {
   if (s.status === 'trialing' && s.ends_at) return `Prueba gratuita · quedan ${daysLeft(s.ends_at)} días`
   if (s.status === 'canceled' && s.ends_at) return 'Plan cancelado, activo hasta su fecha de fin'
   if (s.status === 'active') return 'Activo'
+  if (s.ended?.trial) return `Tu prueba de ${PLANS[s.ended.plan].name} terminó. Estás en el plan gratuito; no se ha borrado nada.`
   return 'Plan gratuito'
 }
 
@@ -69,8 +70,8 @@ export function PlanSettings() {
   }
 
   const groups: [string, (typeof USER_PLANS)[UserPlanId][] | (typeof TEAM_PLANS)[keyof typeof TEAM_PLANS][]][] = [
-    ['Para ti', USER_PLAN_ORDER.map((id) => USER_PLANS[id])],
-    ['Para tu equipo', TEAM_PLAN_ORDER.map((id) => TEAM_PLANS[id])],
+    ['Para ti', USER_PLAN_LISTED.map((id) => USER_PLANS[id])],
+    ['Para tu equipo', TEAM_PLAN_LISTED.map((id) => TEAM_PLANS[id])],
   ]
 
   return (
@@ -91,13 +92,12 @@ export function PlanSettings() {
 
           <Meter label="Equipos propios" used={billing.usage.owned_teams} max={billing.limits.maxOwnedTeams} format={(n) => String(n)} />
           <Meter label="Adjuntos de tu espacio personal" used={billing.usage.storage_bytes} max={billing.limits.personalStorageBytes} format={formatBytes} />
-          <Txt size={12} color={p.onSurfaceVariant}>{`Avisos por tarea: hasta ${billing.limits.maxReminderOffsets}.`}</Txt>
+          <Txt size={12} color={p.onSurfaceVariant}>{`Recordatorios antes del vencimiento: hasta ${billing.limits.maxReminderOffsets} por tarea. Archivos de hasta ${formatBytes(billing.limits.maxFileBytes)} cada uno.`}</Txt>
 
           {billing.own.trial_available && (
             <View style={{ gap: 8, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: alpha(p.primary, 0.3), backgroundColor: alpha(p.primary, 0.06) }}>
               <Txt size={12}>{`Prueba gratis ${TRIAL_DAYS} días, sin tarjeta. Al terminar vuelves al plan gratuito sin perder nada.`}</Txt>
-              <Btn label={`Probar ${USER_PLANS.user_plus.name}`} onPress={() => trial('user_plus')} loading={busy} />
-              <Btn label={`Probar ${USER_PLANS.user_pro.name}`} variant="outline" onPress={() => trial('user_pro')} loading={busy} />
+              {USER_PLAN_LISTED.filter(isPaidPlan).map((id) => <Btn key={id} label={`Probar ${USER_PLANS[id as UserPlanId].name}`} onPress={() => trial(id as UserPlanId)} loading={busy} />)}
             </View>
           )}
         </View>
@@ -119,7 +119,6 @@ export function PlanSettings() {
                       <Txt w="700" size={14}>{plan.monthly === null ? 'Gratis' : `${formatPrice(plan.monthly)} / mes`}</Txt>
                     </View>
                     <Txt size={12} color={p.onSurfaceVariant}>{plan.highlights.join(' · ')}</Txt>
-                    {plan.soon.length > 0 && <Txt size={11} color={alpha(p.onSurfaceVariant, 0.7)}>{`Próximamente: ${plan.soon.join(', ')}`}</Txt>}
                   </View>
                 )
               })}

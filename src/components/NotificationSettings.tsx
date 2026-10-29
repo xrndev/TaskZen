@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff } from 'lucide-react';
 import { OFFSET_LABEL } from '@/lib/reminders';
 import { toast } from '@/lib/toast';
+import { reportError } from '@/lib/upgrade';
 import { urlBase64ToUint8Array, usePushEnvironment } from '@/lib/pushSupport';
 import {
   getNotificationStateAction,
@@ -102,7 +103,7 @@ export function NotificationSettings() {
     setBusy(true);
     const r = await updateNotificationPrefsAction({ ...prefs, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
     setBusy(false);
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) return reportError(r);
     setPrefs(r.data);
     toast.success('Preferencias guardadas.');
   };
@@ -159,7 +160,7 @@ export function NotificationSettings() {
           </label>
           {prefs.due_soon && (
             <fieldset>
-              <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Avisarme con esta antelación (hasta {state.maxOffsets})</legend>
+              <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-on-surface-variant">Recordarme antes del vencimiento (hasta {state.maxOffsets} recordatorios)</legend>
               <div className="flex flex-wrap gap-2">
                 {state.allowedOffsets.map((m) => {
                   const on = prefs.offsets_minutes.includes(m);

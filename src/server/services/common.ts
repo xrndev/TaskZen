@@ -7,7 +7,8 @@ export type ErrorCode = 'FORBIDDEN' | 'NOT_FOUND' | 'INVALID' | 'CONFLICT' | 'LI
 
 /** Error de negocio con mensaje apto para mostrar al usuario. */
 export class ServiceError extends Error {
-  constructor(public code: ErrorCode, message: string) {
+  /** `scope` solo en errores LIMIT: qué plan habría que mejorar (el de la persona o el del equipo). */
+  constructor(public code: ErrorCode, message: string, public scope?: 'user' | 'team') {
     super(message)
     this.name = 'ServiceError'
   }

@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  boolean, check, doublePrecision, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid,
+  boolean, check, date, doublePrecision, index, integer, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
 
@@ -177,6 +177,26 @@ export const subscriptions = pgTable('subscriptions', {
   uniqueIndex('subscriptions_user_uq').on(t.user_id).where(sql`${t.user_id} is not null`),
   uniqueIndex('subscriptions_team_uq').on(t.team_id).where(sql`${t.team_id} is not null`),
 ])
+
+// Contadores agregados y ANÓNIMOS por día (cuántas veces se alcanza un límite, cuántas pruebas se inician): no
+// identifican a nadie. Sirven para saber qué límite duele y si las pruebas convierten.
+export const planMetrics = pgTable('plan_metrics', {
+  day: date('day', { mode: 'string' }).notNull(),
+  event: text('event').notNull(), // 'limit_hit' | 'trial_started' | 'plan_granted' | 'plan_revoked'
+  kind: text('kind').notNull(), // qué límite o qué plan
+  n: integer('n').notNull().default(0),
+}, (t) => [primaryKey({ columns: [t.day, t.event, t.kind] })])
+
+// Quién concedió o quitó qué plan y cuándo (concesiones manuales; más adelante, también eventos del proveedor de pagos).
+export const planAudit = pgTable('plan_audit', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  at: ts('at').notNull().defaultNow(),
+  actor: text('actor').notNull(), // 'cli:<operador>' | 'system'
+  action: text('action').notNull(), // 'grant' | 'revoke'
+  owner: text('owner').notNull(), // correo de la persona o `equipo:<id>`
+  plan: text('plan'),
+  ends_at: ts('ends_at'),
+})
 
 /* ---------- Notificaciones push y recordatorios ---------- */
 export const notificationEndpoints = pgTable('notification_endpoints', {

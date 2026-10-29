@@ -41,7 +41,7 @@ export function endpoint<T>(handler: (c: EndpointContext) => Promise<T>, status 
       })
       return Response.json({ data: data ?? null }, { status })
     } catch (e) {
-      if (e instanceof ServiceError) return Response.json({ error: e.message, code: e.code }, { status: STATUS[e.code] })
+      if (e instanceof ServiceError) return Response.json({ error: e.message, code: e.code, ...(e.scope ? { scope: e.scope } : {}) }, { status: STATUS[e.code] })
       if (e instanceof ZodError) return Response.json({ error: e.issues[0]?.message || 'Datos no válidos.', code: 'INVALID' }, { status: 400 })
       console.error('[api]', e)
       return Response.json({ error: 'Ha ocurrido un error inesperado.' }, { status: 500 })

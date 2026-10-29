@@ -3,11 +3,12 @@ import { attachments, comments } from '@/db/schema'
 import { can } from '@/lib/permissions'
 import type { Db } from '@/server/db'
 import type { Attachment } from '@/types'
-import { assertStorageAvailable } from './billing'
+import { assertFileSize, assertStorageAvailable } from './billing'
 import { notifyTeam, ServiceError } from './common'
 import { taskAccess } from './comments'
 
-export const MAX_FILE_SIZE = 10 * 1024 * 1024
+/** Tope técnico de cualquier archivo (el del plan Pro). El que se aplica a cada equipo depende de su plan: ver `assertFileSize`. */
+export const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 /** Tipos permitidos. Se valida el MIME declarado y, en la capa de almacenamiento, la firma del archivo. */
 export const ALLOWED_TYPES: Record<string, string> = {
@@ -51,7 +52,10 @@ export async function authorizeUpload(db: Db, userId: string, target: { taskId?:
   const { task, role } = await taskAccess(db, userId, taskId)
   if (!can(userId, role, 'attachment:upload')) throw new ServiceError('FORBIDDEN', 'No puedes adjuntar archivos aquí.')
   // El espacio depende del plan del equipo (o del personal, en el espacio personal). Se mira antes de escribir en disco.
-  if (target.size) await assertStorageAvailable(db, task.team_id, target.size)
+  if (target.size) {
+    await assertFileSize(db, task.team_id, target.size)
+    await assertStorageAvailable(db, task.team_id, target.size)
+  }
   return task
 }
 

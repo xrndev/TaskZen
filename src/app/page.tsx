@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { LegalLinks } from '@/components/LegalPage'
 import { Faq, Pricing } from '@/components/pricing/Pricing'
 import { SiteHeader } from '@/components/pricing/SiteHeader'
+import { policyFromEnv } from '@/server/services/registration'
 import { ArrowRight, Bell, MessageSquare, Shield, Smartphone, Sparkles, Users, Zap } from 'lucide-react'
 
 const FEATURES = [
@@ -19,7 +20,12 @@ const TONE = {
   tertiary: 'bg-tertiary/10 text-tertiary',
 } as const
 
+// Depende del entorno (registro abierto o por invitación): se decide en cada petición, no al compilar.
+export const dynamic = 'force-dynamic'
+
 export default function LandingPage() {
+  const openSignup = policyFromEnv().openSignup
+  const cta = openSignup ? 'Empezar gratis' : 'Entrar con mi invitación'
   return (
     <div className="min-h-dvh bg-background text-on-surface font-sans overflow-x-hidden selection:bg-primary/30">
       <SiteHeader />
@@ -45,7 +51,7 @@ export default function LandingPage() {
               href="/board"
               className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-br from-primary to-primary-dim text-black font-extrabold text-sm uppercase tracking-widest rounded-2xl shadow-[0_0_40px] shadow-primary/40 hover:shadow-[0_0_60px] hover:shadow-primary/60 hover:scale-105 transition-all"
             >
-              Empezar gratis <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              {cta} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
             <Link
               href="/precios"
@@ -123,17 +129,17 @@ export default function LandingPage() {
       </section>
 
       <Pricing />
-      <Faq />
+      <Faq openSignup={openSignup} />
 
       {/* Llamada final */}
       <section className="border-t border-surface-container-high py-24 px-6 text-center">
         <h2 className="mx-auto max-w-2xl text-3xl md:text-4xl font-black tracking-tight text-on-surface">Pon orden hoy. Decide después si necesitas más.</h2>
-        <p className="mx-auto mt-4 max-w-xl text-on-surface-variant">El plan gratuito no caduca. Cuando tu equipo crezca, pruebas cualquier plan 14 días sin tarjeta.</p>
+        <p className="mx-auto mt-4 max-w-xl text-on-surface-variant">El plan gratuito no caduca. Cuando tu equipo crezca, pruebas cualquier plan 14 días sin tarjeta.{openSignup ? '' : ' Durante la beta el registro es por invitación de un equipo.'}</p>
         <a
           href="/board"
           className="group mt-8 inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-br from-primary to-primary-dim text-black font-extrabold text-sm uppercase tracking-widest rounded-2xl shadow-[0_0_40px] shadow-primary/40 hover:scale-105 transition-all"
         >
-          Empezar gratis <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          {cta} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </a>
       </section>
 

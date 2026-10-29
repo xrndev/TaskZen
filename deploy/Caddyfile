@@ -15,9 +15,9 @@
 		-Server
 	}
 
-	# Subidas de hasta 10 MB + cabeceras.
+	# Subidas de hasta 50 MB (el tope del plan Pro; cada plan fija el suyo en la app) + cabeceras.
 	request_body {
-		max_size 12MB
+		max_size 60MB
 	}
 
 	# Descargas de las apps (APK). Se suben a /opt/taskzen/downloads sin reconstruir nada.

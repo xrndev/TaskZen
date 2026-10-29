@@ -4,7 +4,8 @@ import * as billing from '@/server/services/billing'
 import * as exp from '@/server/services/export'
 import { parseId } from './common'
 
-const userTrialSchema = z.object({ plan: z.enum(['user_plus', 'user_pro'], { error: 'Plan no válido.' }) })
+// Solo los planes anunciados (`listed`): Personal Pro no se anuncia todavía, así que tampoco se prueba.
+const userTrialSchema = z.object({ plan: z.enum(['user_plus'], { error: 'Plan no válido.' }) })
 const teamTrialSchema = z.object({ plan: z.enum(['team_plus', 'team_pro'], { error: 'Plan no válido.' }) })
 const formatSchema = z.enum(['csv', 'json'], { error: 'Formato no válido: usa csv o json.' }).default('csv')
 

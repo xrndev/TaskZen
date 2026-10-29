@@ -52,7 +52,7 @@ export default function TermsPage() {
           <li>Sobrecargar el servicio con peticiones automatizadas, hacer scraping o ingeniería inversa para fines abusivos.</li>
           <li>Usar el servicio para enviar spam o para hostigar a otras personas.</li>
         </List>
-        <P>El servicio tiene límites técnicos (por ejemplo, 10 MB por archivo adjunto, el espacio total de cada plan y los tipos de archivo permitidos) que pueden ajustarse.</P>
+        <P>El servicio tiene límites técnicos (por ejemplo, el tamaño máximo por archivo y el espacio total de cada plan, descritos en la página de planes, y los tipos de archivo permitidos) que pueden ajustarse.</P>
       </Section>
 
       <Section id="contenido" title="5. Tu contenido">
@@ -82,7 +82,7 @@ export default function TermsPage() {
         <List>
           <li>
             Serenboard ofrece un <Strong>plan gratuito sin caducidad</Strong> y planes de pago, personales y de equipo, con límites distintos (miembros por
-            equipo, espacio de adjuntos, equipos propios, avisos por tarea y exportación de datos). Lo que incluye cada uno se describe en la página de planes.
+            equipo, espacio de adjuntos, equipos propios, recordatorios antes del vencimiento y exportación de datos). Lo que incluye cada uno se describe en la página de planes.
           </li>
           <li>
             Los planes de pago pueden probarse <Strong>14 días gratis, una sola vez por persona o por equipo</Strong>, sin facilitar datos de pago. Al terminar la

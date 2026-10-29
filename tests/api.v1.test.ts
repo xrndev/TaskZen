@@ -246,14 +246,15 @@ describe('API v1', () => {
     state.userId = bob.id
     const denied = await call(myExport.GET(withQuery('format=csv')))
     expect(denied.status).toBe(402)
-    expect(denied.body).toMatchObject({ code: 'LIMIT' })
+    expect(denied.body).toMatchObject({ code: 'LIMIT', scope: 'user' })
     expect(denied.body.error).toContain('plan')
     expect((await call(myExport.GET(withQuery('format=xml')))).status).toBe(400)
 
     // Prueba gratuita: una vez; después 409.
     expect((await call(myBillingTrial.POST(req('POST', { plan: 'user_free' })))).status).toBe(400)
     expect((await call(myBillingTrial.POST(req('POST', { plan: 'user_plus' })))).status).toBe(201)
-    expect((await call(myBillingTrial.POST(req('POST', { plan: 'user_pro' })))).status).toBe(409)
+    expect((await call(myBillingTrial.POST(req('POST', { plan: 'user_pro' })))).status).toBe(400) // no se anuncia: tampoco se prueba
+    expect((await call(myBillingTrial.POST(req('POST', { plan: 'user_plus' })))).status).toBe(409) // la prueba es de una sola vez
     expect((await call(myExport.GET(withQuery('format=csv')))).status).toBe(200)
     expect((await call(myExport.GET(withQuery('format=json')))).status).toBe(402) // el JSON es de Pro
 

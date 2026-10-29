@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Db } from '@/server/db'
 import type { PushPayload, PushResult, PushSender, PushTarget } from '@/server/push/types'
+import * as billing from '@/server/services/billing'
 import * as svc from '@/server/services/notifications'
 import * as tasksSvc from '@/server/services/tasks'
 import * as teamsSvc from '@/server/services/teams'
@@ -251,6 +252,14 @@ describe('runTick: avisos de vencimiento', () => {
     const later = new Date(NOW.getTime() + (1439 - 59) * MIN)
     expect((await svc.runTick(db, sender, later)).sent).toBe(1)
     expect((await svc.runTick(db, sender, new Date(later.getTime() + MIN))).sent).toBe(0)
+  })
+
+  it('si bajó de plan y conserva más recordatorios de los permitidos, solo se envían los de mayor antelación', async () => {
+    await ready({ offsets_minutes: [2880, 1440, 60, 15] }) // guardados cuando el plan permitía 4
+    await taskDueIn(15) // tocaría el aviso de 15 minutos
+    expect((await svc.runTick(db, sender, NOW)).sent).toBe(0) // plan gratuito: solo 2 (2 días y 1 día)
+    await billing.grantPlan(db, { userId: alice.id }, 'user_plus')
+    expect((await svc.runTick(db, sender, NOW)).sent).toBe(1) // con Plus vuelven todos
   })
 
   it('respeta las horas de silencio', async () => {

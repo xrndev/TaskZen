@@ -55,10 +55,14 @@ export default function PrivacyPage() {
             datos de tarjeta ni de pago: los pagos en línea aún no están activados.
           </li>
           <li>
+            <Strong>Contadores agregados y anónimos:</Strong> cuántas veces al día se alcanza un límite de un plan y cuántas pruebas gratuitas se
+            inician. No identifican a nadie y sirven para mejorar los planes.
+          </li>
+          <li>
             <Strong>Registros técnicos del servidor:</Strong> fecha, ruta solicitada y dirección IP de las peticiones, con rotación automática.
           </li>
         </List>
-        <P>No recopilamos datos de localización, contactos, micrófono ni cámara. No usamos analítica, publicidad ni seguimiento de terceros.</P>
+        <P>No recopilamos datos de localización, contactos, micrófono ni cámara. No usamos analítica, publicidad ni seguimiento de terceros: los únicos contadores son los agregados y anónimos de arriba.</P>
       </Section>
 
       <Section id="finalidades" title="3. Para qué los usamos y con qué base legal">

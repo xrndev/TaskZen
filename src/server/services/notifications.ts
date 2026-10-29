@@ -3,6 +3,7 @@ import { notificationEndpoints, notificationPrefs, reminderLog, tasks } from '@/
 import { formatRemaining, planReminders, sentKey, type PlanPrefs } from '@/lib/reminders'
 import type { Db } from '@/server/db'
 import type { PushPayload, PushSender } from '@/server/push/types'
+import { effectiveOffsets } from './billing'
 import { ServiceError } from './common'
 
 /** Antelaciones que se pueden elegir, en minutos. */
@@ -187,7 +188,9 @@ export async function runTick(db: Db, sender: PushSender, now: Date = new Date()
 
   const prefs = new Map<string, PlanPrefs>()
   for (const r of candidates) {
-    prefs.set(r.assigned_to!, { enabled: r.enabled, due_soon: r.due_soon, offsets_minutes: r.offsets, quiet_start: r.quiet_start, quiet_end: r.quiet_end, timezone: r.timezone })
+    // Si bajó de plan y conserva más recordatorios de los permitidos, se envían solo los de mayor antelación hasta el máximo.
+    const offsets = await effectiveOffsets(db, r.assigned_to!, r.offsets)
+    prefs.set(r.assigned_to!, { enabled: r.enabled, due_soon: r.due_soon, offsets_minutes: offsets, quiet_start: r.quiet_start, quiet_end: r.quiet_end, timezone: r.timezone })
   }
 
   const log = await db
