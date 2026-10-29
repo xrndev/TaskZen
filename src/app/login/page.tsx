@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { getSession } from '@/server/session'
 import { LoginForm, type Provider } from './LoginForm'
 
+export const metadata: Metadata = { title: 'Acceso', robots: { index: false, follow: false } }
 // Solo rutas internas: evita redirecciones abiertas (//otro-sitio.com, https://...).
 function safeNext(next?: string) {
   return next && /^\/(?!\/)[\w\-./?=&%]*$/.test(next) ? next : '/board'

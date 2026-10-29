@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { LegalLinks } from '@/components/LegalPage'
 import { db } from '@/server/db'
 import { ServiceError } from '@/server/services/common'
@@ -6,6 +7,8 @@ import { previewInvite } from '@/server/services/invites'
 import { getSession } from '@/server/session'
 import { AcceptInvite } from './AcceptInvite'
 import { StartSignup } from './StartSignup'
+
+export const metadata: Metadata = { title: 'Invitación', robots: { index: false, follow: false } }
 
 export const dynamic = 'force-dynamic'
 

@@ -3,7 +3,7 @@ import { LegalPage, List, P, Section, Strong } from '@/components/LegalPage'
 import { legalInfo, PRIVACY_PATH } from '@/lib/legal'
 
 export const metadata: Metadata = {
-  title: 'Condiciones del servicio · Serenboard',
+  title: 'Condiciones del servicio',
   description: 'Las reglas de uso de Serenboard: acceso, uso aceptable, contenido, disponibilidad y responsabilidad.',
 }
 

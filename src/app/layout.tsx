@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/Toaster";
 import { UpgradeDialog } from "@/components/UpgradeDialog";
+import { siteUrl } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,10 +20,15 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const DESCRIPCION = "Tablero Kanban en equipo con avisos antes del vencimiento, roles y app Android. Gratis para empezar."
+
 export const metadata: Metadata = {
+  metadataBase: siteUrl(),
   appleWebApp: { capable: true, title: "Serenboard", statusBarStyle: "black-translucent" },
-  title: "Serenboard",
-  description: "Organiza tus proyectos con paz y fluidez.",
+  title: { default: "Serenboard · Tablero Kanban en equipo", template: "%s · Serenboard" },
+  description: DESCRIPCION,
+  openGraph: { type: "website", siteName: "Serenboard", locale: "es_ES", title: "Serenboard · Tablero Kanban en equipo", description: DESCRIPCION },
+  twitter: { card: "summary_large_image", title: "Serenboard · Tablero Kanban en equipo", description: DESCRIPCION },
   icons: {
     icon: '/icon-192.png',
     apple: '/apple-touch-icon.png',

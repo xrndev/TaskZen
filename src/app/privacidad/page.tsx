@@ -3,7 +3,7 @@ import { Ext, LegalPage, List, P, Section, Strong } from '@/components/LegalPage
 import { legalInfo, TERMS_PATH } from '@/lib/legal'
 
 export const metadata: Metadata = {
-  title: 'Política de privacidad · Serenboard',
+  title: 'Política de privacidad',
   description: 'Qué datos trata Serenboard, para qué, con quién se comparten, cuánto tiempo se conservan y cómo ejercer tus derechos.',
 }
 

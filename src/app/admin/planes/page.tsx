@@ -4,7 +4,7 @@ import { db } from '@/server/db'
 import { isPlanAdmin, planOverview } from '@/server/services/planAdmin'
 import { getSession } from '@/server/session'
 
-export const metadata: Metadata = { title: 'Administración de planes · Serenboard', robots: { index: false, follow: false } }
+export const metadata: Metadata = { title: 'Administración de planes', robots: { index: false, follow: false } }
 export const dynamic = 'force-dynamic'
 
 const EVENT_LABEL: Record<string, string> = {

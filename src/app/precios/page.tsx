@@ -5,7 +5,7 @@ import { SiteHeader } from '@/components/pricing/SiteHeader'
 import { policyFromEnv } from '@/server/services/registration'
 
 export const metadata: Metadata = {
-  title: 'Planes y precios · Serenboard',
+  title: 'Planes y precios',
   description: 'Compara los planes gratuitos, personales y de equipo de Serenboard y qué incluye cada uno.',
 }
 

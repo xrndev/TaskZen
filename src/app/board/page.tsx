@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { tasks as tasksTable, user } from '@/db/schema';
 import { KanbanBoard } from '@/components/KanbanBoard';
@@ -8,6 +9,8 @@ import { listTags } from '@/server/services/tags';
 import { listTasks } from '@/server/services/tasks';
 import { listMembers, listTeams } from '@/server/services/teams';
 import { requireUser } from '@/server/session';
+
+export const metadata: Metadata = { title: 'Tablero', robots: { index: false, follow: false } };
 
 export const dynamic = 'force-dynamic';
 

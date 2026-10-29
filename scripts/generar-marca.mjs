@@ -54,6 +54,24 @@ async function logoCompleto(ink, inkSoft) {
     .png().toBuffer()
 }
 
+/** Imagen para compartir enlaces (Open Graph / Twitter): 1200×630, fondo oscuro, marca a la izquierda y texto a la derecha. */
+async function imagenSocial() {
+  const W = 1200, H = 630
+  const fondo = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs><radialGradient id="r" cx="20%" cy="0%" r="90%"><stop offset="0" stop-color="#1b1456"/><stop offset="1" stop-color="#0b0620"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#r)"/></svg>`)
+  const mk = await marca(340, 1)
+  const nombre = await texto('<span foreground="#6FD3EA" weight="light">Seren</span><span foreground="#E6ECFF" weight="bold">board</span>', 100)
+  const lema = await texto('<span foreground="#B9B6E6">Tablero Kanban en equipo, con calma.</span>', 34)
+  const lema2 = await texto('<span foreground="#8C89C7">Gratis para empezar · Web y app Android</span>', 28)
+  const alto = async (b) => (await sharp(b).metadata()).height
+  const x = 500
+  return sharp(fondo).composite([
+    { input: mk, left: 90, top: Math.round((H - 340) / 2) },
+    { input: nombre, left: x, top: 190 },
+    { input: lema, left: x, top: 190 + (await alto(nombre)) + 40 },
+    { input: lema2, left: x, top: 190 + (await alto(nombre)) + 40 + (await alto(lema)) + 22 },
+  ]).png().toBuffer()
+}
+
 const write = async (file, buf) => { mkdirSync(path.dirname(file), { recursive: true }); await sharp(buf).toFile(file); console.log('·', path.relative(root, file)) }
 const BLANCO = '#ffffff'
 const FONDO = { r: 255, g: 255, b: 255, alpha: 1 }
@@ -64,6 +82,7 @@ await write(at('docs', 'brand', 'serenboard-logo.png'), await logoCompleto('#262
 await write(at('docs', 'brand', 'serenboard-logo-fondo-oscuro.png'), await logoCompleto('#E6ECFF', '#6FD3EA'))
 
 // Web
+await write(at('src', 'app', 'opengraph-image.png'), await imagenSocial())
 await write(at('public', 'logo-mark.png'), await marca(512, 1))
 await write(at('public', 'logo.png'), await marca(1024, 1))
 await write(at('public', 'icon-512.png'), await icono(512, 0.62, BLANCO, 0.22))
