@@ -78,3 +78,59 @@ export const BOARD_TEMPLATES = [
 export type TemplateId = (typeof BOARD_TEMPLATES)[number]['id']
 export const TEMPLATE_IDS = BOARD_TEMPLATES.map((t) => t.id) as [TemplateId, ...TemplateId[]]
 export const templateById = (id: string): BoardTemplate | undefined => BOARD_TEMPLATES.find((t) => t.id === id)
+
+/** Traducción al inglés, por posición: las mismas etiquetas y tareas que el catálogo, en el mismo orden. */
+const EN: Record<string, { name: string; description: string; tags: string[]; tasks: { title: string; description?: string }[] }> = {
+  sprint: {
+    name: 'Team sprint',
+    description: 'Plan a two-week sprint with features, bugs and improvements.',
+    tags: ['Feature', 'Bug', 'Improvement'],
+    tasks: [
+      { title: 'Define the sprint goal', description: 'One sentence the whole team can repeat.' },
+      { title: 'Design the home screen' },
+      { title: 'Fix the bug when saving the form' },
+      { title: 'Write tests for the payments module' },
+      { title: 'Prepare the client demo' },
+    ],
+  },
+  marketing: {
+    name: 'Marketing campaign',
+    description: 'From plan to launch: content, social media and analysis.',
+    tags: ['Content', 'Social', 'Analysis'],
+    tasks: [
+      { title: 'Define audience and message' },
+      { title: 'Write the press release' },
+      { title: 'Posting calendar' },
+      { title: 'Record the intro video' },
+      { title: 'Measure first-week results' },
+    ],
+  },
+  personal: {
+    name: 'My personal tasks',
+    description: 'To organise your day to day: home, work and studies.',
+    tags: ['Work', 'Home', 'Studies'],
+    tasks: [
+      { title: 'Check email and plan the week' },
+      { title: 'Do the grocery shopping' },
+      { title: 'Prepare Thursday’s presentation' },
+      { title: 'Read chapter 4' },
+    ],
+  },
+}
+
+/** La plantilla con sus textos en el idioma pedido; en español devuelve el catálogo tal cual. */
+export function localizeTemplate(tpl: BoardTemplate, lang: 'es' | 'en'): BoardTemplate {
+  const en = lang === 'en' ? EN[tpl.id] : undefined
+  if (!en) return tpl
+  const tagName = (original: string | undefined) => {
+    const i = tpl.tags.findIndex((t) => t.name === original)
+    return i >= 0 ? en.tags[i] : undefined
+  }
+  return {
+    ...tpl,
+    name: en.name,
+    description: en.description,
+    tags: tpl.tags.map((t, i) => ({ ...t, name: en.tags[i] })),
+    tasks: tpl.tasks.map((t, i) => ({ ...t, title: en.tasks[i].title, description: en.tasks[i].description, tag: tagName(t.tag) })),
+  }
+}

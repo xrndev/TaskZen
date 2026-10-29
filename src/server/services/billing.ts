@@ -101,7 +101,7 @@ export async function teamLimits(db: Db, teamId: string): Promise<TeamLimits & {
   if (!team) throw new ServiceError('NOT_FOUND', 'Equipo no encontrado.')
   if (team.is_personal) {
     const u = await userLimits(db, team.owner_id)
-    return { maxMembers: 1, storageBytes: u.personalStorageBytes, maxFileBytes: u.maxFileBytes, exportCsv: u.exportCsv, exportFull: u.exportFull, personal: true }
+    return { maxMembers: 1, maxColumns: u.maxColumns, storageBytes: u.personalStorageBytes, maxFileBytes: u.maxFileBytes, exportCsv: u.exportCsv, exportFull: u.exportFull, personal: true }
   }
   return { ...TEAM_PLANS[await teamPlanOf(db, teamId)].limits, personal: false }
 }
@@ -149,6 +149,17 @@ export async function assertCanAddMember(db: Db, teamId: string) {
       limits.personal ? 'user' : 'team',
     )
   }
+}
+
+/** `current` = columnas que ya tiene el tablero. Solo frena añadir: bajar de plan no quita las que hay. */
+export async function assertCanAddColumn(db: Db, teamId: string, current: number) {
+  const limits = await teamLimits(db, teamId)
+  if (current < limits.maxColumns) return
+  throw await limitError(
+    db, 'columns',
+    `Tu plan admite hasta ${limits.maxColumns} columnas en el tablero. ${limits.personal ? HINT_USER : HINT_TEAM}`,
+    limits.personal ? 'user' : 'team',
+  )
 }
 
 export async function assertCanCreateTeam(db: Db, userId: string) {

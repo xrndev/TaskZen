@@ -4,13 +4,15 @@
  * Cliente de las server actions. Mantiene la forma de las antiguas utilidades de datos para que los
  * componentes no cambien: los errores se muestran como aviso y la función devuelve un valor vacío.
  */
-import type { Attachment, Profile, Tag, Task, TaskComment, TaskStatus, Team, TeamMember, TeamRole } from '@/types'
+import type { Attachment, BoardColumn, Profile, Subtask, Tag, Task, TaskComment, TaskStatus, Team, TeamMember, TeamRole } from '@/types'
 import * as commentsA from '@/server/actions/comments'
 import * as profileA from '@/server/actions/profile'
 import * as tagsA from '@/server/actions/tags'
 import * as tasksA from '@/server/actions/tasks'
 import * as teamsA from '@/server/actions/teams'
 import * as templatesA from '@/server/actions/templates'
+import * as subtasksA from '@/server/actions/subtasks'
+import * as columnsA from '@/server/actions/columns'
 import * as invitesA from '@/server/actions/invites'
 import type { Result } from '@/server/actions/run'
 import { reportError } from './upgrade'
@@ -73,7 +75,7 @@ export interface NewTaskPayload {
 }
 export const createTask = (teamId: string, input: NewTaskPayload) => soft(tasksA.createTaskAction(teamId, input), null)
 export const updateTask = async (id: string, patch: Partial<NewTaskPayload>) => (await soft(tasksA.updateTaskAction(id, patch), false)) !== false
-export const moveTask = async (id: string, target: { status: TaskStatus; prevId?: string | null; nextId?: string | null }) =>
+export const moveTask = async (id: string, target: { columnId: string; prevId?: string | null; nextId?: string | null }) =>
   (await soft(tasksA.moveTaskAction(id, target), false)) !== false
 export const deleteTask = async (id: string) => (await soft(tasksA.deleteTaskAction(id), false)) !== false
 
@@ -83,8 +85,24 @@ export async function uploadCover(file: File): Promise<string | null> {
   return soft(tasksA.uploadCoverAction(form), null)
 }
 
-export const applyTemplate = async (teamId: string, template: string) =>
-  (await soft(templatesA.applyTemplateAction(teamId, { template }), false)) !== false
+/* ---------- Columnas ---------- */
+export const fetchColumns = (teamId: string): Promise<BoardColumn[]> => soft(columnsA.listColumnsAction(teamId), [] as BoardColumn[])
+export const createColumn = (teamId: string, input: { name: string; kind: TaskStatus; color?: string | null }) =>
+  soft(columnsA.createColumnAction(teamId, input), null)
+export const updateColumn = async (id: string, patch: { name?: string | null; color?: string | null; kind?: TaskStatus }) =>
+  (await soft(columnsA.updateColumnAction(id, patch), false)) !== false
+export const shiftColumn = async (id: string, direction: -1 | 1) => (await soft(columnsA.shiftColumnAction(id, direction), false)) !== false
+export const deleteColumn = async (id: string, moveTo?: string | null) => (await soft(columnsA.deleteColumnAction(id, moveTo), false)) !== false
+
+/* ---------- Subtareas ---------- */
+export const fetchSubtasks = (taskId: string): Promise<Subtask[]> => soft(subtasksA.listSubtasksAction(taskId), [] as Subtask[])
+export const createSubtask = (taskId: string, title: string) => soft(subtasksA.createSubtaskAction(taskId, { title }), null)
+export const updateSubtask = async (id: string, patch: { title?: string; done?: boolean }) =>
+  (await soft(subtasksA.updateSubtaskAction(id, patch), false)) !== false
+export const deleteSubtask = async (id: string) => (await soft(subtasksA.deleteSubtaskAction(id), false)) !== false
+
+export const applyTemplate = async (teamId: string, template: string, lang?: string) =>
+  (await soft(templatesA.applyTemplateAction(teamId, { template, lang }), false)) !== false
 
 /* ---------- Etiquetas ---------- */
 export const fetchUserTags = (teamId: string): Promise<Tag[]> => soft(tagsA.listTagsAction(teamId), [] as Tag[])

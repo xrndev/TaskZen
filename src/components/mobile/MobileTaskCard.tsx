@@ -1,16 +1,11 @@
 'use client';
 
-import { Calendar, MessageSquare, MoreVertical, Paperclip } from 'lucide-react';
+import { Calendar, CheckCircle2, MessageSquare, MoreVertical, Paperclip } from 'lucide-react';
 import { fallbackAvatar } from '@/lib/avatar';
-import type { Task, TaskStatus } from '@/types';
+import type { Task } from '@/types';
+import { KIND_BADGE, type ColumnView } from '@/lib/columns';
+import { useT } from '@/lib/i18n/client';
 import { TagBadge } from '../TagBadge';
-
-export const STATUS_LABEL: Record<TaskStatus, string> = { pending: 'Pending', in_progress: 'In Progress', completed: 'Completed' };
-const STATUS_STYLE: Record<TaskStatus, string> = {
-  pending: 'bg-secondary/15 text-secondary border-secondary/30',
-  in_progress: 'bg-primary/15 text-primary border-primary/30',
-  completed: 'bg-tertiary/15 text-tertiary border-tertiary/30',
-};
 
 /**
  * Tarjeta pensada para el dedo: toda la tarjeta abre la tarea, y las acciones (mover, borrar)
@@ -21,15 +16,19 @@ export function MobileTaskCard({
   task,
   now,
   showStatus = false,
+  column,
   onOpen,
   onMenu,
 }: {
   task: Task;
   now: number;
   showStatus?: boolean;
+  /** La columna de la tarea, para rotularla cuando se muestra el estado. */
+  column?: ColumnView;
   onOpen: (t: Task) => void;
   onMenu: (t: Task) => void;
 }) {
+  const t = useT();
   const overdue = !!task.due_date && task.status !== 'completed' && Date.parse(task.due_date) < now;
 
   return (
@@ -39,9 +38,9 @@ export function MobileTaskCard({
         onClick={() => onOpen(task)}
         className="block w-full rounded-2xl p-4 pr-14 text-left active:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-primary"
       >
-        {showStatus && (
-          <span className={`mb-2 inline-block rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${STATUS_STYLE[task.status]}`}>
-            {STATUS_LABEL[task.status]}
+        {showStatus && column && (
+          <span className={`mb-2 inline-block rounded-full border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${KIND_BADGE[column.kind]}`}>
+            {column.label}
           </span>
         )}
         <span className={`block text-base font-semibold leading-snug ${task.status === 'completed' ? 'text-on-surface/70 line-through' : 'text-on-surface'}`}>{task.title}</span>
@@ -57,21 +56,24 @@ export function MobileTaskCard({
           {task.due_date && (
             <span className={`flex items-center gap-1.5 ${overdue ? 'font-semibold text-error' : ''}`}>
               <Calendar className="h-4 w-4" aria-hidden />
-              <span className="sr-only">{overdue ? 'Vencida: ' : 'Vence: '}</span>
+              <span className="sr-only">{overdue ? t('task.overdue') : t('task.due')}</span>
               {new Date(task.due_date).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
+          {(task.subtask_total ?? 0) > 0 && (
+            <span className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4" aria-hidden />{task.subtask_done}/{task.subtask_total}<span className="sr-only">{t('subtasks.badgeSr')}</span></span>
+          )}
           {(task.comment_count ?? 0) > 0 && (
-            <span className="flex items-center gap-1"><MessageSquare className="h-4 w-4" aria-hidden />{task.comment_count}<span className="sr-only"> comentarios</span></span>
+            <span className="flex items-center gap-1"><MessageSquare className="h-4 w-4" aria-hidden />{task.comment_count}<span className="sr-only">{t('task.commentsSr')}</span></span>
           )}
           {(task.attachment_count ?? 0) > 0 && (
-            <span className="flex items-center gap-1"><Paperclip className="h-4 w-4" aria-hidden />{task.attachment_count}<span className="sr-only"> adjuntos</span></span>
+            <span className="flex items-center gap-1"><Paperclip className="h-4 w-4" aria-hidden />{task.attachment_count}<span className="sr-only">{t('task.attachmentsSr')}</span></span>
           )}
           {task.assigned_to && (
             <span className="ml-auto flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={task.assignee?.avatar_url || fallbackAvatar(task.assigned_to)} alt="" className="h-6 w-6 rounded-full object-cover" />
-              <span className="sr-only">Asignada a {task.assignee?.full_name}</span>
+              <span className="sr-only">{t('task.assignedTo', { name: task.assignee?.full_name ?? '' })}</span>
             </span>
           )}
         </span>

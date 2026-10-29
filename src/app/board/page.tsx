@@ -6,6 +6,7 @@ import { KanbanBoard } from '@/components/KanbanBoard';
 import { db } from '@/server/db';
 import { profileColumns } from '@/server/services/common';
 import { listTags } from '@/server/services/tags';
+import { listColumns } from '@/server/services/columns';
 import { listTasks } from '@/server/services/tasks';
 import { listMembers, listTeams } from '@/server/services/teams';
 import { requireUser } from '@/server/session';
@@ -39,13 +40,13 @@ export default async function BoardPage(props: { searchParams: Promise<{ team?: 
     }
   }
   teamId ??= teams[0]?.id ?? null;
-  const [tasks, members, tags] = teamId
-    ? await Promise.all([listTasks(db, id, teamId), listMembers(db, id, teamId), listTags(db, id, teamId)])
-    : [[], [], []];
+  const [tasks, members, tags, columns] = teamId
+    ? await Promise.all([listTasks(db, id, teamId), listMembers(db, id, teamId), listTags(db, id, teamId), listColumns(db, id, teamId)])
+    : [[], [], [], []];
 
   return (
     <main className="min-h-dvh bg-background text-on-surface font-sans">
-      <KanbanBoard initial={{ me, teams, teamId, tasks, members, tags, openTaskId }} />
+      <KanbanBoard initial={{ me, teams, teamId, tasks, members, tags, columns, openTaskId }} />
     </main>
   );
 }

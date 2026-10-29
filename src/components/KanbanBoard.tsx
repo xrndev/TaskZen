@@ -2,13 +2,16 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Task, TaskStatus, Profile, Tag, Team, TeamMember } from '@/types';
+import { Task, Profile, Tag, Team, TeamMember, BoardColumn } from '@/types';
 import { Trash, Search, Plus, Tag as TagIcon, LayoutGrid, X, Users, Calendar, Settings, ChevronDown, Paperclip, List, CalendarDays } from 'lucide-react';
 import { TagBadge } from './TagBadge';
 import { TagSelector } from './TagSelector';
-import { applyTemplate, fetchUserTags, fetchTasks, createTask, updateTask, moveTask, deleteTask, uploadCover, updateProfile, fetchTeamMembers } from '@/lib/api';
+import { applyTemplate, fetchColumns, fetchUserTags, fetchTasks, createTask, updateTask, moveTask, deleteTask, uploadCover, updateProfile, fetchTeamMembers } from '@/lib/api';
 import { authClient } from '@/lib/auth-client';
-import { BOARD_TEMPLATES } from '@/lib/templates';
+import { BOARD_TEMPLATES, localizeTemplate } from '@/lib/templates';
+import { useLang, useT } from '@/lib/i18n/client';
+import { columnIdOf, columnViews, KIND_DOT, type ColumnView } from '@/lib/columns';
+import { ColumnsDialog } from './ColumnsDialog';
 import { 
   DndContext, 
   DragEndEvent, 
@@ -38,7 +41,7 @@ import { ThemeSwitcher } from './ThemeSwitcher';
 import { TaskListView } from './TaskListView';
 import { CalendarView } from './CalendarView';
 import { DueSoonBell } from './DueSoonBell';
-import { MobileBoard, STATUSES } from './mobile/MobileBoard';
+import { MobileBoard } from './mobile/MobileBoard';
 import { MobileHeader, MobileNav } from './mobile/MobileChrome';
 import { MobileFiltersSheet, MobileMoreSheet } from './mobile/MobileSheets';
 import { MobileTaskList } from './mobile/MobileTaskList';
@@ -47,12 +50,6 @@ import { TeamSettingsModal } from './TeamSettingsModal';
 import { PlanBanner } from './PlanBanner';
 import { OPEN_SETTINGS_EVENT } from '@/lib/upgrade';
 import { fallbackAvatar, rememberName } from '@/lib/avatar';
-
-const COLUMNS: { id: TaskStatus; title: string; color: string }[] = [
-  { id: 'pending', title: 'Pending', color: 'bg-secondary' },
-  { id: 'in_progress', title: 'In Progress', color: 'bg-primary' },
-  { id: 'completed', title: 'Completed', color: 'bg-tertiary' },
-];
 
 // Draggable + Sortable wrapper
 function SortableTaskCard({ task, globalAvatar, onTaskClick, onDeleteTask, onTagClick, setIsOpeningWithTagsFocused }: { task: Task, globalAvatar: string, onTaskClick: () => void, onDeleteTask: (id: string) => void, onTagClick: (tagId: string) => void, setIsOpeningWithTagsFocused: (val: boolean) => void }) {
@@ -147,6 +144,14 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
                  </div>
                )}
                
+               {/* Subtareas */}
+               {(task.subtask_total ?? 0) > 0 && (
+                 <div className={`flex items-center gap-1 ${task.subtask_done === task.subtask_total ? 'text-tertiary' : 'text-on-surface-variant/60'}`} title={`${task.subtask_done} de ${task.subtask_total} subtareas hechas`}>
+                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                   <span className="text-[10px] font-bold">{task.subtask_done}/{task.subtask_total}</span>
+                 </div>
+               )}
+
                {/* Attachment Indicator */}
                {(task.attachment_count ?? 0) > 0 && (
                  <div className="flex items-center gap-1 text-on-surface-variant/60" title={`${task.attachment_count} archivos adjuntos`}>
@@ -166,7 +171,7 @@ function TaskCardRenderer({ task, globalAvatar, isDragging, onClick, onDelete, o
 }
 
 // Column container with Context
-function KanbanColumn({ column, tasks, globalAvatar, onTaskClick, onDeleteTask, onTagClick, setIsOpeningWithTagsFocused }: { column: { id: string; title: string; color: string }, tasks: Task[], globalAvatar: string, onTaskClick: (t: Task) => void, onDeleteTask: (id: string) => void, onTagClick: (tagId: string) => void, setIsOpeningWithTagsFocused: (val: boolean) => void }) {
+function KanbanColumn({ column, tasks, globalAvatar, onTaskClick, onDeleteTask, onTagClick, setIsOpeningWithTagsFocused }: { column: { id: string; title: string; color: string; hex?: string | null }, tasks: Task[], globalAvatar: string, onTaskClick: (t: Task) => void, onDeleteTask: (id: string) => void, onTagClick: (tagId: string) => void, setIsOpeningWithTagsFocused: (val: boolean) => void }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id as string,
     data: { type: 'Column', column },
@@ -176,7 +181,7 @@ function KanbanColumn({ column, tasks, globalAvatar, onTaskClick, onDeleteTask, 
     <div ref={setNodeRef} className={`flex flex-col w-[280px] sm:w-[320px] md:w-auto md:flex-1 shrink-0 gap-4 bg-surface-container-low rounded-xl p-4 min-h-[500px] border transition-colors ${isOver ? 'border-primary ring-1 ring-primary/20 bg-surface-container-high' : 'border-surface-container-high'}`}>
        <div className="flex items-center justify-between mb-2">
          <div className="flex items-center gap-2">
-           <span className={`w-2 h-2 rounded-full ${column.color} shadow-[0_0_8px] shadow-current`} />
+           <span className={`w-2 h-2 rounded-full ${column.hex ? '' : column.color} shadow-[0_0_8px] shadow-current`} style={column.hex ? { backgroundColor: column.hex, color: column.hex } : undefined} />
            <h2 className="font-semibold text-on-surface uppercase tracking-wider text-xs">{column.title}</h2>
          </div>
          <span className="text-xs font-medium text-on-surface-variant bg-surface-container px-2 py-1 rounded-full">
@@ -202,6 +207,7 @@ export interface BoardInitialData {
   tasks: Task[];
   members: TeamMember[];
   tags: Tag[];
+  columns: BoardColumn[];
   /** Tarea que se abre al entrar (enlace de un aviso). */
   openTaskId?: string | null;
 }
@@ -228,7 +234,13 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
-  const [activeStatus, setActiveStatus] = useState<TaskStatus>('pending');
+  const [activeColumnId, setActiveColumnId] = useState<string | null>(null);
+  const [columns, setColumns] = useState<BoardColumn[]>(initial.columns);
+  const [isColumnsOpen, setIsColumnsOpen] = useState(false);
+  const t = useT();
+  const lang = useLang();
+  const views = useMemo(() => columnViews(columns, t), [columns, t]);
+  const activeView = views.find((v) => v.id === activeColumnId) ?? views[0];
   const searchRef = useRef<HTMLInputElement>(null);
   const [allTags, setAllTags] = useState<Tag[]>(initial.tags);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
@@ -275,7 +287,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
   const loadTemplate = async (templateId: string) => {
     if (!selectedTeamId) return;
     setApplyingTemplate(true);
-    const ok = await applyTemplate(selectedTeamId, templateId);
+    const ok = await applyTemplate(selectedTeamId, templateId, lang);
     if (ok) {
       const [freshTags] = await Promise.all([fetchUserTags(selectedTeamId), refreshTasksWithTags()]);
       setAllTags(freshTags);
@@ -291,6 +303,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
     setSelectedTask(null);
     fetchTeamMembers(teamId).then(setTeamMembers);
     fetchUserTags(teamId).then(setAllTags);
+    fetchColumns(teamId).then(setColumns);
     fetchTasks(teamId).then(fresh => fresh && setTasks(fresh));
   };
 
@@ -304,6 +317,7 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
       timer = setTimeout(() => {
         refreshTasksWithTags();
         fetchUserTags(selectedTeamId).then(setAllTags);
+        fetchColumns(selectedTeamId).then(setColumns);
       }, 200);
     };
     return () => {
@@ -399,25 +413,33 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
 
     if (!isActiveATask) return;
 
+    // Pasa una tarea a otra columna (estado y columna a la vez, como hace el servidor al guardarla).
+    const withColumn = (task: Task, columnId: string): Task => {
+      const col = views.find(v => v.id === columnId);
+      return col ? { ...task, column_id: col.id, status: col.kind } : task;
+    };
+
     if (isActiveATask && isOverATask) {
       setTasks(currentTasks => {
         const activeIndex = currentTasks.findIndex(t => t.id === activeId);
         const overIndex = currentTasks.findIndex(t => t.id === overId);
-        if (currentTasks[activeIndex].status !== currentTasks[overIndex].status) {
+        const overColumn = columnIdOf(currentTasks[overIndex], views);
+        if (overColumn && columnIdOf(currentTasks[activeIndex], views) !== overColumn) {
           const newTasks = [...currentTasks];
-          newTasks[activeIndex] = { ...newTasks[activeIndex], status: currentTasks[overIndex].status };
+          newTasks[activeIndex] = withColumn(newTasks[activeIndex], overColumn);
           return arrayMove(newTasks, activeIndex, overIndex);
         }
         return arrayMove(currentTasks, activeIndex, overIndex);
       });
     }
 
-    if (isActiveATask && isOverAColumn) {
+    // Solo las columnas reales (en la agrupación por etiqueta no se cambia de estado al soltar).
+    if (isActiveATask && isOverAColumn && views.some(v => v.id === overId)) {
       setTasks(currentTasks => {
         const activeIndex = currentTasks.findIndex(t => t.id === activeId);
-        if (currentTasks[activeIndex].status !== overId) {
+        if (columnIdOf(currentTasks[activeIndex], views) !== overId) {
           const newTasks = [...currentTasks];
-          newTasks[activeIndex] = { ...newTasks[activeIndex], status: overId as TaskStatus };
+          newTasks[activeIndex] = withColumn(newTasks[activeIndex], overId as string);
           return arrayMove(newTasks, activeIndex, activeIndex);
         }
         return currentTasks;
@@ -430,11 +452,13 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
     const { active } = event;
     const dropped = tasks.find(t => t.id === active.id);
     if (!dropped) return;
+    const columnId = columnIdOf(dropped, views);
+    if (!columnId) return;
     // Vecinas en la columna de destino, en el orden visual actual.
-    const column = tasks.filter(t => t.status === dropped.status);
+    const column = tasks.filter(t => columnIdOf(t, views) === columnId);
     const idx = column.findIndex(t => t.id === dropped.id);
     const ok = await moveTask(dropped.id, {
-      status: dropped.status,
+      columnId,
       prevId: column[idx - 1]?.id ?? null,
       nextId: column[idx + 1]?.id ?? null,
     });
@@ -484,11 +508,13 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
   const onMobileTeamChange = (value: string) => (value === 'NEW_TEAM' ? setIsCreateTeamOpen(true) : switchTeam(value));
 
   // Mover desde el menú de la tarjeta (alternativa a arrastrar): va al final de la columna de destino.
-  const handleMoveTo = async (task: Task, status: TaskStatus) => {
-    const last = tasks.filter(t => t.status === status && t.id !== task.id).at(-1);
-    setTasks(prev => prev.map(t => (t.id === task.id ? { ...t, status } : t)));
-    setActiveStatus(status);
-    const ok = await moveTask(task.id, { status, prevId: last?.id ?? null, nextId: null });
+  const handleMoveTo = async (task: Task, columnId: string) => {
+    const col = views.find(v => v.id === columnId);
+    if (!col) return;
+    const last = tasks.filter(t => columnIdOf(t, views) === columnId && t.id !== task.id).at(-1);
+    setTasks(prev => prev.map(x => (x.id === task.id ? { ...x, column_id: col.id, status: col.kind } : x)));
+    setActiveColumnId(columnId);
+    const ok = await moveTask(task.id, { columnId, prevId: last?.id ?? null, nextId: null });
     if (!ok) refreshTasksWithTags();
   };
 
@@ -813,19 +839,19 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
       </div>
 
       {tasks.length === 0 && (
-        <section aria-label="Primeros pasos" className="mx-4 mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5 lg:mx-6">
-          <h2 className="text-base font-bold text-on-surface">Tu tablero está vacío. Empieza en tres pasos</h2>
+        <section aria-label={t('board.guide.region')} className="mx-4 mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-5 lg:mx-6">
+          <h2 className="text-base font-bold text-on-surface">{t('board.guide.title')}</h2>
           <ol className="mt-3 grid gap-3 text-sm text-on-surface-variant sm:grid-cols-3">
-            <li><span className="font-bold text-primary">1.</span> Crea tu primera tarea y ponle una fecha límite.</li>
-            <li><span className="font-bold text-primary">2.</span> Arrástrala entre columnas según avance: pendiente, en curso, hecha.</li>
-            <li><span className="font-bold text-primary">3.</span> Activa los recordatorios en tu perfil para que te avisemos antes de que venza.</li>
+            <li><span className="font-bold text-primary">1.</span> {t('board.guide.step1')}</li>
+            <li><span className="font-bold text-primary">2.</span> {t('board.guide.step2')}</li>
+            <li><span className="font-bold text-primary">3.</span> {t('board.guide.step3')}</li>
           </ol>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <button onClick={() => setIsModalOpen(true)} className="min-h-11 rounded-xl bg-primary px-4 py-2 text-xs font-extrabold uppercase tracking-widest text-black transition-all hover:brightness-110 active:scale-95">
-              Crear la primera tarea
+              {t('board.guide.create')}
             </button>
-            <span className="text-xs text-on-surface-variant">o empieza con una plantilla:</span>
-            {BOARD_TEMPLATES.map((tpl) => (
+            <span className="text-xs text-on-surface-variant">{t('board.guide.orTemplate')}</span>
+            {BOARD_TEMPLATES.map((raw) => { const tpl = localizeTemplate(raw, lang); return (
               <button
                 key={tpl.id}
                 onClick={() => void loadTemplate(tpl.id)}
@@ -835,15 +861,15 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
               >
                 {tpl.name}
               </button>
-            ))}
+            ); })}
           </div>
         </section>
       )}
 
       {view === 'list' ? (
         <>
-          <TaskListView tasks={visibleTasks} onOpen={setSelectedTask} />
-          <MobileTaskList tasks={visibleTasks} userId={currentUserId} role={currentUserRole} onOpen={setSelectedTask} onMove={handleMoveTo} onDelete={(t) => handleDeleteTask(t.id)} />
+          <TaskListView tasks={visibleTasks} columns={views} onOpen={setSelectedTask} />
+          <MobileTaskList tasks={visibleTasks} columns={views} userId={currentUserId} role={currentUserRole} onOpen={setSelectedTask} onMove={handleMoveTo} onDelete={(t) => handleDeleteTask(t.id)} />
         </>
       ) : view === 'calendar' ? (
         <CalendarView tasks={visibleTasks} onOpen={setSelectedTask} />
@@ -854,21 +880,30 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
         <div className="flex-1 overflow-x-auto p-6 flex gap-6 items-start">
           {(() => {
             if (groupBy === 'status') {
-              return COLUMNS.map(col => {
-                const filteredTasks = getFilteredTasks(tasks.filter(t => t.status === col.id));
+              return [...views.map(col => {
+                const filteredTasks = getFilteredTasks(tasks.filter(t => columnIdOf(t, views) === col.id));
                 return (
-                  <KanbanColumn 
-                    key={col.id} 
-                    column={col} 
+                  <KanbanColumn
+                    key={col.id}
+                    column={{ id: col.id, title: col.label, color: KIND_DOT[col.kind], hex: col.hex }}  
                     tasks={filteredTasks} 
                     globalAvatar={userAvatarUrl} 
                     onTaskClick={setSelectedTask} 
                     onDeleteTask={handleDeleteTask} 
                     onTagClick={(tagId) => setFilterTagIds(prev => prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId])} 
-                    setIsOpeningWithTagsFocused={setIsOpeningWithTagsFocused} 
+                    setIsOpeningWithTagsFocused={setIsOpeningWithTagsFocused}
                   />
                 );
-              });
+              }),
+              <button
+                key="manage-columns"
+                type="button"
+                onClick={() => setIsColumnsOpen(true)}
+                className="flex min-h-[120px] w-[200px] shrink-0 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-outline-variant/40 p-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+              >
+                <Plus className="h-5 w-5" aria-hidden />
+                {t('columns.manage')}
+              </button>];
             } else {
               return (
                 <>
@@ -917,8 +952,9 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
             tasks={visibleTasks}
             groupBy={groupBy}
             allTags={allTags}
-            activeStatus={activeStatus}
-            onActiveStatus={setActiveStatus}
+            columns={views}
+            activeColumnId={activeView?.id ?? null}
+            onActiveColumn={setActiveColumnId}
             userId={currentUserId}
             role={currentUserRole}
             onOpen={setSelectedTask}
@@ -957,6 +993,20 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
         </div>
       )}
 
+      <ColumnsDialog
+        isOpen={isColumnsOpen}
+        onClose={() => setIsColumnsOpen(false)}
+        teamId={selectedTeamId}
+        columns={columns}
+        tasks={tasks}
+        canManage={currentUserRole === 'admin' || currentUserRole === 'product_owner'}
+        onChanged={async () => {
+          if (!selectedTeamId) return;
+          const [fresh] = await Promise.all([fetchColumns(selectedTeamId), refreshTasksWithTags()]);
+          setColumns(fresh);
+        }}
+      />
+
       <ProfileModal isOpen={isProfileModalOpen} profile={sessionProfile} onClose={() => setIsProfileModalOpen(false)} onUpdateProfile={handleUpdateProfile} onLogout={handleLogout} />
       <TaskDetailPanel 
         key={selectedTask?.id || 'none'} 
@@ -967,6 +1017,8 @@ export function KanbanBoard({ initial }: { initial: BoardInitialData }) {
         onUpdate={handleUpdateTask} 
         onDelete={handleDeleteTask}
         onRefresh={refreshTasksWithTags}
+        columns={views}
+        onMoveToColumn={handleMoveTo}
         teamMembers={teamMembers}
         currentUserRole={currentUserRole}
         currentUserId={currentUserId}

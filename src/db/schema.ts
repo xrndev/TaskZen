@@ -94,6 +94,21 @@ export const teamMembers = pgTable('team_members', {
   index('team_members_user_idx').on(t.user_id),
 ])
 
+/**
+ * Columnas (estados) del tablero de un equipo. `kind` es lo que significa para el resto del sistema (una tarea en una
+ * columna «hecha» no avisa de vencimientos): `tasks.status` siempre es el `kind` de su columna. Las tres de serie
+ * tienen `name` nulo y se muestran con el nombre traducido; al renombrarlas se guarda el nombre elegido.
+ */
+export const boardColumns = pgTable('board_columns', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  team_id: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  name: text('name'),
+  kind: taskStatus('kind').notNull(),
+  color: text('color'),
+  position: doublePrecision('position').notNull().default(0),
+  created_at: ts('created_at').notNull().defaultNow(),
+}, (t) => [index('board_columns_team_idx').on(t.team_id, t.position)])
+
 export const tasks = pgTable('tasks', {
   id: uuid('id').primaryKey().defaultRandom(),
   team_id: uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
@@ -102,6 +117,7 @@ export const tasks = pgTable('tasks', {
   title: text('title').notNull(),
   description: text('description'),
   status: taskStatus('status').notNull().default('pending'),
+  column_id: uuid('column_id').references(() => boardColumns.id, { onDelete: 'set null' }),
   // Orden fraccionario: arrastrar solo reescribe la tarea movida.
   position: doublePrecision('position').notNull().default(0),
   image_url: text('image_url'),
@@ -124,6 +140,16 @@ export const taskTags = pgTable('task_tags', {
   task_id: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
   tag_id: uuid('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
 }, (t) => [primaryKey({ columns: [t.task_id, t.tag_id] })])
+
+/** Lista de comprobación de una tarea. El orden es fraccionario, como el de las tareas. */
+export const subtasks = pgTable('subtasks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  task_id: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  done: boolean('done').notNull().default(false),
+  position: doublePrecision('position').notNull().default(0),
+  created_at: ts('created_at').notNull().defaultNow(),
+}, (t) => [index('subtasks_task_idx').on(t.task_id, t.position)])
 
 export const comments = pgTable('task_comments', {
   id: uuid('id').primaryKey().defaultRandom(),

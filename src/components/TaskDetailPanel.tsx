@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { Task, Tag, TeamMember, TeamRole, TaskComment } from '@/types'
 import { TagSelector } from './TagSelector'
 import { TagBadge } from './TagBadge'
+import { Subtasks } from './Subtasks'
+import { columnIdOf, type ColumnView } from '@/lib/columns'
+import { useT } from '@/lib/i18n/client'
 import { Plus, User, ShieldAlert, MessageSquare, Send, Reply, Trash2, Calendar, Paperclip, FileText, X, Download, AlertCircle, Check, Loader2 } from 'lucide-react'
 import { fetchTaskComments, createComment, deleteComment, uploadAttachment, getAttachmentsByTask, deleteAttachment, attachmentUrl } from '@/lib/api'
 import { toast } from '@/lib/toast'
@@ -18,6 +21,8 @@ export function TaskDetailPanel({
    onUpdate, 
    onDelete,
    onRefresh,
+   columns = [],
+   onMoveToColumn,
    teamMembers = [],
    currentUserRole = 'member',
    currentUserId = '',
@@ -30,11 +35,14 @@ export function TaskDetailPanel({
    onUpdate: (id: string, partial: Partial<Task> & { tag_ids?: string[] }) => Promise<void>, 
    onDelete: (id: string) => Promise<void>,
    onRefresh?: () => void,
+   columns?: ColumnView[],
+   onMoveToColumn?: (task: Task, columnId: string) => Promise<void> | void,
    teamMembers?: TeamMember[],
    currentUserRole?: TeamRole,
    currentUserId?: string,
    teamId?: string | null
 }) {
+   const t = useT();
    const [isEditing, setIsEditing] = useState(false);
    const [editedTitle, setEditedTitle] = useState('');
    const [editedDesc, setEditedDesc] = useState('');
@@ -235,21 +243,21 @@ export function TaskDetailPanel({
          <div className={`flex-1 overflow-y-auto p-6 flex flex-col gap-6 ${task.image_url ? '-mt-12 relative z-10' : ''}`}>
             
             {/* Status Mover Pill (Especial móvil: Mover sin Drag) */}
-            <div className="flex bg-surface-container border border-outline-variant/20 rounded-xl p-1 shadow-inner mt-2 shrink-0 relative z-20">
-               {(['pending', 'in_progress', 'completed'] as const).map(s => (
-                  <button 
-                     key={s}
+            <div className="flex bg-surface-container border border-outline-variant/20 rounded-xl p-1 shadow-inner mt-2 shrink-0 relative z-20 overflow-x-auto">
+               {columns.map(c => (
+                  <button
+                     key={c.id}
                      disabled={isSubmitting}
                      onClick={async () => {
-                        if (task.status !== s) {
+                        if (columnIdOf(task, columns) !== c.id && onMoveToColumn) {
                            setIsSubmitting(true);
-                           await onUpdate(task.id, { status: s });
+                           await onMoveToColumn(task, c.id);
                            setIsSubmitting(false);
                         }
                      }}
-                     className={`flex-1 py-2 max-lg:min-h-11 max-lg:text-xs rounded-lg text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${task.status === s ? 'bg-primary text-black shadow-lg scale-100 ring-2 ring-primary/50' : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'}`}
+                     className={`flex-1 whitespace-nowrap px-2 py-2 max-lg:min-h-11 max-lg:text-xs rounded-lg text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${columnIdOf(task, columns) === c.id ? 'bg-primary text-black shadow-lg scale-100 ring-2 ring-primary/50' : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface'}`}
                   >
-                     {s.replace('_', ' ')}
+                     {c.label}
                   </button>
                ))}
             </div>
@@ -257,7 +265,7 @@ export function TaskDetailPanel({
             {/* Responsable Selector */}
             <div className="flex flex-col gap-2">
                <div className="flex items-center justify-between border-b border-outline-variant/10 pb-2">
-                  <h3 className="text-xs uppercase font-bold text-on-surface-variant tracking-wider">Responsable</h3>
+                  <h3 className="text-xs uppercase font-bold text-on-surface-variant tracking-wider">{t('detail.assignee')}</h3>
                   {isEditing && !canManage && (
                     <span className="text-[9px] text-error font-bold uppercase tracking-tighter flex items-center gap-1">
                       <ShieldAlert className="w-3 h-3" /> Solo Admin / Propietario
@@ -382,6 +390,8 @@ export function TaskDetailPanel({
                   </div>
                )}
             </div>
+
+            <Subtasks key={task.id} taskId={task.id} canEdit={canManage || task.assigned_to === currentUserId} onChange={onRefresh} />
 
             {/* SECCIÓN DE ADJUNTOS (TASK) */}
             <div className="flex flex-col gap-2">

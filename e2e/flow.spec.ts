@@ -39,19 +39,19 @@ test('tarea, arrastrar, comentar y adjuntar', async () => {
   await page.getByRole('button', { name: 'Añadir al Tablero' }).click()
   const card = visibleText(page, 'Mi primera tarea')
   await expect(card).toBeVisible()
-  await expect(column(page, 'Pending')).toContainText('Mi primera tarea')
+  await expect(column(page, 'Pendiente')).toContainText('Mi primera tarea')
 
   // Arrastrar a "In Progress" y comprobar que persiste tras recargar.
   const from = await card.boundingBox()
-  const to = await column(page, 'In Progress').boundingBox()
+  const to = await column(page, 'En curso').boundingBox()
   await page.mouse.move(from!.x + 20, from!.y + 10)
   await page.mouse.down()
   await page.mouse.move(from!.x + 40, from!.y + 30, { steps: 5 })
   await page.mouse.move(to!.x + to!.width / 2, to!.y + 150, { steps: 20 })
   await page.mouse.up()
-  await expect(column(page, 'In Progress')).toContainText('Mi primera tarea')
+  await expect(column(page, 'En curso')).toContainText('Mi primera tarea')
   await page.reload()
-  await expect(column(page, 'In Progress')).toContainText('Mi primera tarea')
+  await expect(column(page, 'En curso')).toContainText('Mi primera tarea')
 
   // Comentario y adjunto desde el panel de detalle.
   await visibleText(page, 'Mi primera tarea').click()

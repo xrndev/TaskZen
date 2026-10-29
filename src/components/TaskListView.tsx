@@ -5,15 +5,9 @@ import { ArrowDown, ArrowUp, Calendar, MessageSquare, Paperclip } from 'lucide-r
 import { fallbackAvatar } from '@/lib/avatar';
 import { useNow } from '@/lib/useNow';
 import { TagBadge } from './TagBadge';
-import type { Task, TaskStatus } from '@/types';
-
-const STATUS_LABEL: Record<TaskStatus, string> = { pending: 'Pending', in_progress: 'In Progress', completed: 'Completed' };
-const STATUS_STYLE: Record<TaskStatus, string> = {
-  pending: 'bg-secondary/15 text-secondary border-secondary/30',
-  in_progress: 'bg-primary/15 text-primary border-primary/30',
-  completed: 'bg-tertiary/15 text-tertiary border-tertiary/30',
-};
-const STATUS_ORDER: Record<TaskStatus, number> = { pending: 0, in_progress: 1, completed: 2 };
+import type { Task } from '@/types';
+import { KIND_BADGE, viewOf, type ColumnView } from '@/lib/columns';
+import { useT } from '@/lib/i18n/client';
 
 type SortKey = 'title' | 'status' | 'assignee' | 'due';
 
@@ -28,7 +22,8 @@ function Head({ k, sort, onToggle, children }: { k: SortKey; sort: Sort; onToggl
   );
 }
 
-export function TaskListView({ tasks, onOpen }: { tasks: Task[]; onOpen: (t: Task) => void }) {
+export function TaskListView({ tasks, columns, onOpen }: { tasks: Task[]; columns: ColumnView[]; onOpen: (t: Task) => void }) {
+  const t = useT();
   const now = useNow();
   const [sort, setSort] = useState<Sort>({ key: 'due', dir: 1 });
 
@@ -36,7 +31,7 @@ export function TaskListView({ tasks, onOpen }: { tasks: Task[]; onOpen: (t: Tas
     const value = (t: Task): string | number => {
       switch (sort.key) {
         case 'title': return t.title.toLowerCase();
-        case 'status': return STATUS_ORDER[t.status];
+        case 'status': return Math.max(0, columns.findIndex((c) => c.id === viewOf(t, columns)?.id));
         case 'assignee': return (t.assignee?.full_name ?? '￿').toLowerCase();
         // Sin fecha siempre al final, sea cual sea el sentido.
         case 'due': return t.due_date ? Date.parse(t.due_date) : sort.dir === 1 ? Infinity : -Infinity;
@@ -46,22 +41,22 @@ export function TaskListView({ tasks, onOpen }: { tasks: Task[]; onOpen: (t: Tas
       const x = value(a), y = value(b);
       return x < y ? -sort.dir : x > y ? sort.dir : 0;
     });
-  }, [tasks, sort]);
+  }, [tasks, columns, sort]);
 
   const toggle = (key: SortKey) => setSort(s => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: 1 }));
 
   if (tasks.length === 0) {
-    return <div className="hidden lg:flex flex-1 items-center justify-center text-sm text-on-surface-variant p-10">No hay tareas que coincidan con los filtros.</div>;
+    return <div className="hidden lg:flex flex-1 items-center justify-center text-sm text-on-surface-variant p-10">{t('board.noMatches')}</div>;
   }
 
   return (
     <div className="hidden lg:block flex-1 overflow-auto p-3 sm:p-6">
       <div className="min-w-[640px] bg-surface-container-low border border-surface-container-high rounded-xl overflow-hidden">
         <div className="grid grid-cols-[minmax(0,3fr)_120px_minmax(0,1.4fr)_150px] gap-4 px-4 py-3 border-b border-surface-container-high bg-surface-container">
-          <Head k="title" sort={sort} onToggle={toggle}>Tarea</Head>
-          <Head k="status" sort={sort} onToggle={toggle}>Estado</Head>
-          <Head k="assignee" sort={sort} onToggle={toggle}>Responsable</Head>
-          <Head k="due" sort={sort} onToggle={toggle}>Fecha límite</Head>
+          <Head k="title" sort={sort} onToggle={toggle}>{t('list.col.task')}</Head>
+          <Head k="status" sort={sort} onToggle={toggle}>{t('list.col.status')}</Head>
+          <Head k="assignee" sort={sort} onToggle={toggle}>{t('list.col.assignee')}</Head>
+          <Head k="due" sort={sort} onToggle={toggle}>{t('list.col.due')}</Head>
         </div>
         <ul>
           {sorted.map(t => {
@@ -73,11 +68,12 @@ export function TaskListView({ tasks, onOpen }: { tasks: Task[]; onOpen: (t: Tas
                     <p className={`text-sm font-medium truncate ${t.status === 'completed' ? 'text-on-surface-variant line-through' : 'text-on-surface'}`}>{t.title}</p>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {t.tags?.map(tag => <TagBadge key={tag.id} tag={tag} />)}
+                      {(t.subtask_total ?? 0) > 0 && <span className="flex items-center gap-1 text-[10px] text-on-surface-variant" title="Subtareas hechas">☑ {t.subtask_done}/{t.subtask_total}</span>}
                       {(t.comment_count ?? 0) > 0 && <span className="flex items-center gap-1 text-[10px] text-on-surface-variant"><MessageSquare className="w-3 h-3" />{t.comment_count}</span>}
                       {(t.attachment_count ?? 0) > 0 && <span className="flex items-center gap-1 text-[10px] text-on-surface-variant"><Paperclip className="w-3 h-3" />{t.attachment_count}</span>}
                     </div>
                   </div>
-                  <span className={`justify-self-start px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wide ${STATUS_STYLE[t.status]}`}>{STATUS_LABEL[t.status]}</span>
+                  <span className={`justify-self-start px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wide ${KIND_BADGE[t.status]}`}>{viewOf(t, columns)?.label}</span>
                   <div className="flex items-center gap-2 min-w-0">
                     {t.assigned_to ? (
                       <>

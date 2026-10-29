@@ -23,6 +23,8 @@ export type PlanScope = 'team' | 'user'
 export interface TeamLimits {
   /** `null` = sin límite. */
   maxMembers: number | null
+  /** Columnas (estados) del tablero, contando las tres de serie. */
+  maxColumns: number
   storageBytes: number
   /** Tamaño máximo de cada archivo adjunto. */
   maxFileBytes: number
@@ -33,6 +35,8 @@ export interface TeamLimits {
 export interface UserLimits {
   /** Equipos propios (sin contar el espacio personal). `null` = sin límite. */
   maxOwnedTeams: number | null
+  /** Columnas (estados) del tablero de tu espacio personal, contando las tres de serie. */
+  maxColumns: number
   /** Recordatorios distintos antes del vencimiento de una tarea (por ejemplo, 1 día y 1 hora antes = 2). */
   maxReminderOffsets: number
   /** Adjuntos en el espacio personal. */
@@ -64,22 +68,22 @@ export const TEAM_PLANS: Record<TeamPlanId, TeamPlan> = {
   team_free: {
     id: 'team_free', scope: 'team', name: 'Equipo Gratis', tagline: 'Para empezar con tu grupo.',
     monthly: null, yearly: null,
-    limits: { maxMembers: 5, storageBytes: 100 * MB, maxFileBytes: 10 * MB, exportCsv: false, exportFull: false },
-    highlights: ['Hasta 5 miembros por equipo', '100 MB de adjuntos (archivos de hasta 10 MB)', 'Tablero, lista y calendario', 'Etiquetas, comentarios y avisos'],
+    limits: { maxMembers: 5, maxColumns: 3, storageBytes: 100 * MB, maxFileBytes: 10 * MB, exportCsv: false, exportFull: false },
+    highlights: ['Hasta 5 miembros por equipo', '3 columnas en el tablero (puedes renombrarlas)', '100 MB de adjuntos (archivos de hasta 10 MB)', 'Tablero, lista y calendario', 'Etiquetas, comentarios y avisos'],
     soon: [],
   },
   team_plus: {
     id: 'team_plus', scope: 'team', name: 'Equipo Plus', tagline: 'Para equipos que ya trabajan a diario.',
     monthly: 5, yearly: 50, featured: true,
-    limits: { maxMembers: 15, storageBytes: 5 * GB, maxFileBytes: 25 * MB, exportCsv: true, exportFull: false },
-    highlights: ['Hasta 15 miembros por equipo', '5 GB de adjuntos (archivos de hasta 25 MB)', 'Exportar el tablero a CSV'],
+    limits: { maxMembers: 15, maxColumns: 6, storageBytes: 5 * GB, maxFileBytes: 25 * MB, exportCsv: true, exportFull: false },
+    highlights: ['Hasta 15 miembros por equipo', 'Hasta 6 columnas en el tablero', '5 GB de adjuntos (archivos de hasta 25 MB)', 'Exportar el tablero a CSV'],
     soon: ['Plantillas y tareas repetitivas', 'Historial completo de cada tarea'],
   },
   team_pro: {
     id: 'team_pro', scope: 'team', name: 'Equipo Pro', tagline: 'Para organizaciones sin límites.',
     monthly: 15, yearly: 150,
-    limits: { maxMembers: null, storageBytes: 50 * GB, maxFileBytes: 50 * MB, exportCsv: true, exportFull: true },
-    highlights: ['Miembros ilimitados', '50 GB de adjuntos (archivos de hasta 50 MB)', 'Exportar a CSV y copia completa en JSON', 'Personal Plus incluido para todos los miembros'],
+    limits: { maxMembers: null, maxColumns: 10, storageBytes: 50 * GB, maxFileBytes: 50 * MB, exportCsv: true, exportFull: true },
+    highlights: ['Miembros ilimitados', 'Hasta 10 columnas en el tablero', '50 GB de adjuntos (archivos de hasta 50 MB)', 'Exportar a CSV y copia completa en JSON', 'Personal Plus incluido para todos los miembros'],
     soon: ['Automatizaciones sencillas', 'Registro de auditoría'],
   },
 }
@@ -88,22 +92,22 @@ export const USER_PLANS: Record<UserPlanId, UserPlan> = {
   user_free: {
     id: 'user_free', scope: 'user', name: 'Personal Gratis', tagline: 'Todo lo esencial, sin caducidad.',
     monthly: null, yearly: null,
-    limits: { maxOwnedTeams: 1, maxReminderOffsets: 2, personalStorageBytes: 100 * MB, maxFileBytes: 10 * MB, exportCsv: false, exportFull: false },
-    highlights: ['1 equipo propio además de tu espacio personal', '2 recordatorios antes del vencimiento', '100 MB en tu espacio personal (archivos de hasta 10 MB)', 'Los 5 temas de color'],
+    limits: { maxOwnedTeams: 1, maxColumns: 3, maxReminderOffsets: 2, personalStorageBytes: 100 * MB, maxFileBytes: 10 * MB, exportCsv: false, exportFull: false },
+    highlights: ['1 equipo propio además de tu espacio personal', '3 columnas en tu tablero personal', '2 recordatorios antes del vencimiento', '100 MB en tu espacio personal (archivos de hasta 10 MB)', 'Los 5 temas de color'],
     soon: [],
   },
   user_plus: {
     id: 'user_plus', scope: 'user', name: 'Personal Plus', tagline: 'Para quien vive en su tablero.',
     monthly: 3, yearly: 30, featured: true,
-    limits: { maxOwnedTeams: 5, maxReminderOffsets: 4, personalStorageBytes: 2 * GB, maxFileBytes: 25 * MB, exportCsv: true, exportFull: false },
-    highlights: ['Hasta 5 equipos propios', '4 recordatorios antes del vencimiento', '2 GB en tu espacio personal (archivos de hasta 25 MB)', 'Exportar tus tareas a CSV'],
+    limits: { maxOwnedTeams: 5, maxColumns: 6, maxReminderOffsets: 4, personalStorageBytes: 2 * GB, maxFileBytes: 25 * MB, exportCsv: true, exportFull: false },
+    highlights: ['Hasta 5 equipos propios', 'Hasta 6 columnas en tu tablero personal', '4 recordatorios antes del vencimiento', '2 GB en tu espacio personal (archivos de hasta 25 MB)', 'Exportar tus tareas a CSV'],
     soon: ['Resumen diario o semanal por aviso', 'Vistas y filtros guardados', 'Notas privadas'],
   },
   user_pro: {
     id: 'user_pro', scope: 'user', name: 'Personal Pro', tagline: 'Todo lo personal, sin tope.',
     monthly: 6, yearly: 60, listed: false, // se anunciará cuando tenga funciones propias (calendario, asistente): hoy solo difiere de Plus en cantidades
-    limits: { maxOwnedTeams: null, maxReminderOffsets: 6, personalStorageBytes: 5 * GB, maxFileBytes: 50 * MB, exportCsv: true, exportFull: true },
-    highlights: ['Equipos propios ilimitados', '6 recordatorios antes del vencimiento', '5 GB en tu espacio personal', 'Exportar a CSV y copia completa en JSON'],
+    limits: { maxOwnedTeams: null, maxColumns: 10, maxReminderOffsets: 6, personalStorageBytes: 5 * GB, maxFileBytes: 50 * MB, exportCsv: true, exportFull: true },
+    highlights: ['Equipos propios ilimitados', 'Hasta 10 columnas en tu tablero personal', '6 recordatorios antes del vencimiento', '5 GB en tu espacio personal', 'Exportar a CSV y copia completa en JSON'],
     soon: ['Sincronizar con tu calendario', 'Asistente de planificación semanal'],
   },
 }
@@ -196,6 +200,7 @@ export function teamComparison(): ComparisonRow[] {
   const [f, p, r] = TEAM_PLAN_ORDER.map((id) => TEAM_PLANS[id].limits)
   return [
     { label: 'Miembros por equipo', cells: [lim(f.maxMembers), lim(p.maxMembers), lim(r.maxMembers)] },
+    { label: 'Columnas del tablero', hint: 'Estados de las tareas, como «En revisión» o «Bloqueada». Las tres de serie cuentan.', cells: [String(f.maxColumns), String(p.maxColumns), String(r.maxColumns)] },
     { label: 'Adjuntos compartidos', cells: [formatBytes(f.storageBytes), formatBytes(p.storageBytes), formatBytes(r.storageBytes)] },
     { label: 'Tamaño máximo por archivo', cells: [formatBytes(f.maxFileBytes), formatBytes(p.maxFileBytes), formatBytes(r.maxFileBytes)] },
     { label: 'Tareas, etiquetas y comentarios', cells: ['Sin límite', 'Sin límite', 'Sin límite'] },
@@ -223,6 +228,7 @@ export function userComparison(): ComparisonRow[] {
   const [f, p, r] = USER_PLAN_ORDER.map((id) => USER_PLANS[id].limits)
   return onlyListed([
     { label: 'Equipos propios', cells: [lim(f.maxOwnedTeams), lim(p.maxOwnedTeams), lim(r.maxOwnedTeams)] },
+    { label: 'Columnas en tu tablero personal', cells: [String(f.maxColumns), String(p.maxColumns), String(r.maxColumns)] },
     { label: 'Recordatorios antes del vencimiento', hint: 'Eliges con qué antelación te avisamos de una fecha límite (por ejemplo, 1 día y 1 hora antes).', cells: [String(f.maxReminderOffsets), String(p.maxReminderOffsets), String(r.maxReminderOffsets)] },
     { label: 'Adjuntos en tu espacio personal', cells: [formatBytes(f.personalStorageBytes), formatBytes(p.personalStorageBytes), formatBytes(r.personalStorageBytes)] },
     { label: 'Tamaño máximo por archivo', cells: [formatBytes(f.maxFileBytes), formatBytes(p.maxFileBytes), formatBytes(r.maxFileBytes)] },

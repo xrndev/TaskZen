@@ -17,7 +17,9 @@ const taskFields = {
 }
 const createSchema = z.object(taskFields)
 const updateSchema = z.object(taskFields).partial()
-const moveSchema = z.object({ status: z.enum(['pending', 'in_progress', 'completed']), prevId: uuid.nullish(), nextId: uuid.nullish() })
+const moveSchema = z
+  .object({ status: z.enum(['pending', 'in_progress', 'completed']).optional(), columnId: uuid.nullish(), prevId: uuid.nullish(), nextId: uuid.nullish() })
+  .refine((v) => v.status || v.columnId, 'Indica la columna de destino.')
 
 export type CreateTaskInput = z.input<typeof createSchema>
 export type UpdateTaskInput = z.input<typeof updateSchema>

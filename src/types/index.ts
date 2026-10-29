@@ -54,6 +54,8 @@ export interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
+  /** Columna del tablero; `null` solo en datos antiguos (se muestra en la primera de su estado). */
+  column_id?: string | null;
   position: number;
   created_at: string;
   updated_at: string;
@@ -65,7 +67,29 @@ export interface Task {
   assignee?: Profile | null;
   comment_count?: number;
   attachment_count?: number;
+  /** Lista de comprobación: total y hechas (el detalle se pide al abrir la tarea). */
+  subtask_total?: number;
+  subtask_done?: number;
   attachments?: Attachment[];
+}
+
+/** Columna (estado) del tablero. `name` nulo = una de las tres de serie, que se muestra con el nombre traducido. */
+export interface BoardColumn {
+  id: string;
+  team_id: string;
+  name: string | null;
+  kind: TaskStatus;
+  color: string | null;
+  position: number;
+}
+
+export interface Subtask {
+  id: string;
+  task_id: string;
+  title: string;
+  done: boolean;
+  position: number;
+  created_at: string;
 }
 
 export interface TaskComment {

@@ -20,6 +20,7 @@ export default defineConfig({
   use: {
     baseURL: REMOTE ?? `http://localhost:${PORT}`,
     viewport: { width: 1280, height: 800 },
+    locale: 'es-ES', // la interfaz sigue el idioma del navegador; las pruebas esperan el español
     trace: 'retain-on-failure',
   },
   webServer: REMOTE ? undefined : {

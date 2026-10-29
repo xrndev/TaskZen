@@ -45,7 +45,7 @@ test('atajos, vistas de lista y calendario', async () => {
   await expect(visibleText(page, /Sin fecha límite \(1\)/)).toBeVisible()
 
   await page.keyboard.press('1')
-  await expect(page.getByRole('heading', { name: 'Pending' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Pendiente' })).toBeVisible()
 })
 
 test('invitación por enlace: la única vía para crear una cuenta nueva', async () => {

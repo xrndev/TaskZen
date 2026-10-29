@@ -1,8 +1,9 @@
-import { and, asc, count, eq, inArray, max } from 'drizzle-orm'
-import { attachments, comments, tags, taskTags, tasks, user } from '@/db/schema'
+import { and, asc, count, eq, inArray, max, sql } from 'drizzle-orm'
+import { attachments, comments, subtasks, tags, taskTags, tasks, user } from '@/db/schema'
 import { can } from '@/lib/permissions'
 import type { Db } from '@/server/db'
 import type { Tag, Task, TaskStatus } from '@/types'
+import { ensureColumns, firstColumnOfKind } from './columns'
 import { notifyTeam, profileColumns, requireRole, roleIn, ServiceError } from './common'
 
 const STEP = 1000
@@ -28,7 +29,7 @@ export async function listTasks(db: Db, userId: string, teamId: string): Promise
   if (rows.length === 0) return []
   const ids = rows.map((t) => t.id)
 
-  const [tagRows, assignees, commentCounts, attachmentCounts] = await Promise.all([
+  const [tagRows, assignees, commentCounts, attachmentCounts, subtaskCounts] = await Promise.all([
     db
       .select({ task_id: taskTags.task_id, tag: tags })
       .from(taskTags)
@@ -48,6 +49,11 @@ export async function listTasks(db: Db, userId: string, teamId: string): Promise
       .from(attachments)
       .where(inArray(attachments.task_id, ids))
       .groupBy(attachments.task_id),
+    db
+      .select({ task_id: subtasks.task_id, total: count(), done: sql<number>`count(*) filter (where ${subtasks.done})::int` })
+      .from(subtasks)
+      .where(inArray(subtasks.task_id, ids))
+      .groupBy(subtasks.task_id),
   ])
 
   const tagsByTask = new Map<string, Tag[]>()
@@ -55,6 +61,7 @@ export async function listTasks(db: Db, userId: string, teamId: string): Promise
   const assigneeById = new Map(assignees.map((a) => [a.id, a]))
   const commentsByTask = new Map(commentCounts.map((c) => [c.task_id, c.n]))
   const attachmentsByTask = new Map(attachmentCounts.map((c) => [c.task_id, c.n]))
+  const subtasksByTask = new Map(subtaskCounts.map((c) => [c.task_id, c]))
 
   return rows.map((t) => ({
     ...t,
@@ -62,6 +69,8 @@ export async function listTasks(db: Db, userId: string, teamId: string): Promise
     assignee: t.assigned_to ? (assigneeById.get(t.assigned_to) ?? null) : null,
     comment_count: commentsByTask.get(t.id) ?? 0,
     attachment_count: attachmentsByTask.get(t.id) ?? 0,
+    subtask_total: subtasksByTask.get(t.id)?.total ?? 0,
+    subtask_done: subtasksByTask.get(t.id)?.done ?? 0,
   }))
 }
 
@@ -96,10 +105,12 @@ export async function createTask(db: Db, userId: string, teamId: string, input: 
   await assertAssignable(db, teamId, input.assigned_to)
   await assertTagsInTeam(db, teamId, input.tag_ids ?? [])
 
+  // Una tarea nueva cae en la primera columna del tablero.
+  const [first] = await ensureColumns(db, teamId)
   const [{ top }] = await db
     .select({ top: max(tasks.position) })
     .from(tasks)
-    .where(and(eq(tasks.team_id, teamId), eq(tasks.status, 'pending')))
+    .where(and(eq(tasks.team_id, teamId), eq(tasks.column_id, first.id)))
 
   const [task] = await db
     .insert(tasks)
@@ -111,7 +122,8 @@ export async function createTask(db: Db, userId: string, teamId: string, input: 
       due_date: input.due_date || null,
       image_url: input.image_url || null,
       assigned_to: input.assigned_to || null,
-      status: 'pending',
+      status: first.kind,
+      column_id: first.id,
       position: (top ?? 0) + STEP,
     })
     .returning()
@@ -120,7 +132,7 @@ export async function createTask(db: Db, userId: string, teamId: string, input: 
   return task
 }
 
-async function loadEditable(db: Db, userId: string, taskId: string, action: 'task:edit' | 'task:move' | 'task:delete') {
+export async function loadEditable(db: Db, userId: string, taskId: string, action: 'task:edit' | 'task:move' | 'task:delete') {
   const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1)
   // Mismo error para "no existe" y "no eres miembro": no revela qué IDs existen.
   if (!task) throw new ServiceError('NOT_FOUND', 'Tarea no encontrada.')
@@ -160,16 +172,22 @@ export async function moveTask(
   db: Db,
   userId: string,
   taskId: string,
-  target: { status: TaskStatus; prevId?: string | null; nextId?: string | null },
+  target: { status?: TaskStatus; columnId?: string | null; prevId?: string | null; nextId?: string | null },
 ) {
   const task = await loadEditable(db, userId, taskId, 'task:move')
+  // Por columna (web) o solo por estado (app antigua): en ese caso, la primera columna de ese tipo.
+  const columns = await ensureColumns(db, task.team_id)
+  const column = target.columnId
+    ? columns.find((c) => c.id === target.columnId)
+    : target.status ? firstColumnOfKind(columns, target.status) : undefined
+  if (!column) throw new ServiceError('INVALID', 'Columna de destino no válida.')
 
   const neighbourPos = async (id?: string | null) => {
     if (!id) return null
     const [n] = await db
       .select({ position: tasks.position })
       .from(tasks)
-      .where(and(eq(tasks.id, id), eq(tasks.team_id, task.team_id), eq(tasks.status, target.status)))
+      .where(and(eq(tasks.id, id), eq(tasks.team_id, task.team_id), eq(tasks.column_id, column.id)))
     if (!n) throw new ServiceError('INVALID', 'Posición de destino no válida.')
     return n.position
   }
@@ -184,7 +202,7 @@ export async function moveTask(
 
   await db
     .update(tasks)
-    .set({ status: target.status, position, updated_at: new Date().toISOString() })
+    .set({ status: column.kind, column_id: column.id, position, updated_at: new Date().toISOString() })
     .where(eq(tasks.id, taskId))
   await notifyTeam(db, task.team_id)
 }

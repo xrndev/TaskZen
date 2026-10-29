@@ -52,21 +52,21 @@ test('crear con el botón flotante y mover con el menú de la tarjeta', async ()
 
   const card = page.getByRole('button', { name: /Tarea móvil/ }).first()
   await expect(card).toBeVisible()
-  await expect(page.getByRole('tab', { name: /Pending/ })).toContainText('1')
+  await expect(page.getByRole('tab', { name: /Pendiente/ })).toContainText('1')
   await expectAccessible('tablero con una tarea')
 
   // Alternativa a arrastrar: el menú de la tarjeta.
   await page.getByRole('button', { name: /Acciones de la tarea Tarea móvil/ }).click()
   await expectAccessible('menú de la tarjeta')
-  await page.getByRole('button', { name: /In Progress/ }).click()
-  await expect(page.getByRole('tab', { name: /Pending/ })).toContainText('0')
-  await expect(page.getByRole('tab', { name: /In Progress/ })).toContainText('1')
-  await page.getByRole('tab', { name: /In Progress/ }).click()
+  await page.getByRole('button', { name: /En curso/ }).click()
+  await expect(page.getByRole('tab', { name: /Pendiente/ })).toContainText('0')
+  await expect(page.getByRole('tab', { name: /En curso/ })).toContainText('1')
+  await page.getByRole('tab', { name: /En curso/ }).click()
   await expect(page.getByRole('button', { name: /Tarea móvil/ }).first()).toBeVisible()
 
   // El cambio persiste en el servidor.
   await page.reload()
-  await page.getByRole('tab', { name: /In Progress/ }).click()
+  await page.getByRole('tab', { name: /En curso/ }).click()
   await expect(page.getByRole('button', { name: /Tarea móvil/ }).first()).toBeVisible()
 })
 
@@ -88,14 +88,14 @@ test('buscar, filtrar y borrar con confirmación', async () => {
   await page.getByRole('button', { name: 'Estado', exact: true }).click()
   await page.getByRole('button', { name: 'Ver resultados' }).click()
 
-  await page.getByRole('tab', { name: /In Progress/ }).click()
+  await page.getByRole('tab', { name: /En curso/ }).click()
   await page.getByRole('button', { name: /Acciones de la tarea Tarea móvil/ }).click()
   await page.getByRole('button', { name: 'Eliminar tarea' }).click()
   await expect(page.getByText(/Se borrarán también sus comentarios/)).toBeVisible()
   await page.getByRole('button', { name: 'Cancelar' }).click()
   await page.getByRole('button', { name: 'Eliminar tarea' }).click()
   await page.getByRole('button', { name: 'Sí, eliminar' }).click()
-  await expect(page.getByRole('tab', { name: /In Progress/ })).toContainText('0')
+  await expect(page.getByRole('tab', { name: /En curso/ })).toContainText('0')
 })
 
 test('lista, calendario y menú Más', async () => {
